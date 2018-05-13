@@ -28,7 +28,7 @@ dataprep_modevalplots <- function(datasets = list("train","test"),modelname = "c
   for (dataset in datasets) {
 
     # 1.1. get category prediction from model (NOT YET DYNAMIC!) and prepare
-    actuals = get(dataset) %>% select_(y_true=depvar)
+    actuals = get(dataset) %>% dplyr::select_(y_true=targetname)
     predictions = predict(get(modelname), get(dataset))
 
     #predictions
@@ -75,23 +75,23 @@ dataprep_modevalplots <- function(datasets = list("train","test"),modelname = "c
 #' add(10, 10)
 #' @export
 #' @importFrom tidyverse %>%
-input_modevalplots <- function(eval_tot="eval_tot"){
+input_modevalplots <- function(prepared_input=eval_tot){
 
   # check if eval_tot exists, otherwise create
   if (!(exists("eval_tot"))) dataprep_modevalplots()
 
-  modelgroups = levels(eval_tot$dataset)
-  yvals = levels(eval_tot$y_true)
+  modelgroups = levels(prepared_input$dataset)
+  yvals = levels(prepared_input$y_true)
 
-  eval_t_tot = data.frame()
+  eval_t_tot <- data.frame()
 
 
   for (val in yvals) {
 
     eval_t_zero = eval_tot %>%
-      mutate("category"=val,"decile"=0) %>%
-      group_by_("dataset","category","decile") %>%
-      summarize(neg=0,
+      dplyr::mutate("category"=val,"decile"=0) %>%
+      dplyr::group_by_("dataset","category","decile") %>%
+      dplyr::summarize(neg=0,
                 pos=0,
                 tot=0,
                 pct=NA,
@@ -113,19 +113,19 @@ input_modevalplots <- function(eval_tot="eval_tot"){
       as.data.frame()
 
     eval_t_add = eval_tot %>%
-      mutate("category"=val,"decile"=get(paste0("dcl_",val))) %>%
-      group_by_("dataset","category","decile") %>%
-      summarize(neg=sum(y_true!=category),
+      dplyr::mutate("category"=val,"decile"=get(paste0("dcl_",val))) %>%
+      dplyr::group_by_("dataset","category","decile") %>%
+      dplyr::summarize(neg=sum(y_true!=category),
                 pos=sum(y_true==category),
                 tot=n(),
                 pct=1.0*sum(y_true==category)/n()) %>%
-      group_by_("dataset","category") %>%
-      mutate(negtot=sum(neg),
+      dplyr::group_by_("dataset","category") %>%
+      dplyr::mutate(negtot=sum(neg),
              postot=sum(pos),
              tottot=sum(tot),
              pcttot=1.0*sum(pos)/sum(tot)) %>%
-      group_by_("dataset","category","negtot","postot","tottot","pcttot") %>%
-      mutate(cumneg=cumsum(neg),
+      dplyr::group_by_("dataset","category","negtot","postot","tottot","pcttot") %>%
+      dplyr::mutate(cumneg=cumsum(neg),
              cumpos=cumsum(pos),
              cumtot=cumsum(tot),
              cumpct=1.0*cumsum(pos)/cumsum(tot),

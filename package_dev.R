@@ -1,35 +1,26 @@
-# iris dataset
+
+# prepare iris dataset
 data(iris)
 colnames(iris) = c('sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species')
-head(iris)
-
-
 test_size = 0.3
 train_index =  sample(seq(1, nrow(iris)),size = (1 - test_size)*nrow(iris) ,replace = F )
-
 train = iris[train_index,]
 test = iris[-train_index,]
-train_index
+# estimate Random Forest
+clf <- randomForest::randomForest(species ~ ., data=train, importance = T)
 
-head(train)
+# plot
+dataprep_modevalplots(targetname="species")
+input_modevalplots()
+cumgains <- cumgains()
+lift <- lift()
+response <- response()
+cumresponse <- cumresponse()
+multiplot(cumgains,lift,response,cumresponse,cols=2)
 
 
-# install.packages("randomForest")
-# install.packages("caret")
-# install.packages("e1071")
-# install.packages("tidyverse")
 
-# packageVersion("tidyverse")
-# packageVersion("ggplot2")
-
-library(tidyverse)
-library(randomForest)
-library(caret)
-
-# library(tidyverse)
-
-# Random Forest
-clf <- randomForest(species ~ ., data=train, importance = T)
+?filter_
 
 # Predict the labels of the test data: y_pred
 y_pred <- predict(clf, test)
