@@ -5,8 +5,8 @@ Version: 0.1
 Authors@R: as.person(c(
     "Jurriaan Nagelkerke <jurriaan.nagelkerke@gmail.com> [aut, cre]", 
     "Pieter Marcus <pieter.marcus@persgroep.net> [aut]"))
-URL: http://yihui.name/knitr/
-BugReports: https://github.com/yihui/knitr/issues    
+URL: http://github.com/hadley/dplyr
+BugReports: http://github.com/hadley/dplyr/issues
 Description: Plots to evaluate the business performance of a predictive model in R.
     A number of widely used plots to assess the quality of a predictive model from a business perspective can easily be created.
     Also, the under/overperformance of a model on the train data compared to other datasets (test data, external validation data,...)
