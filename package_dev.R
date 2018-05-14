@@ -20,6 +20,7 @@ multiplot(cumgains,lift,response,cumresponse,cols=2)
 
 
 
+devtools::document()
 
 # Predict the labels of the test data: y_pred
 y_pred <- predict(clf, test)

@@ -4,7 +4,7 @@
 \alias{input_modevalplots}
 \title{Build 'eval_t' with aggregated evaluation measures}
 \usage{
-input_modevalplots(eval_tot = "eval_tot")
+input_modevalplots(prepared_input = eval_tot)
 }
 \arguments{
 \item{eval_tot}{Dataframe resulting from function dataprep_modevalplots().}
