@@ -58,6 +58,7 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 #' add(1, 1)
 #' add(10, 10)
 #' @export
+#' @importFrom magrittr %>%
 cumgains <- function(plot_input=eval_t_tot,targetcat='setosa') {
   plot_input %>%
   dplyr::filter(category==targetcat) %>%
@@ -85,6 +86,7 @@ cumgains <- function(plot_input=eval_t_tot,targetcat='setosa') {
 #' add(1, 1)
 #' add(10, 10)
 #' @export
+#' @importFrom magrittr %>%
 lift <- function(plot_input=eval_t_tot,targetcat='setosa') {
   plot_input %>%
   dplyr::filter(category==targetcat & decile>0) %>%
@@ -111,6 +113,7 @@ lift <- function(plot_input=eval_t_tot,targetcat='setosa') {
 #' add(1, 1)
 #' add(10, 10)
 #' @export
+#' @importFrom magrittr %>%
 response <- function(plot_input=eval_t_tot,targetcat='setosa') {
   plot_input %>%
   dplyr::filter(category==targetcat & decile>0) %>%
@@ -136,6 +139,7 @@ response <- function(plot_input=eval_t_tot,targetcat='setosa') {
 #' add(1, 1)
 #' add(10, 10)
 #' @export
+#' @importFrom magrittr %>%
 cumresponse <- function(plot_input=eval_t_tot,targetcat='setosa') {
   plot_input %>%
   dplyr::filter(category==targetcat & decile>0) %>%

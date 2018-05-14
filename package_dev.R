@@ -9,6 +9,7 @@ test = iris[-train_index,]
 # estimate Random Forest
 clf <- randomForest::randomForest(species ~ ., data=train, importance = T)
 
+
 library(modelplotr)
 # plot
 dataprep_modevalplots(targetname="species")
@@ -19,8 +20,7 @@ response <- response()
 cumresponse <- cumresponse()
 multiplot(cumgains,lift,response,cumresponse,cols=2)
 
-
-
+devtools::install_github('jurrr/modelplotr')
 devtools::document()
 
 # Predict the labels of the test data: y_pred
