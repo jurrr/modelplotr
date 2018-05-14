@@ -143,4 +143,6 @@ input_modevalplots <- function(prepared_input=eval_tot){
     eval_t_tot = eval_t_tot[with(eval_t_tot,order(category,dataset,decile)),]
   }
   eval_t_tot <<- eval_t_tot
+  return('Data preparation step 2 succeeded! Dataframe \'eval_t_tot\' created.')
+
 }
