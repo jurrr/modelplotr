@@ -54,9 +54,6 @@ dataprep_modevalplots <- function(datasets = list("train","test"),modelname = "c
       # add decile variable per y-class
       probabilities[,paste0('dcl_',y_values[i])] <- 11-as.numeric(cut(prob_plus_smallrandom,breaks=cutoffs,include.lowest = T))
     }
-    for (i in 1:length(y_values)) {
-      probabilities[,paste0('ind_',y_values[i])] <- 1
-    }
     eval_tot = rbind(eval_tot,probabilities)
   }
   eval_tot <<- eval_tot
