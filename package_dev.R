@@ -20,7 +20,6 @@ multiplot(cumgains,lift,response,cumresponse,cols=2)
 
 
 
-?filter_
 
 # Predict the labels of the test data: y_pred
 y_pred <- predict(clf, test)
@@ -43,7 +42,7 @@ devtools::document()
 ?input_modevalplots
 
 
-devtools::use_vignette("modelplotr")µ
+devtools::use_vignette("modelplotr")
 
 devtools::use_testthat()
 usethis::use_testthat()
