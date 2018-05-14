@@ -19,7 +19,7 @@
 #' add(1, 1)
 #' add(10, 10)
 #' @export
-#' @importFrom dplyr %>%
+#' @importFrom tidyverse %>%
 dataprep_modevalplots <- function(datasets = list("train","test"),modelname = "clf",targetname="y"){
 
   eval_tot = data.frame()
@@ -75,7 +75,7 @@ dataprep_modevalplots <- function(datasets = list("train","test"),modelname = "c
 #' add(1, 1)
 #' add(10, 10)
 #' @export
-#' @importFrom dplyr %>%
+#' @importFrom tidyverse %>%
 input_modevalplots <- function(prepared_input=eval_tot){
 
   # check if eval_tot exists, otherwise create
