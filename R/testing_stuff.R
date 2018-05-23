@@ -23,3 +23,5 @@ return(multiplot(cumgains,lift,response,cumresponse,cols=2))
 
 
 #iris_multiplotter()
+
+

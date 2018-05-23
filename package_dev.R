@@ -1,3 +1,6 @@
+library(roxygen2)
+
+
 
 # prepare iris dataset
 data(iris)
@@ -9,9 +12,28 @@ test = iris[-train_index,]
 # estimate Random Forest
 clf <- randomForest::randomForest(species ~ ., data=train, importance = T)
 
+install.packages("xgboost")
+install.packages("nnet")
+
+library(xgboost)
+??xgboost
+
+
+clf <- xgboost::xgboost(data=as.matrix(train[,1:4]),label=train$species,nrounds = 20)
+clf <- nnet::multinom(species ~ ., data = train)
+
+clf <- randomForest::randomForest(species ~ ., data=train, importance = T)
+
 
 library(modelplotr)
 # plot
+
+dataprep_modevalplots(targetname="species")
+
+train1=as.matrix(train[,1:4])
+test1=as.matrix(test[,1:4])
+
+dataprep_modevalplots(datasets=list("train1","test1"),targetname="species")
 dataprep_modevalplots(targetname="species")
 input_modevalplots()
 cumgains <- cumgains()
@@ -66,3 +88,33 @@ list.files(
   full.names=TRUE,
   recursive=TRUE
 )
+
+
+# test with bankingdata
+
+temp <- tempfile()
+download.file(zipname,temp, mode="wb")
+bank <- read.table(unzip(temp,csvname),sep=";", stringsAsFactors=FALSE,header = T)
+summary(bank)
+unlink(temp)
+
+bank$y = as.factor(bank$y)
+
+test_size = 0.3
+train_index =  sample(seq(1, nrow(bank)),size = (1 - test_size)*nrow(bank) ,replace = F )
+train = bank[train_index,]
+test = bank[-train_index,]
+
+summary(bank)
+# estimate Random Forest
+clf <- randomForest::randomForest(y ~ duration+campaign, data=train, importance = T)
+
+levels(bank$y)
+library(modelplotr)
+dataprep_modevalplots(targetname="y")
+input_modevalplots()
+cumgains <- cumgains(targetcat='yes')
+lift <- lift(targetcat='yes')
+response <- response(targetcat='yes')
+cumresponse <- cumresponse(targetcat='yes')
+multiplot(cumgains,lift,response,cumresponse,cols=2)
