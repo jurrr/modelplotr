@@ -4,28 +4,66 @@
 \alias{dataprep_modevalplots}
 \title{Build 'eval_tot' containing Actuals and Predictions}
 \usage{
-dataprep_modevalplots(datasets = list("train", "test"), modelname = "clf",
-  targetname = "y")
+dataprep_modevalplots(datasets = list("train", "test"), datasetlabels, models,
+  modellabels, targetname = "y")
 }
 \arguments{
-\item{datasets}{List of strings. A list of the names of the dataframe objects to include in model evaluation. All dataframes need to contain target variable and feature variables. Default value is list("train","set"), hence the presence of objects named "train" and "test" in the environment is expected.}
+\item{datasets}{List of strings. A list of the names of the dataframe
+objects to include in model evaluation. All dataframes need to contain
+target variable and feature variables. Default value is list("train","set"),
+hence the presence of objects named "train" and "test" in the environment is
+expected.}
 
-\item{modelname}{String. Name of the model object containing parameters to apply model on data.}
+\item{datasetlabels}{List of strings. A list of labels for the datasets, user.
+When not specified, the dataset name is used.}
 
-\item{targetname}{String. Name of the target variable in datasets. Target can be either binary or multinomial. Continuous targets are not supported.}
+\item{models}{List of Strings. Names of the model objects containing parameters to
+apply models to data.}
+
+\item{modellabels}{List of String. Labels for the models to use in plots.}
+
+\item{targetname}{String. Name of the target variable in datasets. Target
+can be either binary or multinomial. Continuous targets are not supported.}
 }
 \value{
 Dataframe. Dataframe 'eval_tot' is built based on \code{datasets}.
-It contains the dataset name, actuals on the target \code{target} , the predicted probabilities for each class of the target
-and attribution to deciles in the dataset for each class of the target.
+  It contains the dataset name, actuals on the target \code{target} , the
+  predicted probabilities for each class of the target and attribution to
+  deciles in the dataset for each class of the target.
 }
 \description{
-Build dataframe object 'eval_tot' that contains actuals and predictions on dependent variable for each dataset in datasets
+Build dataframe object 'eval_tot' that contains actuals and predictions on
+dependent variable for each dataset in datasets
 }
 \examples{
-add(1, 1)
-add(10, 10)
+data(iris)
+colnames(iris) = c('sepal_length', 'sepal_width', 'petal_length',
+'petal_width', 'species')
+test_size = 0.3
+train_index =  sample(seq(1, nrow(iris)),size = (1 - test_size)*nrow(iris) ,
+replace = F )
+train = iris[train_index,]
+test = iris[-train_index,]
+rf <- randomForest::randomForest(species ~ ., data=train, importance = T,ntree=5)
+mnl <- nnet::multinom(species ~ ., data = train)
+dataprep_modevalplots(datasets=list("train","test"),
+                      datasetlabels = list("train data","test data"),
+                      models = list("rf","mnl"),
+                      modellabels = list("random forest","multinomial logit"),
+                      targetname="species")
+head(eval_tot)
+input_modevalplots()
+cumgains()
+lift()
+response()
+cumresponse()
+multiplot(cumgains,lift,response,cumresponse,cols=2)
 }
 \seealso{
-\code{\link{input_modevalplots}} for details on the function that aggregates the output to the input for the plots.
+\code{\link{input_modevalplots}} for details on the function that
+aggregates the output to the input for the plots.
+
+\url{https://github.com/jurrr/modelplotr} for details on the package
+
+\url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
 }

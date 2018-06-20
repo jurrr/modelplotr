@@ -2,9 +2,9 @@
 % Please edit documentation in R/plottingmodelplots.R
 \name{cumresponse}
 \alias{cumresponse}
-\title{Cumulative responnse plot}
+\title{Cumulative response plot}
 \usage{
-cumresponse(plot_input = eval_t_tot, targetcat = "setosa")
+cumresponse(plot_input = eval_t_type)
 }
 \arguments{
 \item{plot_input}{Dataframe.}
@@ -15,7 +15,7 @@ cumresponse(plot_input = eval_t_tot, targetcat = "setosa")
 Cumulative response plot.
 }
 \description{
-Cumulative responnse plot
+Cumulative response plot
 }
 \examples{
 add(1, 1)

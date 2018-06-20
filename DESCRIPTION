@@ -1,24 +1,27 @@
 Package: modelplotr
 Type: Package
-Title: Plots to evaluate the business performance of a predictive model
+Title: Plots to Evaluate the Business Performance of a Predictive Model
 Version: 0.1
 Authors@R: as.person(c(
     "Jurriaan Nagelkerke <jurriaan.nagelkerke@gmail.com> [aut, cre]", 
     "Pieter Marcus <pieter.marcus@persgroep.net> [aut]"))
-URL: http://github.com/hadley/dplyr
-BugReports: http://github.com/hadley/dplyr/issues
+URL: https://github.com/jurrr/modelplotr
+BugReports: https://github.com/jurrr/modelplotr/issues
 Description: Plots to evaluate the business performance of a predictive model in R.
-    A number of widely used plots to assess the quality of a predictive model from a business perspective can easily be created.
-    Also, the under/overperformance of a model on the train data compared to other datasets (test data, external validation data,...)
-    can be visualized with a number of functions.
-License: What license is it under?
+    A number of widely used plots to assess the quality of a predictive model from 
+    a business perspective can easily be created.Using these plots, it can be shown
+    how implementation of the model will impact business targets like response on a
+    campaign. Also, the under/overperformance of a model on the train data compared 
+    to other datasets (test data, external validation data,...) can be visualized 
+    with a number of functions.
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Imports:
-    tidyverse (>= 1.2.1),
     ggplot2 (>= 2.2.1),
     grid (>= 3.5.0),
-    magrittr 
+    magrittr,
+    tidyverse (>= 1.2.1),
 RoxygenNote: 6.0.1
 Suggests: 
     knitr,

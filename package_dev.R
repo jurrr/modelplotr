@@ -10,19 +10,61 @@ train_index =  sample(seq(1, nrow(iris)),size = (1 - test_size)*nrow(iris) ,repl
 train = iris[train_index,]
 test = iris[-train_index,]
 # estimate Random Forest
-clf <- randomForest::randomForest(species ~ ., data=train, importance = T)
+rf <- randomForest::randomForest(species ~ ., data=train, importance = T,ntree=5)
+mnl <- nnet::multinom(species ~ ., data = train)
+dataprep_modevalplots(datasets=list("train","test"),
+                      datasetlabels = list("train data","test data"),
+                      models = list("rf","mnl"),
+                      modellabels = list("random forest","multinomial logit"),
+                      targetname="species")
+head(eval_tot)
+tail(eval_tot)
+input_modevalplots()
+head(eval_t_tot)
+tail(eval_t_tot)
+scope_modevalplots(eval_type="CompareTrainTest")
+scope_modevalplots(eval_type="CompareModels")
+scope_modevalplots(eval_type="TargetValues")
+head(eval_t_type)
+tail(eval_t_type)
 
+cumgains <- cumgains()
+lift <- lift()
+response <- response()
+cumresponse <- cumresponse()
+multiplot(cumgains,lift,response,cumresponse,cols=2)
+savemodelplots()
 install.packages("xgboost")
+
+
+extval <- test
+dataprep_modevalplots(datasets=list("extval"),targetname="species")
+input_modevalplots()
+eval_tot
+eval_t_tot
+
+package?modelplotr
+
 install.packages("nnet")
 
 library(xgboost)
 ??xgboost
 
+# multinomial logit
+install.packages("nnet")
 
-clf <- xgboost::xgboost(data=as.matrix(train[,1:4]),label=train$species,nrounds = 20)
 clf <- nnet::multinom(species ~ ., data = train)
 
-clf <- randomForest::randomForest(species ~ ., data=train, importance = T)
+dataprep_modevalplots(datasets=list("train","test"),targetname="species")
+dataprep_modevalplots(targetname="species")
+cumgains <- cumgains()
+lift <- lift()
+response <- response()
+cumresponse <- cumresponse()
+multiplot(cumgains,lift,response,cumresponse,cols=2)
+
+
+# Xgradient boost
 
 
 library(modelplotr)
@@ -33,6 +75,7 @@ dataprep_modevalplots(targetname="species")
 train1=as.matrix(train[,1:4])
 test1=as.matrix(test[,1:4])
 
+clf <- xgboost::xgboost(data=as.matrix(train[,1:4]),label=train$species,nrounds = 20)
 dataprep_modevalplots(datasets=list("train1","test1"),targetname="species")
 dataprep_modevalplots(targetname="species")
 input_modevalplots()
@@ -59,9 +102,10 @@ dataprep_modevalplots(depvar = 'species')
 eval_tot
 
 library(roxygen2)
+library(modelplotr)
+?dataprep_modelevalplots
 
-devtools::document()
-
+??modelplotr
 ?dataprep_modevalplots
 ?input_modevalplots
 
@@ -91,6 +135,9 @@ list.files(
 
 
 # test with bankingdata
+
+zipname = 'https://archive.ics.uci.edu/ml/machine-learning-databases/00222/bank-additional.zip'
+csvname = 'bank-additional/bank-additional.csv'
 
 temp <- tempfile()
 download.file(zipname,temp, mode="wb")

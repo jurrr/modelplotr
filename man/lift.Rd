@@ -4,7 +4,7 @@
 \alias{lift}
 \title{Lift plot}
 \usage{
-lift(plot_input = eval_t_tot, targetcat = "setosa")
+lift(plot_input = eval_t_type)
 }
 \arguments{
 \item{plot_input}{Dataframe.}

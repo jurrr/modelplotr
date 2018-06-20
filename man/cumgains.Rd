@@ -4,10 +4,11 @@
 \alias{cumgains}
 \title{Cumulative gains plot}
 \usage{
-cumgains(plot_input = eval_t_tot, targetcat = "setosa")
+cumgains(plot_input = eval_t_type)
 }
 \arguments{
-\item{plot_input}{Dataframe.}
+\item{plot_input}{Dataframe. Dataframe needs to be created with input_modevalplots
+or else meet required input format (see link to format in "See Also" section)}
 
 \item{targetcat}{String.}
 }
@@ -20,4 +21,7 @@ Cumulative gains plot
 \examples{
 add(1, 1)
 add(10, 10)
+}
+\seealso{
+\code{\link{input_modevalplots}} for details on the required input dataframe format.
 }

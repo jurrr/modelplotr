@@ -4,7 +4,7 @@
 \alias{response}
 \title{Response plot}
 \usage{
-response(plot_input = eval_t_tot, targetcat = "setosa")
+response(plot_input = eval_t_type)
 }
 \arguments{
 \item{plot_input}{Dataframe.}

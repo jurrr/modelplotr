@@ -51,7 +51,8 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 #' Cumulative gains plot
 #'
 #'
-#' @param plot_input Dataframe.
+#' @param plot_input Dataframe. Dataframe needs to be created with input_modevalplots
+#' or else meet required input format (see link to format in "See Also" section)
 #' @param targetcat String.
 #' @return Cumulative gains plot.
 #' @examples
@@ -59,19 +60,22 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 #' add(10, 10)
 #' @export
 #' @importFrom magrittr %>%
-cumgains <- function(plot_input=eval_t_tot,targetcat='setosa') {
+#' @seealso \code{\link{input_modevalplots}} for details on the required input dataframe format.
+cumgains <- function(plot_input=eval_t_type) {
   plot_input %>%
-  dplyr::filter(category==targetcat) %>%
-  ggplot2::ggplot(ggplot2::aes(x=decile,y=cumgain, colour=dataset)) +
+  ggplot2::ggplot(ggplot2::aes(x=decile,y=cumgain, colour=lines)) +
   ggplot2::geom_line() +
-  ggplot2::geom_line(ggplot2::aes(x=decile,y=gain_opt, colour=dataset),linetype=2) +
+  ggplot2::geom_line(ggplot2::aes(x=decile,y=gain_opt, colour=lines),linetype=2) +
   ggplot2::geom_line(ggplot2::aes(x=decile,y=gain_ref), colour="gray",linetype=2) +
-  ggplot2::scale_x_discrete(name="decile", breaks=0:10, labels=0:10) +
+  ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10) +
   ggplot2::scale_y_continuous(name="cumulative gains",breaks=seq(0,1,0.2),labels = scales::percent ) +
   ggplot2::ggtitle(paste("Gains chart")) +
-  ggplot2::theme(plot.title = ggplot2::element_text(size = 20)) +
-  ggplot2::theme(legend.position="top")
-  }
+  ggplot2::theme_minimal() +
+  ggplot2::theme(plot.title = ggplot2::element_text(size = 20,hjust = 0.5)) +
+  ggplot2::theme(legend.position="top",
+      panel.grid.minor.x = ggplot2::element_blank(),
+      panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"))
+}
 
 #cumgains()
 
@@ -87,17 +91,21 @@ cumgains <- function(plot_input=eval_t_tot,targetcat='setosa') {
 #' add(10, 10)
 #' @export
 #' @importFrom magrittr %>%
-lift <- function(plot_input=eval_t_tot,targetcat='setosa') {
+lift <- function(plot_input=eval_t_type) {
   plot_input %>%
-  dplyr::filter(category==targetcat & decile>0) %>%
-  ggplot2::ggplot(ggplot2::aes(x=decile,y=cumlift, colour=dataset)) +
+  dplyr::filter(decile>0) %>%
+  ggplot2::ggplot(ggplot2::aes(x=decile,y=cumlift, colour=lines)) +
   ggplot2::geom_line() +
   ggplot2::geom_hline(yintercept = 1,colour="gray",linetype=2) +
-  ggplot2::scale_x_discrete(name="decile", breaks=0:10, labels=0:10) +
+  ggplot2::scale_x_continuous(name="decile", breaks=1:10, labels=1:10) +
   ggplot2::scale_y_continuous(name="cumulative lift") +
+  ggplot2::expand_limits(y=0) +
   ggplot2::ggtitle(paste("Lift chart")) +
-  ggplot2::theme(plot.title = ggplot2::element_text(size = 20)) +
-  ggplot2::theme(legend.position="top")
+  ggplot2::theme_minimal() +
+  ggplot2::theme(plot.title = ggplot2::element_text(size = 20,hjust = 0.5)) +
+  ggplot2::theme(legend.position="top",
+                 panel.grid.minor.x = ggplot2::element_blank(),
+                 panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"))
 }
 
 #lift()
@@ -114,22 +122,26 @@ lift <- function(plot_input=eval_t_tot,targetcat='setosa') {
 #' add(10, 10)
 #' @export
 #' @importFrom magrittr %>%
-response <- function(plot_input=eval_t_tot,targetcat='setosa') {
+response <- function(plot_input=eval_t_type) {
   plot_input %>%
-  dplyr::filter(category==targetcat & decile>0) %>%
-  ggplot2::ggplot(ggplot2::aes(x=decile,y=pct, colour=dataset)) +
+  dplyr::filter(decile>0) %>%
+  ggplot2::ggplot(ggplot2::aes(x=decile,y=pct, colour=lines)) +
   ggplot2::geom_line() +
   ggplot2::geom_line(ggplot2::aes(x=decile,y=pcttot,colour=dataset),linetype=2) +
-  ggplot2::scale_x_discrete( name="decile", breaks=1:10, labels=1:10) +
+  ggplot2::scale_x_continuous( name="decile", breaks=1:10, labels=1:10) +
   ggplot2::scale_y_continuous(name="response",labels = scales::percent) +
+  ggplot2::expand_limits(y=0) +
   ggplot2::ggtitle(paste("Response chart")) +
-  ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0,size = 20)) +
-  ggplot2::theme(legend.position="top")
+  ggplot2::theme_minimal() +
+  ggplot2::theme(plot.title = ggplot2::element_text(size = 20,hjust = 0.5)) +
+  ggplot2::theme(legend.position="top",
+      panel.grid.minor.x = ggplot2::element_blank(),
+      panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"))
 }
 
 #response()
 
-#' Cumulative responnse plot
+#' Cumulative response plot
 #'
 #'
 #' @param plot_input Dataframe.
@@ -140,19 +152,45 @@ response <- function(plot_input=eval_t_tot,targetcat='setosa') {
 #' add(10, 10)
 #' @export
 #' @importFrom magrittr %>%
-cumresponse <- function(plot_input=eval_t_tot,targetcat='setosa') {
+cumresponse <- function(plot_input=eval_t_type) {
   plot_input %>%
-  dplyr::filter(category==targetcat & decile>0) %>%
-  ggplot2::ggplot(ggplot2::aes(x=decile,y=cumpct, colour=dataset)) +
+  dplyr::filter(decile>0) %>%
+  ggplot2::ggplot(ggplot2::aes(x=decile,y=cumpct, colour=lines)) +
   ggplot2::geom_line() +
   ggplot2::geom_line(ggplot2::aes(x=decile,y=pcttot,colour=dataset),linetype=2) +
-  ggplot2::scale_x_discrete( name="decile", breaks=1:10, labels=1:10) +
+  ggplot2::scale_x_continuous( name="decile", breaks=1:10, labels=1:10) +
   ggplot2::scale_y_continuous(name="cumulative response",labels = scales::percent) +
+  ggplot2::expand_limits(y=0) +
   ggplot2::ggtitle(paste("Cumulative response chart")) +
-  ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0,size = 20)) +
-  ggplot2::theme(legend.position="top")
+  ggplot2::theme_minimal() +
+  ggplot2::theme(plot.title = ggplot2::element_text(size = 20,hjust = 0.5)) +
+  ggplot2::theme(legend.position="top",
+      panel.grid.minor.x = ggplot2::element_blank(),
+      panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"))
 }
 
 #cumresponse()
 
 #multiplot(cumgains,lift,response,cumresponse,cols=2)
+
+#' Save Model Plots to file.
+#'
+#'
+#' @param plots list of strings. List of plot names as strings.
+#' @param dir String. Directory on file system where to save plots to.
+#'   Default: working directory.
+#' @return Save model plots to file
+#' @examples
+#' add(1, 1)
+#' add(10, 10)
+#' @export
+#'
+savemodelplots <- function(plots=c("cumgains","lift","response","cumresponse"), dir = getwd()) {
+  for (plot in plots) {
+    png(paste0(dir, "/", plot, ".png"))
+    print(get(plot))
+    dev.off()
+    print(paste0('saved ',plot,' to ',dir, "/", plot, ".png", sep = ''))
+  }
+}
+
