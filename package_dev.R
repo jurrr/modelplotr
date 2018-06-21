@@ -10,7 +10,7 @@ train_index =  sample(seq(1, nrow(iris)),size = (1 - test_size)*nrow(iris) ,repl
 train = iris[train_index,]
 test = iris[-train_index,]
 # estimate Random Forest
-rf <- randomForest::randomForest(species ~ ., data=train, importance = T,ntree=5)
+rf <- randomForest::randomForest(species ~ ., data=train, importance = T,ntree=1,maxnodes=1)
 mnl <- nnet::multinom(species ~ ., data = train)
 dataprep_modevalplots(datasets=list("train","test"),
                       datasetlabels = list("train data","test data"),
@@ -19,16 +19,20 @@ dataprep_modevalplots(datasets=list("train","test"),
                       targetname="species")
 head(eval_tot)
 tail(eval_tot)
+dim(eval_tot)
 input_modevalplots()
-head(eval_t_tot)
+head(eval_t_tot[eval_t_tot$modelname=="random forest"&
+                eval_t_tot$dataset=="train data"&
+                eval_t_tot$category=="setosa",],11)
 tail(eval_t_tot)
-scope_modevalplots(eval_type="CompareTrainTest")
-scope_modevalplots(eval_type="CompareModels")
-scope_modevalplots(eval_type="TargetValues")
+scope_modevalplots(eval_type="CompareTrainTest",select_model = "multinomial logit")
+#scope_modevalplots(eval_type="CompareModels")
+#scope_modevalplots(eval_type="TargetValues")
 head(eval_t_type)
 tail(eval_t_type)
 
 cumgains <- cumgains()
+cumgains
 lift <- lift()
 response <- response()
 cumresponse <- cumresponse()

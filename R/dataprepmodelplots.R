@@ -184,7 +184,7 @@ input_modevalplots <- function(prepared_input=eval_tot){
                 cumlift=NA,
                 cumlift_ref = 1) %>%
       as.data.frame()
-
+    ifelse(eval_t_tot$cumtot/eval_t_tot$postot>1,1,eval_t_tot$cumtot/eval_t_tot$postot)
     eval_t_add = eval_tot %>%
       dplyr::mutate("category"=val,"decile"=get(paste0("dcl_",val))) %>%
       dplyr::group_by_("modelname","dataset","category","decile") %>%
@@ -205,11 +205,12 @@ input_modevalplots <- function(prepared_input=eval_tot){
              gain=pos/postot,
              cumgain=cumsum(pos)/postot,
              gain_ref=decile/10,
-             gain_opt=ifelse(decile>=ceiling(10*pcttot),1,(decile/10)/(ceiling(10*pcttot)/10)),
+             gain_opt=ifelse(cumtot/postot>1,1,cumtot/postot),
              lift=pct/pcttot,
              cumlift=1.0*cumsum(pos)/cumsum(tot)/pcttot,
              cumlift_ref = 1) %>%
       as.data.frame()
+
 
     eval_t_tot = rbind(eval_t_tot,eval_t_zero,eval_t_add)
     eval_t_tot = eval_t_tot[with(eval_t_tot,order(category,dataset,decile)),]
@@ -255,6 +256,6 @@ scope_modevalplots <- function(prepared_input=eval_t_tot,
     else print('no valid evaluation type specified!')}
   eval_t_type <<- cbind(eval_type=eval_type,
                         eval_t_type)
-return('Data preparation step 2 succeeded! Dataframe \'eval_t_tot\' created.')
+return('Data preparation step 3 succeeded! Dataframe \'eval_t_type\' created.')
 
 }
