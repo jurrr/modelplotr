@@ -47,13 +47,12 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
     }
   }
 }
-
 #' Cumulative gains plot
 #'
 #'
 #' @param plot_input Dataframe. Dataframe needs to be created with input_modevalplots
 #' or else meet required input format (see link to format in "See Also" section)
-#' @param targetcat String.
+#' @param customlinecolors String.
 #' @return Cumulative gains plot.
 #' @examples
 #' add(1, 1)
@@ -61,23 +60,50 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{input_modevalplots}} for details on the required input dataframe format.
-cumgains <- function(plot_input=eval_t_type) {
-  plot_input %>%
-  ggplot2::ggplot(ggplot2::aes(x=decile,y=cumgain, colour=lines)) +
-  ggplot2::geom_line() +
-  ggplot2::geom_line(ggplot2::aes(x=decile,y=gain_opt, colour=lines),linetype=2) +
-  ggplot2::geom_line(ggplot2::aes(x=decile,y=gain_ref), colour="gray",linetype=2) +
-  ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10) +
-  ggplot2::scale_y_continuous(name="cumulative gains",breaks=seq(0,1,0.2),labels = scales::percent ) +
-  ggplot2::ggtitle(paste("Gains chart")) +
-  ggplot2::theme_minimal() +
-  ggplot2::theme(plot.title = ggplot2::element_text(size = 20,hjust = 0.5)) +
-  ggplot2::theme(legend.position="top",
-      panel.grid.minor.x = ggplot2::element_blank(),
-      panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"))
-}
+cumgains <- function(plot_input=eval_t_type,customlinecolors="") {
+  # needed for optimizing plot layout
+  nlevels <- length(levels(plot_input$legend))
+  randcols <- RColorBrewer::brewer.pal(n = 8, name = "Accent")
+  levelcols <- randcols[1:nlevels]
+  levels <- c(levels(plot_input$legend),'minimal gains',paste0('optimal gains (',levels(plot_input$legend),')'))
+  linetypes <- c(rep('solid',nlevels),'dashed',rep('dotted',nlevels))
+  if(length(customlinecolors)==nlevels) levelcols <- customlinecolors
+  else if (exists("customlinecolors")) {
+    print('specified customlinecolors vector not of required length! \
+      It is cropped or extended with extra colors to match required length')
+    levelcols <- c(customlinecolors[1:nlevels],randcols[which(!randcols %in% customlinecolors)])
+  }
+  else linecols <- c(levelcols,'gray',levelcols)
+  linesizes <- c(rep(2,nlevels),1,rep(1,nlevels))
+  # rearrange plot_input
+  vallines <- plot_input %>% dplyr::select(eval_type:decile,cumgain,legend)
+  optreflines <- plot_input%>% dplyr::mutate(legend=paste0('optimal gains (',legend, ')'),cumgain=gain_opt) %>% dplyr::select(eval_type:decile,cumgain,legend)
+  minrefline <- plot_input %>% dplyr::mutate(legend=paste0('minimal gains'),cumgain=gain_ref) %>% dplyr::select(eval_type:decile,cumgain,legend)
+  plot_input <- rbind(minrefline,optreflines,vallines)
+  plot_input$legend <- factor(plot_input$legend,levels=levels)
 
-#cumgains()
+  #make plot
+  plot_input %>%
+    ggplot2::ggplot() +
+    ggplot2::geom_line(ggplot2::aes(x=decile,y=cumgain, colour=legend,linetype=legend,size=legend)) +
+    ggplot2::scale_linetype_manual(values=linetypes)+
+    ggplot2::scale_color_manual(values=linecols)+
+    ggplot2::scale_size_manual(values=linesizes)+
+    ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10,expand = c(0, 0.02)) +
+    ggplot2::scale_y_continuous(name="cumulative gains",breaks=seq(0,1,0.2),labels = scales::percent ,expand = c(0, 0.02)) +
+    ggplot2::ggtitle(paste("Gains chart")) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(plot.title = ggplot2::element_text(size = 20,hjust = 0.5)) +
+    ggplot2::theme(legend.title = ggplot2::element_blank() ,
+      legend.position = c(0.85, 0.2),
+      legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("lightgray",0.2), size = 0),
+      panel.grid.minor.x = ggplot2::element_blank(),
+      panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
+      axis.line.x=ggplot2::element_line(),
+      axis.line.y=ggplot2::element_line())
+  }
+
+
 
 
 #' Lift plot
@@ -94,7 +120,7 @@ cumgains <- function(plot_input=eval_t_type) {
 lift <- function(plot_input=eval_t_type) {
   plot_input %>%
   dplyr::filter(decile>0) %>%
-  ggplot2::ggplot(ggplot2::aes(x=decile,y=cumlift, colour=lines)) +
+  ggplot2::ggplot(ggplot2::aes(x=decile,y=cumlift, colour=legend)) +
   ggplot2::geom_line() +
   ggplot2::geom_hline(yintercept = 1,colour="gray",linetype=2) +
   ggplot2::scale_x_continuous(name="decile", breaks=1:10, labels=1:10) +
@@ -125,7 +151,7 @@ lift <- function(plot_input=eval_t_type) {
 response <- function(plot_input=eval_t_type) {
   plot_input %>%
   dplyr::filter(decile>0) %>%
-  ggplot2::ggplot(ggplot2::aes(x=decile,y=pct, colour=lines)) +
+  ggplot2::ggplot(ggplot2::aes(x=decile,y=pct, colour=legend)) +
   ggplot2::geom_line() +
   ggplot2::geom_line(ggplot2::aes(x=decile,y=pcttot,colour=dataset),linetype=2) +
   ggplot2::scale_x_continuous( name="decile", breaks=1:10, labels=1:10) +
@@ -155,7 +181,7 @@ response <- function(plot_input=eval_t_type) {
 cumresponse <- function(plot_input=eval_t_type) {
   plot_input %>%
   dplyr::filter(decile>0) %>%
-  ggplot2::ggplot(ggplot2::aes(x=decile,y=cumpct, colour=lines)) +
+  ggplot2::ggplot(ggplot2::aes(x=decile,y=cumpct, colour=legend)) +
   ggplot2::geom_line() +
   ggplot2::geom_line(ggplot2::aes(x=decile,y=pcttot,colour=dataset),linetype=2) +
   ggplot2::scale_x_continuous( name="decile", breaks=1:10, labels=1:10) +

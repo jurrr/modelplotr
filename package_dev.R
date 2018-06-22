@@ -26,8 +26,7 @@ head(eval_t_tot[eval_t_tot$modelname=="random forest"&
                 eval_t_tot$category=="setosa",],11)
 tail(eval_t_tot)
 scope_modevalplots(eval_type="CompareTrainTest",
-                   select_model = "random forest",
-                   select_targetvalue = "setosa")
+                   select_model = "random forest")
 #scope_modevalplots(eval_type="CompareModels")
 #scope_modevalplots(eval_type="TargetValues")
 head(eval_t_type)
@@ -72,6 +71,7 @@ multiplot(cumgains,lift,response,cumresponse,cols=2)
 
 # Xgradient boost
 
+packageVersion("RColorBrewer")
 
 library(modelplotr)
 # plot

@@ -238,24 +238,32 @@ scope_modevalplots <- function(prepared_input=eval_t_tot,
                                eval_type=c("CompareTrainTest","CompareModels","TargetValues"),
                                select_model,
                                select_dataset,
-                               select_targetvalue){
+                               select_targetvalue,
+                               select_smallesttargetvalue=TRUE){
 
   # check if eval_tot exists, otherwise create
   if (!(exists("eval_t_tot"))) input_modevalplots()
-  if (missing(select_model)) select_model <- unique(prepared_input$modelname)[1]
-  if (missing(select_dataset)) select_dataset <- unique(prepared_input$dataset)[1]
-  if (missing(select_targetvalue)) select_targetvalue <- unique(prepared_input$category)[1]
-
+  #check if needed selections of model / dataset / targetvalues are set
+  if (missing(select_model)) select_model <- sort(unique(prepared_input$modelname))[1]
+  if (missing(select_dataset)) select_dataset <- sort(unique(prepared_input$dataset))[1]
+  # determine smallest targetvalue
+  #`%>%` <- magrittr::`%>%`
+  smallest <- prepared_input%>%dplyr::select(category,postot)%>%
+    dplyr::group_by(category)%>%dplyr::summarize(n=min(postot,na.rm = T))%>%
+    dplyr::arrange(n)%>%dplyr::top_n(n=1)%>%dplyr::select(category)%>%as.character()
+  if (missing(select_targetvalue)){
+    if (select_smallesttargetvalue==TRUE) select_targetvalue <- smallest
+    else select_targetvalue <- sort(unique(prepared_input$category))[1]
+    }
   eval_t_type <- prepared_input %>%
     {if (eval_type=="CompareTrainTest") dplyr::filter(., modelname == select_model & category == select_targetvalue) %>%
-        dplyr::mutate(.,lines=dataset)
+        dplyr::mutate(.,legend=dataset)
     else if (eval_type=="CompareModels") dplyr::filter(., dataset == select_dataset & category == select_targetvalue) %>%
-        dplyr::mutate(.,lines=modelname)
+        dplyr::mutate(.,legend=modelname)
     else if (eval_type=="TargetValues") dplyr::filter(., modelname == select_model & dataset == select_dataset)%>%
-        dplyr::mutate(.,lines=category)
+        dplyr::mutate(.,legend=category)
     else print('no valid evaluation type specified!')}
   eval_t_type <<- cbind(eval_type=eval_type,
                         eval_t_type)
 return('Data preparation step 3 succeeded! Dataframe \'eval_t_type\' created.')
-
 }

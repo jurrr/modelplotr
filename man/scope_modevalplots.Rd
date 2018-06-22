@@ -6,7 +6,8 @@
 \usage{
 scope_modevalplots(prepared_input = eval_t_tot,
   eval_type = c("CompareTrainTest", "CompareModels", "TargetValues"),
-  select_model, select_dataset, select_targetvalue)
+  select_model, select_dataset, select_targetvalue,
+  select_smallesttargetvalue = TRUE)
 }
 \arguments{
 \item{eval_t_tot}{Dataframe resulting from function dataprep_modevalplots().}

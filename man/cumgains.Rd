@@ -4,13 +4,13 @@
 \alias{cumgains}
 \title{Cumulative gains plot}
 \usage{
-cumgains(plot_input = eval_t_type)
+cumgains(plot_input = eval_t_type, customlinecolors = "")
 }
 \arguments{
 \item{plot_input}{Dataframe. Dataframe needs to be created with input_modevalplots
 or else meet required input format (see link to format in "See Also" section)}
 
-\item{targetcat}{String.}
+\item{customlinecolors}{String.}
 }
 \value{
 Cumulative gains plot.
