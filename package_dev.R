@@ -1,25 +1,67 @@
+###################################################################################
+# GENERAL CHECKS
+###################################################################################
+
+packageVersion("mlr")
+devtools::load_all('C:/TEMP/modelplotr')
 library(roxygen2)
+#library(modelplotr)
+
+??modelplotr
+?dataprep_modevalplots
+?input_modevalplots
+?scope_modevalplots
 
 
+devtools::use_vignette("modelplotr")
+devtools::use_testthat()
+usethis::use_testthat()
+
+
+###################################################################################
+# TEST WITH IRIS
+###################################################################################
 
 # prepare iris dataset
 data(iris)
-colnames(iris) = c('sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'species')
+# add some noise to iris to prevent perfect models
+
+iris_addnoise = data.frame(
+  Sepal.Length=round(rnorm(n=100,mean=mean(iris$Sepal.Length),sd=sd(iris$Sepal.Length)),1),
+  Sepal.Width=round(rnorm(n=100,mean=mean(iris$Sepal.Width),sd=sd(iris$Sepal.Width)),1),
+  Petal.Length=round(rnorm(n=100,mean=mean(iris$Petal.Length),sd=sd(iris$Petal.Length)),1),
+  Petal.Width=round(rnorm(n=100,mean=mean(iris$Petal.Width),sd=sd(iris$Petal.Width)),1),
+  Species=sample(unique(iris$Species),100,replace=TRUE))
+
+iris <- rbind(iris,iris_addnoise)
 test_size = 0.3
 train_index =  sample(seq(1, nrow(iris)),size = (1 - test_size)*nrow(iris) ,replace = F )
 train = iris[train_index,]
 test = iris[-train_index,]
-# estimate Random Forest
-rf <- randomForest::randomForest(species ~ ., data=train, importance = T,ntree=1,maxnodes=2)
-mnl <- nnet::multinom(species ~ ., data = train)
+# estimate models with mlr
+# this line is needed when usin mlr without loading it (mlr::)
+mlr::configureMlr()
+#estimate models
+task = makeClassifTask(data = train, target = "Species")
+lrn = makeLearner("classif.randomForest", predict.type = "prob")
+rf = train(lrn, task)
+lrn = makeLearner("classif.multinom", predict.type = "prob")
+mnl = train(lrn, task)
+lrn = makeLearner("classif.xgboost", predict.type = "prob")
+xgb = train(lrn, task)
+lrn = makeLearner("classif.lda", predict.type = "prob")
+lda = train(lrn, task)
+
+# apply modelplotr functions
 dataprep_modevalplots(datasets=list("train","test"),
                       datasetlabels = list("train data","test data"),
-                      models = list("rf","mnl"),
-                      modellabels = list("random forest","multinomial logit"),
-                      targetname="species")
+                      models = list("rf","mnl","xgb","lda"),
+                      modellabels = list("random forest","multinomial logit","XGBoost","Discriminant"),
+                      targetname="Species")
 head(eval_tot)
 tail(eval_tot)
 dim(eval_tot)
+
 input_modevalplots()
 head(eval_t_tot[eval_t_tot$modelname=="random forest"&
                 eval_t_tot$dataset=="train data"&
@@ -28,7 +70,7 @@ tail(eval_t_tot)
 scope_modevalplots(eval_type="CompareTrainTest",
                    select_model = "random forest")
 #scope_modevalplots(eval_type="CompareModels")
-#scope_modevalplots(eval_type="TargetValues")
+#scope_modevalplots(eval_type="TargetValues",select_model="Discriminant")
 head(eval_t_type)
 tail(eval_t_type)
 
@@ -38,109 +80,17 @@ lift <- lift()
 response <- response()
 cumresponse <- cumresponse()
 multiplot(cumgains,lift,response,cumresponse,cols=2)
+
+# save plots
 savemodelplots()
-install.packages("xgboost")
 
 
-extval <- test
-dataprep_modevalplots(datasets=list("extval"),targetname="species")
-input_modevalplots()
-eval_tot
-eval_t_tot
-
-package?modelplotr
-
-install.packages("nnet")
-
-library(xgboost)
-??xgboost
-
-# multinomial logit
-install.packages("nnet")
-
-clf <- nnet::multinom(species ~ ., data = train)
-
-dataprep_modevalplots(datasets=list("train","test"),targetname="species")
-dataprep_modevalplots(targetname="species")
-cumgains <- cumgains()
-lift <- lift()
-response <- response()
-cumresponse <- cumresponse()
-multiplot(cumgains,lift,response,cumresponse,cols=2)
 
 
-# Xgradient boost
 
-packageVersion("RColorBrewer")
-
-library(modelplotr)
-# plot
-
-dataprep_modevalplots(targetname="species")
-
-train1=as.matrix(train[,1:4])
-test1=as.matrix(test[,1:4])
-
-clf <- xgboost::xgboost(data=as.matrix(train[,1:4]),label=train$species,nrounds = 20)
-dataprep_modevalplots(datasets=list("train1","test1"),targetname="species")
-dataprep_modevalplots(targetname="species")
-input_modevalplots()
-cumgains <- cumgains()
-lift <- lift()
-response <- response()
-cumresponse <- cumresponse()
-multiplot(cumgains,lift,response,cumresponse,cols=2)
-
-devtools::install_github('jurrr/modelplotr')
-devtools::document()
-
-# Predict the labels of the test data: y_pred
-y_pred <- predict(clf, test)
-
-clf$importance
-
-confusionMatrix(y_pred, test$species)
-
-devtools::load_all('C:/TEMP/modelplotr')
-
-dataprep_modevalplots(depvar = 'species')
-
-eval_tot
-
-library(roxygen2)
-library(modelplotr)
-?dataprep_modelevalplots
-
-??modelplotr
-?dataprep_modevalplots
-?input_modevalplots
-
-
-devtools::use_vignette("modelplotr")
-
-devtools::use_testthat()
-usethis::use_testthat()
-
-
-file.exists("~/.shh/id_rsa.pub")
-
-
-list.files(
-  path=c("c:/program files", "c:/program files (x86)"),
-  pattern="git.exe",
-  full.names=TRUE,
-  recursive=TRUE
-)
-
-list.files(
-  path=c("c:/"),
-  pattern="svn.exe",
-  full.names=TRUE,
-  recursive=TRUE
-)
-
-
+###################################################################################
 # test with bankingdata
+###################################################################################
 
 zipname = 'https://archive.ics.uci.edu/ml/machine-learning-databases/00222/bank-additional.zip'
 csvname = 'bank-additional/bank-additional.csv'
@@ -153,21 +103,128 @@ unlink(temp)
 
 bank$y = as.factor(bank$y)
 
+
 test_size = 0.3
 train_index =  sample(seq(1, nrow(bank)),size = (1 - test_size)*nrow(bank) ,replace = F )
 train = bank[train_index,]
 test = bank[-train_index,]
 
-summary(bank)
-# estimate Random Forest
-clf <- randomForest::randomForest(y ~ duration+campaign, data=train, importance = T)
+# subset with 4 columns
+train <- train[,c('duration','campaign','pdays','previous','euribor3m','y')]
+test <- test[,c('duration','campaign','pdays','previous','euribor3m','y')]
 
-levels(bank$y)
-library(modelplotr)
-dataprep_modevalplots(targetname="y")
+
+
+# estimate models with mlr
+# this line is needed when usin mlr without loading it (mlr::)
+mlr::configureMlr()
+#models
+task = mlr::makeClassifTask(data = train, target = "y")
+lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+rf = mlr::train(lrn, task)
+lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+mnl = mlr::train(lrn, task)
+lrn = mlr::makeLearner("classif.xgboost", predict.type = "prob")
+xgb = mlr::train(lrn, task)
+lrn = mlr::makeLearner("classif.lda", predict.type = "prob")
+lda = mlr::train(lrn, task)
+
+# apply modelplotr
+dataprep_modevalplots(datasets=list("train","test"),
+  datasetlabels = list("train data","test data"),
+  models = list("rf","mnl","xgb","lda"),
+  modellabels = list("random forest","multinomial logit","XGBoost","Discriminant"),
+  targetname="y")
+head(eval_tot)
+tail(eval_tot)
+dim(eval_tot)
+
 input_modevalplots()
-cumgains <- cumgains(targetcat='yes')
-lift <- lift(targetcat='yes')
-response <- response(targetcat='yes')
-cumresponse <- cumresponse(targetcat='yes')
+tail(eval_t_tot)
+
+scope_modevalplots(eval_type="CompareDatasets")
+#scope_modevalplots(eval_type="CompareModels")
+#scope_modevalplots(eval_type="TargetValues",select_model="Discriminant")
+head(eval_t_type)
+tail(eval_t_type)
+
+cumgains <- cumgains()
+cumgains
+lift <- lift()
+response <- response()
+cumresponse <- cumresponse()
 multiplot(cumgains,lift,response,cumresponse,cols=2)
+
+# save plots
+savemodelplots()
+
+
+
+###################################################################################
+# tutorial mdl
+###################################################################################
+# https://www.analyticsvidhya.com/blog/2016/08/practicing-machine-learning-techniques-in-r-with-mlr-package/
+install.packages("mlr")
+library(mlr)
+
+summarizeColumns(train)
+
+
+
+trainTask <- makeClassifTask(data = cd_train,target = "y")
+testTask <- makeClassifTask(data = cd_test, target = "y")
+
+getParamSet("classif.randomForest")
+
+rf <- makeLearner("classif.randomForest", predict.type = "response", par.vals = list(ntree = 200, mtry = 3))
+rf$par.vals <- list(importance = TRUE)
+
+#set tunable parameters
+#grid search to find hyperparameters
+rf_param <- makeParamSet(
+  makeIntegerParam("ntree",lower = 50, upper = 500),
+  makeIntegerParam("mtry", lower = 3, upper = 4),
+  makeIntegerParam("nodesize", lower = 10, upper = 50)
+)
+
+#let's do random search for 50 iterations
+rancontrol <- makeTuneControlRandom(maxit = 50L)
+
+#set 3 fold cross validation
+set_cv <- makeResampleDesc("CV",iters = 3L)
+
+#hypertuning
+rf_tune <- tuneParams(learner = rf, resampling = set_cv, task = trainTask, par.set = rf_param, control = rancontrol, measures = acc)
+
+#cv accuracy
+rf_tune$y
+
+#best parameters
+rf_tune$x
+
+#using hyperparameters for modeling
+rf.tree <- setHyperPars(rf, par.vals = rf_tune$x)
+
+#train a model
+rforest <- train(rf.tree, trainTask)
+getLearnerModel(rforest)
+
+#make predictions
+rfmodel <- predict(rforest, testTask)
+predprob <- getPredictionProbabilities(rfmodel)
+rfmodel$data
+
+??mlr::predict
+
+
+task = makeClassifTask(data = cd_train, target = "y")
+getTaskDesc(task)$positive
+
+lrn = makeLearner("classif.randomForest", predict.type = "prob")
+rf = train(lrn, task)
+# predict probabilities
+pred = predict(rf, newdata = cd_test)
+
+# Get probabilities for all classes
+head(getPredictionProbabilities(pred))
+

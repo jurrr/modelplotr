@@ -37,15 +37,16 @@ dependent variable for each dataset in datasets
 }
 \examples{
 data(iris)
-colnames(iris) = c('sepal_length', 'sepal_width', 'petal_length',
-'petal_width', 'species')
-test_size = 0.3
-train_index =  sample(seq(1, nrow(iris)),size = (1 - test_size)*nrow(iris) ,
-replace = F )
+train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 train = iris[train_index,]
 test = iris[-train_index,]
-rf <- randomForest::randomForest(species ~ ., data=train, importance = T,ntree=5)
-mnl <- nnet::multinom(species ~ ., data = train)
+trainTask <- makeClassifTask(data = train, target = "species")
+testTask <- makeClassifTask(data = test, target = "species")
+task = makeClassifTask(data = train, target = "species")
+lrn = makeLearner("classif.randomForest")
+rf = train(lrn, task)
+lrn = makeLearner("classif.multinom")
+mnl = train(mnl, task)
 dataprep_modevalplots(datasets=list("train","test"),
                       datasetlabels = list("train data","test data"),
                       models = list("rf","mnl"),

@@ -60,7 +60,7 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{input_modevalplots}} for details on the required input dataframe format.
-cumgains <- function(plot_input=eval_t_type,customlinecolors="") {
+cumgains <- function(plot_input=eval_t_type,customlinecolors=NA) {
   # needed for optimizing plot layout
   nlevels <- length(levels(plot_input$legend))
   randcols <- RColorBrewer::brewer.pal(n = 8, name = "Accent")
@@ -68,13 +68,23 @@ cumgains <- function(plot_input=eval_t_type,customlinecolors="") {
   levels <- c(levels(plot_input$legend),'minimal gains',paste0('optimal gains (',levels(plot_input$legend),')'))
   linetypes <- c(rep('solid',nlevels),'dashed',rep('dotted',nlevels))
   if(length(customlinecolors)==nlevels) levelcols <- customlinecolors
-  else if (exists("customlinecolors")) {
+  else if (!is.na(customlinecolors)) {
     print('specified customlinecolors vector not of required length! \
       It is cropped or extended with extra colors to match required length')
-    levelcols <- c(customlinecolors[1:nlevels],randcols[which(!randcols %in% customlinecolors)])
+    linecols <- c(customlinecolors[1:nlevels],randcols[which(!randcols %in% customlinecolors)])
   }
   else linecols <- c(levelcols,'gray',levelcols)
-  linesizes <- c(rep(2,nlevels),1,rep(1,nlevels))
+  linesizes <- c(rep(1,nlevels),1,rep(1,nlevels))
+  seltype <- max(as.character(plot_input$eval_type))
+  selmod <- max(as.character(plot_input$modelname))
+  seldata <- max(as.character(plot_input$dataset))
+  selval <- max(as.character(plot_input$category))
+  plottitle <- paste0('Gains chart - comparing ',ifelse(seltype=="CompareDatasets",'datasets',
+    ifelse(seltype=="CompareModels",'models','target values')))
+  plotsubtitle <- ifelse(plot_input$eval_type=="CompareDatasets",paste0('model: ',selmod,' & target value: ',selval),
+    ifelse(plot_input$eval_type=="CompareModels",paste0('dataset: ',seldata,' & target value: ',selval),
+      paste0('dataset: ',seldata,' & model: ',selmod)))
+
   # rearrange plot_input
   vallines <- plot_input %>% dplyr::select(eval_type:decile,cumgain,legend)
   optreflines <- plot_input%>% dplyr::mutate(legend=paste0('optimal gains (',legend, ')'),cumgain=gain_opt) %>% dplyr::select(eval_type:decile,cumgain,legend)
@@ -91,9 +101,10 @@ cumgains <- function(plot_input=eval_t_type,customlinecolors="") {
     ggplot2::scale_size_manual(values=linesizes)+
     ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10,expand = c(0, 0.02)) +
     ggplot2::scale_y_continuous(name="cumulative gains",breaks=seq(0,1,0.2),labels = scales::percent ,expand = c(0, 0.02)) +
-    ggplot2::ggtitle(paste("Gains chart")) +
+    ggplot2::labs(title=plottitle,subtitle=plotsubtitle) +
     ggplot2::theme_minimal() +
-    ggplot2::theme(plot.title = ggplot2::element_text(size = 20,hjust = 0.5)) +
+    ggplot2::theme(plot.title = ggplot2::element_text(size = 20,hjust = 0.5),
+                   plot.subtitle = ggplot2::element_text(size = 14,hjust = 0.5)) +
     ggplot2::theme(legend.title = ggplot2::element_blank() ,
       legend.position = c(0.85, 0.2),
       legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("lightgray",0.2), size = 0),

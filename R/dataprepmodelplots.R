@@ -26,15 +26,16 @@
 #' @seealso \url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
 #' @examples
 #' data(iris)
-#' colnames(iris) = c('sepal_length', 'sepal_width', 'petal_length',
-#' 'petal_width', 'species')
-#' test_size = 0.3
-#' train_index =  sample(seq(1, nrow(iris)),size = (1 - test_size)*nrow(iris) ,
-#' replace = F )
+#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 #' train = iris[train_index,]
 #' test = iris[-train_index,]
-#' rf <- randomForest::randomForest(species ~ ., data=train, importance = T,ntree=5)
-#' mnl <- nnet::multinom(species ~ ., data = train)
+#' trainTask <- makeClassifTask(data = train, target = "species")
+#' testTask <- makeClassifTask(data = test, target = "species")
+#' task = makeClassifTask(data = train, target = "species")
+#' lrn = makeLearner("classif.randomForest")
+#' rf = train(lrn, task)
+#' lrn = makeLearner("classif.multinom")
+#' mnl = train(mnl, task)
 #' dataprep_modevalplots(datasets=list("train","test"),
 #'                       datasetlabels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
@@ -51,14 +52,14 @@
 #' @importFrom magrittr %>%
 dataprep_modevalplots <- function(datasets = list("train","test"),
                                   datasetlabels,
-                                  models ,
+                                  models,
                                   modellabels ,
                                   targetname="y"){
   if(missing(datasetlabels)) datasetlabels = datasets
   if(missing(modellabels)) modellabels = models
-  eval_tot = data.frame()
   # create per dataset (train, test,...) a set with y, y_pred, p_y and dec_y
-
+  eval_tot = data.frame()
+  print('eval_tot created!')
   for (dataset in datasets) {
     for (mdl in models) {
 
@@ -66,11 +67,18 @@ dataprep_modevalplots <- function(datasets = list("train","test"),
       actuals = get(dataset) %>% dplyr::select_(y_true=targetname)
 
       # 1.2. get probabilities per target category from model and prepare
-      probabilities = as.data.frame(predict(get(mdl),newdata=get(dataset),
-                                            type = "prob"))
+      mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+      if (!is.na(mlr::getTaskDesc(get(mdl))$positive)) {
+          y_values <- c(mlr::getTaskDesc(get(mdl))$positive,mlr::getTaskDesc(get(mdl))$negative)
+          prob_pos <- mlr::getPredictionProbabilities(predict(get(mdl),newdata=get(dataset)))
+          probabilities <- data.frame(pos=prob_pos,neg=1-prob_pos)
+      }
+      else {
+        probabilities <- as.data.frame(mlr::getPredictionProbabilities(predict(get(mdl),newdata=get(dataset))))
+        y_values <- colnames(probabilities)
+      }
 
       #name probability per target category
-      y_values = colnames(probabilities)
       colnames(probabilities) = paste0('prob_',y_values)
       y_probvars = colnames(probabilities)
 
@@ -234,34 +242,48 @@ input_modevalplots <- function(prepared_input=eval_tot){
 #' add(10, 10)
 #' @export
 #' @importFrom magrittr %>%
+#eval_type <- CompareDatasets
+#select_smallesttargetvalue <- TRUE
 scope_modevalplots <- function(prepared_input=eval_t_tot,
-                               eval_type=c("CompareTrainTest","CompareModels","TargetValues"),
-                               select_model,
-                               select_dataset,
-                               select_targetvalue,
+                               eval_type=c("CompareDatasets","CompareModels","TargetValues"),
+                               select_model=NA,
+                               select_dataset=NA,
+                               select_targetvalue=NA,
                                select_smallesttargetvalue=TRUE){
 
   # check if eval_tot exists, otherwise create
   if (!(exists("eval_t_tot"))) input_modevalplots()
   #check if needed selections of model / dataset / targetvalues are set
-  if (missing(select_model)) select_model <- sort(unique(prepared_input$modelname))[1]
-  if (missing(select_dataset)) select_dataset <- sort(unique(prepared_input$dataset))[1]
-  # determine smallest targetvalue
+  if (is.na(select_model)) {
+    select_model <- sort(unique(prepared_input$modelname))[1]
+    print(paste0('no model specified for comparison, selected model: ',select_model))
+  }
+  if (is.na(select_dataset)) {
+    select_dataset <- sort(unique(prepared_input$dataset))[1]
+    print(paste0('no dataset specified for comparison, selected dataset: ',select_dataset))
+  }
+    # determine smallest targetvalue
   #`%>%` <- magrittr::`%>%`
-  smallest <- prepared_input%>%dplyr::select(category,postot)%>%
-    dplyr::group_by(category)%>%dplyr::summarize(n=min(postot,na.rm = T))%>%
-    dplyr::arrange(n)%>%dplyr::top_n(n=1)%>%dplyr::select(category)%>%as.character()
-  if (missing(select_targetvalue)){
-    if (select_smallesttargetvalue==TRUE) select_targetvalue <- smallest
-    else select_targetvalue <- sort(unique(prepared_input$category))[1]
+    smallest <- prepared_input%>%dplyr::select(category,postot)%>%
+      dplyr::group_by(category)%>%dplyr::summarize(n=min(postot,na.rm = T))%>%
+      dplyr::arrange(n)%>%dplyr::top_n(n=1, -n)%>%dplyr::select(category)%>%as.character()
+  if (is.na(select_targetvalue)){
+    if (select_smallesttargetvalue==TRUE) {
+      select_targetvalue <- smallest
+      print(paste0('smallest target value specified for comparison: ',select_targetvalue))
     }
+    else {
+      select_targetvalue <- sort(unique(prepared_input$category))[1]
+      print(paste0('no target value specified for comparison, selected target value: ',select_targetvalue))
+    }
+  }
   eval_t_type <- prepared_input %>%
-    {if (eval_type=="CompareTrainTest") dplyr::filter(., modelname == select_model & category == select_targetvalue) %>%
-        dplyr::mutate(.,legend=dataset)
+    {if (eval_type=="CompareDatasets") dplyr::filter(., modelname == select_model & category == select_targetvalue) %>%
+        dplyr::mutate(.,legend=as.factor(dataset))
     else if (eval_type=="CompareModels") dplyr::filter(., dataset == select_dataset & category == select_targetvalue) %>%
-        dplyr::mutate(.,legend=modelname)
+        dplyr::mutate(.,legend=as.factor(modelname))
     else if (eval_type=="TargetValues") dplyr::filter(., modelname == select_model & dataset == select_dataset)%>%
-        dplyr::mutate(.,legend=category)
+        dplyr::mutate(.,legend=as.factor(category))
     else print('no valid evaluation type specified!')}
   eval_t_type <<- cbind(eval_type=eval_type,
                         eval_t_type)

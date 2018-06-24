@@ -4,7 +4,7 @@
 \alias{cumgains}
 \title{Cumulative gains plot}
 \usage{
-cumgains(plot_input = eval_t_type, customlinecolors = "")
+cumgains(plot_input = eval_t_type, customlinecolors = NA)
 }
 \arguments{
 \item{plot_input}{Dataframe. Dataframe needs to be created with input_modevalplots

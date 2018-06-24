@@ -22,11 +22,11 @@ Imports:
     grid (>= 3.5.0),
     magrittr,
     tidyverse (>= 1.2.1),
-    RColorBrewer (>= 1.1.2)
+    RColorBrewer (>= 1.1.2),
+    mlr (>= 2.12.1)
 RoxygenNote: 6.0.1
 Suggests: 
     knitr,
     rmarkdown,
-    testthat,
-    randomForest
+    testthat
 VignetteBuilder: knitr
