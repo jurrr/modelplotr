@@ -70,7 +70,7 @@ tail(eval_t_tot)
 scope_modevalplots(eval_type="CompareDatasets",
                    select_model = "random forest")
 scope_modevalplots(eval_type="CompareModels")
-scope_modevalplots(eval_type="CompareTargetValues",select_targetvalue = "setosa")
+scope_modevalplots(eval_type="CompareTargetValues")
 
 
 
@@ -86,7 +86,9 @@ test %>% dplyr::group_by(Species) %>% dplyr::summarize(n=n())
 cumgains <- cumgains()
 cumgains
 lift <- lift()
+lift
 response <- response()
+response
 cumresponse <- cumresponse()
 multiplot(cumgains,lift,response,cumresponse,cols=2)
 
@@ -157,11 +159,19 @@ scope_modevalplots(eval_type="CompareDatasets")
 head(eval_t_type)
 tail(eval_t_type)
 
+scope_modevalplots(eval_type="CompareDatasets",
+  select_model = "random forest")
+scope_modevalplots(eval_type="CompareModels")
+scope_modevalplots(eval_type="CompareTargetValues")
+
 cumgains <- cumgains()
 cumgains
 lift <- lift()
+lift
 response <- response()
+response
 cumresponse <- cumresponse()
+cumresponse
 multiplot(cumgains,lift,response,cumresponse,cols=2)
 
 # save plots
