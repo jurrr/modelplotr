@@ -42,15 +42,15 @@ test = iris[-train_index,]
 # this line is needed when usin mlr without loading it (mlr::)
 mlr::configureMlr()
 #estimate models
-task = makeClassifTask(data = train, target = "Species")
-lrn = makeLearner("classif.randomForest", predict.type = "prob")
-rf = train(lrn, task)
-lrn = makeLearner("classif.multinom", predict.type = "prob")
-mnl = train(lrn, task)
-lrn = makeLearner("classif.xgboost", predict.type = "prob")
-xgb = train(lrn, task)
-lrn = makeLearner("classif.lda", predict.type = "prob")
-lda = train(lrn, task)
+task = mlr::makeClassifTask(data = train, target = "Species")
+lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+rf = mlr::train(lrn, task)
+lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+mnl = mlr::train(lrn, task)
+lrn = mlr::makeLearner("classif.xgboost", predict.type = "prob")
+xgb = mlr::train(lrn, task)
+lrn = mlr::makeLearner("classif.lda", predict.type = "prob")
+lda = mlr::train(lrn, task)
 
 # apply modelplotr functions
 dataprep_modevalplots(datasets=list("train","test"),
@@ -67,12 +67,21 @@ head(eval_t_tot[eval_t_tot$modelname=="random forest"&
                 eval_t_tot$dataset=="train data"&
                 eval_t_tot$category=="setosa",],11)
 tail(eval_t_tot)
-scope_modevalplots(eval_type="CompareTrainTest",
+scope_modevalplots(eval_type="CompareDatasets",
                    select_model = "random forest")
-#scope_modevalplots(eval_type="CompareModels")
+scope_modevalplots(eval_type="CompareModels")
+scope_modevalplots(eval_type="CompareTargetValues",select_targetvalue = "setosa")
+
+
+
 #scope_modevalplots(eval_type="TargetValues",select_model="Discriminant")
 head(eval_t_type)
 tail(eval_t_type)
+
+#`%>%` <- magrittr::`%>%`
+
+eval_t_type %>% dplyr::group_by(legend) %>% dplyr::summarize(n=n())
+test %>% dplyr::group_by(Species) %>% dplyr::summarize(n=n())
 
 cumgains <- cumgains()
 cumgains

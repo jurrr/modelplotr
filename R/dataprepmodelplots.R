@@ -245,7 +245,7 @@ input_modevalplots <- function(prepared_input=eval_tot){
 #eval_type <- CompareDatasets
 #select_smallesttargetvalue <- TRUE
 scope_modevalplots <- function(prepared_input=eval_t_tot,
-                               eval_type=c("CompareDatasets","CompareModels","TargetValues"),
+                               eval_type=c("CompareDatasets","CompareModels","CompareTargetValues"),
                                select_model=NA,
                                select_dataset=NA,
                                select_targetvalue=NA,
@@ -255,12 +255,12 @@ scope_modevalplots <- function(prepared_input=eval_t_tot,
   if (!(exists("eval_t_tot"))) input_modevalplots()
   #check if needed selections of model / dataset / targetvalues are set
   if (is.na(select_model)) {
-    select_model <- sort(unique(prepared_input$modelname))[1]
-    print(paste0('no model specified for comparison, selected model: ',select_model))
+    select_model <- sort(as.character(unique(prepared_input$modelname)))[1]
+    if (eval_type!="CompareModels") print(paste0('no model specified for comparison, selected model: ',select_model))
   }
   if (is.na(select_dataset)) {
-    select_dataset <- sort(unique(prepared_input$dataset))[1]
-    print(paste0('no dataset specified for comparison, selected dataset: ',select_dataset))
+    select_dataset <- sort(as.character(unique(prepared_input$dataset)))[1]
+    if (eval_type!="CompareDatasets") print(paste0('no dataset specified for comparison, selected dataset: ',select_dataset))
   }
     # determine smallest targetvalue
   #`%>%` <- magrittr::`%>%`
@@ -270,11 +270,11 @@ scope_modevalplots <- function(prepared_input=eval_t_tot,
   if (is.na(select_targetvalue)){
     if (select_smallesttargetvalue==TRUE) {
       select_targetvalue <- smallest
-      print(paste0('smallest target value specified for comparison: ',select_targetvalue))
+      if (eval_type!="CompareTargetValues") print(paste0('smallest target value specified for comparison: ',select_targetvalue))
     }
     else {
-      select_targetvalue <- sort(unique(prepared_input$category))[1]
-      print(paste0('no target value specified for comparison, selected target value: ',select_targetvalue))
+      select_targetvalue <- sort(as.character(unique(prepared_input$category)))[1]
+      if (eval_type!="CompareTargetValues") print(paste0('no target value specified for comparison, selected target value: ',select_targetvalue))
     }
   }
   eval_t_type <- prepared_input %>%
@@ -282,7 +282,7 @@ scope_modevalplots <- function(prepared_input=eval_t_tot,
         dplyr::mutate(.,legend=as.factor(dataset))
     else if (eval_type=="CompareModels") dplyr::filter(., dataset == select_dataset & category == select_targetvalue) %>%
         dplyr::mutate(.,legend=as.factor(modelname))
-    else if (eval_type=="TargetValues") dplyr::filter(., modelname == select_model & dataset == select_dataset)%>%
+    else if (eval_type=="CompareTargetValues") dplyr::filter(., modelname == select_model & dataset == select_dataset)%>%
         dplyr::mutate(.,legend=as.factor(category))
     else print('no valid evaluation type specified!')}
   eval_t_type <<- cbind(eval_type=eval_type,

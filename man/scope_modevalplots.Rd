@@ -5,7 +5,7 @@
 \title{Build 'eval_t_type' with subset for selected evaluation type.}
 \usage{
 scope_modevalplots(prepared_input = eval_t_tot,
-  eval_type = c("CompareDatasets", "CompareModels", "TargetValues"),
+  eval_type = c("CompareDatasets", "CompareModels", "CompareTargetValues"),
   select_model = NA, select_dataset = NA, select_targetvalue = NA,
   select_smallesttargetvalue = TRUE)
 }

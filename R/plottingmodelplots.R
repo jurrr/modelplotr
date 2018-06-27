@@ -62,43 +62,64 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 #' @seealso \code{\link{input_modevalplots}} for details on the required input dataframe format.
 cumgains <- function(plot_input=eval_t_type,customlinecolors=NA) {
   # needed for optimizing plot layout
-  nlevels <- length(levels(plot_input$legend))
-  randcols <- RColorBrewer::brewer.pal(n = 8, name = "Accent")
-  levelcols <- randcols[1:nlevels]
-  levels <- c(levels(plot_input$legend),'minimal gains',paste0('optimal gains (',levels(plot_input$legend),')'))
-  linetypes <- c(rep('solid',nlevels),'dashed',rep('dotted',nlevels))
-  if(length(customlinecolors)==nlevels) levelcols <- customlinecolors
-  else if (!is.na(customlinecolors)) {
-    print('specified customlinecolors vector not of required length! \
-      It is cropped or extended with extra colors to match required length')
-    linecols <- c(customlinecolors[1:nlevels],randcols[which(!randcols %in% customlinecolors)])
-  }
-  else linecols <- c(levelcols,'gray',levelcols)
-  linesizes <- c(rep(1,nlevels),1,rep(1,nlevels))
   seltype <- max(as.character(plot_input$eval_type))
   selmod <- max(as.character(plot_input$modelname))
   seldata <- max(as.character(plot_input$dataset))
   selval <- max(as.character(plot_input$category))
+  levels <- levels(plot_input$legend)
+  nlevels <- length(levels)
+  if (seltype=='CompareModels') {
+    optreflevels <- paste0('optimal gains (',unique(plot_input$dataset),')')
+  } else {
+    optreflevels <- paste0('optimal gains (',levels,')')
+  }
+  noptreflevels <- ifelse(seltype=='CompareModels',1,nlevels)
+  legendcolumns <- ifelse(nlevels+1+noptreflevels>6,2,1)
+  randcols <- RColorBrewer::brewer.pal(n = 8, name = "Set1")
+  levelcols <- randcols[1:nlevels]
+  if (seltype=='CompareModels') optreflevelcols <- 'gray' else optreflevelcols <- levelcols
+  levels <- c(levels,'minimal gains',optreflevels)
+  linetypes <- c(rep('solid',nlevels),'dashed',rep('dotted',noptreflevels))
+  alphas <- c(rep(1,nlevels),1,rep(1,noptreflevels))
+  if(!is.na(customlinecolors) & length(customlinecolors)==nlevels) {
+    levelcols <- customlinecolors
+    } else if (!is.na(customlinecolors)) {
+    print('specified customlinecolors vector not of required length! \
+      It is cropped or extended with extra colors to match required length')
+    lencustcols <- length(customlinecolors)
+    levelcols <- c(customlinecolors[1:nlevels],randcols[which(!randcols %in% customlinecolors)][1:(nlevels-lencustcols)])
+    } else {
+    levelcols <- randcols[1:nlevels]
+    }
+  linecols <- c(levelcols,'gray',optreflevelcols)
+  linesizes <- c(rep(1,nlevels),0.5,rep(1.2,noptreflevels))
+
   plottitle <- paste0('Gains chart - comparing ',ifelse(seltype=="CompareDatasets",'datasets',
     ifelse(seltype=="CompareModels",'models','target values')))
-  plotsubtitle <- ifelse(plot_input$eval_type=="CompareDatasets",paste0('model: ',selmod,' & target value: ',selval),
-    ifelse(plot_input$eval_type=="CompareModels",paste0('dataset: ',seldata,' & target value: ',selval),
+  plotsubtitle <- ifelse(seltype=="CompareDatasets",paste0('model: ',selmod,' & target value: ',selval),
+    ifelse(seltype=="CompareModels",paste0('dataset: ',seldata,' & target value: ',selval),
       paste0('dataset: ',seldata,' & model: ',selmod)))
 
   # rearrange plot_input
   vallines <- plot_input %>% dplyr::select(eval_type:decile,cumgain,legend)
-  optreflines <- plot_input%>% dplyr::mutate(legend=paste0('optimal gains (',legend, ')'),cumgain=gain_opt) %>% dplyr::select(eval_type:decile,cumgain,legend)
-  minrefline <- plot_input %>% dplyr::mutate(legend=paste0('minimal gains'),cumgain=gain_ref) %>% dplyr::select(eval_type:decile,cumgain,legend)
+  if (seltype=="CompareModels") {
+    optreflines <- plot_input %>% dplyr::mutate(legend=paste0('optimal gains (',dataset,')'),modelname='',cumgain=gain_opt) %>% dplyr::select(eval_type:decile,cumgain,legend) %>% dplyr::distinct()
+  } else {
+    optreflines <- plot_input%>% dplyr::mutate(legend=paste0('optimal gains (',legend,')'),cumgain=gain_opt) %>% dplyr::select(eval_type:decile,cumgain,legend)
+  }
+  minrefline <- plot_input %>% dplyr::mutate(legend=paste0('minimal gains'),modelname='',dataset='',category='',
+    cumgain=gain_ref) %>% dplyr::select(eval_type:decile,cumgain,legend)%>% dplyr::distinct()
   plot_input <- rbind(minrefline,optreflines,vallines)
   plot_input$legend <- factor(plot_input$legend,levels=levels)
 
   #make plot
   plot_input %>%
     ggplot2::ggplot() +
-    ggplot2::geom_line(ggplot2::aes(x=decile,y=cumgain, colour=legend,linetype=legend,size=legend)) +
-    ggplot2::scale_linetype_manual(values=linetypes)+
+    ggplot2::geom_line(ggplot2::aes(x=decile,y=cumgain, colour=legend,linetype=legend,size=legend,alpha=legend)) +
+    ggplot2::scale_linetype_manual(values=linetypes,guide=ggplot2::guide_legend(ncol=legendcolumns))+
     ggplot2::scale_color_manual(values=linecols)+
     ggplot2::scale_size_manual(values=linesizes)+
+    ggplot2::scale_alpha_manual(values=alphas)+
     ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10,expand = c(0, 0.02)) +
     ggplot2::scale_y_continuous(name="cumulative gains",breaks=seq(0,1,0.2),labels = scales::percent ,expand = c(0, 0.02)) +
     ggplot2::labs(title=plottitle,subtitle=plotsubtitle) +
@@ -106,7 +127,7 @@ cumgains <- function(plot_input=eval_t_type,customlinecolors=NA) {
     ggplot2::theme(plot.title = ggplot2::element_text(size = 20,hjust = 0.5),
                    plot.subtitle = ggplot2::element_text(size = 14,hjust = 0.5)) +
     ggplot2::theme(legend.title = ggplot2::element_blank() ,
-      legend.position = c(0.85, 0.2),
+      legend.position = c(0.75, 0.25),
       legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("lightgray",0.2), size = 0),
       panel.grid.minor.x = ggplot2::element_blank(),
       panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
