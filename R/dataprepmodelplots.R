@@ -245,7 +245,7 @@ input_modevalplots <- function(prepared_input=eval_tot){
 #eval_type <- CompareDatasets
 #select_smallesttargetvalue <- TRUE
 scope_modevalplots <- function(prepared_input=eval_t_tot,
-                               eval_type=c("CompareDatasets","CompareModels","CompareTargetValues"),
+                               eval_type="NoComparison",
                                select_model=NA,
                                select_dataset=NA,
                                select_targetvalue=NA,
@@ -253,16 +253,26 @@ scope_modevalplots <- function(prepared_input=eval_t_tot,
 
   # check if eval_tot exists, otherwise create
   if (!(exists("eval_t_tot"))) input_modevalplots()
-  #check if needed selections of model / dataset / targetvalues are set
+
+  #check if needed selections of model / dataset / targetvalues are set, else set to defaults
+  # no model specified? take first model based on alphabetic name.
+  models <- as.character(unique(prepared_input$modelname))
   if (is.na(select_model)) {
-    select_model <- sort(as.character(unique(prepared_input$modelname)))[1]
-    if (eval_type!="CompareModels") print(paste0('no model specified for comparison, selected model: ',select_model))
+    select_model <- sort(models)[1]
+    selmodelprint <- (paste0(select_model,' (alphabetical first)'))
   }
+  else selmodprint <- (paste0(select_model,' (specified by user)'))
+
+  # no dataset specified? take first model based on alphabetic name.
+  datasets <- as.character(unique(prepared_input$dataset))
   if (is.na(select_dataset)) {
-    select_dataset <- sort(as.character(unique(prepared_input$dataset)))[1]
-    if (eval_type!="CompareDatasets") print(paste0('no dataset specified for comparison, selected dataset: ',select_dataset))
+    select_dataset <- sort(datasets)[1]
+    seldatasetprint <- (paste0(select_dataset,' (alphabetical first)'))
   }
-    # determine smallest targetvalue
+  else seldatasetprint <- (paste0(select_dataset,' (specified by user)'))
+
+  # no target value specified? take smallest targetvalue
+  targetvalues <- as.character(unique(prepared_input$category))
   #`%>%` <- magrittr::`%>%`
     smallest <- prepared_input%>%dplyr::select(category,postot)%>%
       dplyr::group_by(category)%>%dplyr::summarize(n=min(postot,na.rm = T))%>%
@@ -270,22 +280,52 @@ scope_modevalplots <- function(prepared_input=eval_t_tot,
   if (is.na(select_targetvalue)){
     if (select_smallesttargetvalue==TRUE) {
       select_targetvalue <- smallest
-      if (eval_type!="CompareTargetValues") print(paste0('smallest target value specified for comparison: ',select_targetvalue))
+      seltargetvalueprint <- (paste0(select_targetvalue,' (smallest group)'))
     }
     else {
-      select_targetvalue <- sort(as.character(unique(prepared_input$category)))[1]
-      if (eval_type!="CompareTargetValues") print(paste0('no target value specified for comparison, selected target value: ',select_targetvalue))
+      select_targetvalue <- sort(targetvalues)[1]
+      seltargetvalueprint <- (paste0(select_targetvalue,' (alphabetical first)'))
     }
   }
-  eval_t_type <- prepared_input %>%
-    {if (eval_type=="CompareDatasets") dplyr::filter(., modelname == select_model & category == select_targetvalue) %>%
+  else  seltargetvalueprint <- (paste0(select_targetvalue,' (specified by user)'))
+
+
+  #check evaluation type and print relevant processing output
+    if (eval_type=="CompareDatasets") {
+      eval_t_type <- prepared_input %>%
+        dplyr::filter(., modelname == select_model & category == select_targetvalue) %>%
         dplyr::mutate(.,legend=as.factor(dataset))
-    else if (eval_type=="CompareModels") dplyr::filter(., dataset == select_dataset & category == select_targetvalue) %>%
+        datasets_print <- paste('"', datasets, '"', sep = "", collapse = ", ")
+        type_print <- (paste0('Datasets ',datasets_print,' compared for model "',
+          select_model,'" and target value "',select_targetvalue,'".'))
+    } else if (eval_type=="CompareModels") {
+      eval_t_type <- prepared_input %>%
+        dplyr::filter(., dataset == select_dataset & category == select_targetvalue) %>%
         dplyr::mutate(.,legend=as.factor(modelname))
-    else if (eval_type=="CompareTargetValues") dplyr::filter(., modelname == select_model & dataset == select_dataset)%>%
+        models_print <- paste('"', models, '"', sep = "", collapse = ", ")
+        type_print <- (paste0('Models ',models_print,' compared for dataset "',
+          select_dataset,'" and target value "',select_targetvalue,'".'))
+    } else if (eval_type=="CompareTargetValues") {
+      eval_t_type <- prepared_input %>%
+        dplyr::filter(., modelname == select_model & dataset == select_dataset)%>%
         dplyr::mutate(.,legend=as.factor(category))
-    else print('no valid evaluation type specified!')}
+        targetvalues_print <- paste('"', targetvalues, '"', sep = "", collapse = ", ")
+        type_print <- (paste0('Target values ',targetvalues_print,' compared for dataset "',
+          select_dataset,'" and model "',select_model,'".'))
+    } else {
+      eval_t_type <- prepared_input %>%
+        dplyr::filter(., modelname == select_model & dataset == select_dataset & category == select_targetvalue)%>%
+        dplyr::mutate(.,legend=as.factor(category))
+      type_print <- (paste0('No comparison specified! Single evaluation line will be plotted: \n Target value "',
+        select_targetvalue,'" plotted for dataset "',
+        select_dataset,'" and model "',select_model,'."
+  To compare models, specify: eval_type = "CompareModels"
+  To compare datasets, specify: eval_type = "CompareDatasets"
+  To compare target values, specify: eval_type = "CompareTargetValues"
+  To plot one line, do not specify eval_type or specify eval_type = "NoComparison".'))
+    }
   eval_t_type <<- cbind(eval_type=eval_type,
                         eval_t_type)
-return('Data preparation step 3 succeeded! Dataframe \'eval_t_type\' created.')
+  cat(paste0('Data preparation step 3 succeeded! Dataframe \'eval_t_type\' created.\n\n',type_print))
 }
+

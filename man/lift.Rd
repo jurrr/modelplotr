@@ -4,7 +4,7 @@
 \alias{lift}
 \title{Lift plot}
 \usage{
-lift(plot_input = eval_t_type)
+lift(plot_input = eval_t_type, customlinecolors = NA)
 }
 \arguments{
 \item{plot_input}{Dataframe.}

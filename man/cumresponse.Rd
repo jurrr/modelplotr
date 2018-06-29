@@ -4,7 +4,7 @@
 \alias{cumresponse}
 \title{Cumulative response plot}
 \usage{
-cumresponse(plot_input = eval_t_type)
+cumresponse(plot_input = eval_t_type, customlinecolors = NA)
 }
 \arguments{
 \item{plot_input}{Dataframe.}

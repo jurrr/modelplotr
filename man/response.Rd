@@ -4,7 +4,7 @@
 \alias{response}
 \title{Response plot}
 \usage{
-response(plot_input = eval_t_type)
+response(plot_input = eval_t_type, customlinecolors = NA)
 }
 \arguments{
 \item{plot_input}{Dataframe.}

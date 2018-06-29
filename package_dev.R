@@ -71,6 +71,7 @@ scope_modevalplots(eval_type="CompareDatasets",
                    select_model = "random forest")
 scope_modevalplots(eval_type="CompareModels")
 scope_modevalplots(eval_type="CompareTargetValues")
+scope_modevalplots()
 
 
 
@@ -90,6 +91,7 @@ lift
 response <- response()
 response
 cumresponse <- cumresponse()
+cumresponse
 multiplot(cumgains,lift,response,cumresponse,cols=2)
 
 # save plots
