@@ -53,11 +53,6 @@ xgb = mlr::train(lrn, task)
 lrn = mlr::makeLearner("classif.lda", predict.type = "prob")
 lda = mlr::train(lrn, task)
 
-dataprep_modevalplots(datasets=list("train","test"),
-  datasetlabels = list("train data","test data"),
-  models = list("rf","mnl","xgb","lda"),
-  modellabels = list("random forest","multinomial logit","XGBoost","Discriminant"),
-  targetname="Species")
 
 # apply modelplotr functions
 dataprep_modevalplots(datasets=list("train","test"),
@@ -65,45 +60,35 @@ dataprep_modevalplots(datasets=list("train","test"),
                       models = list("rf","mnl","xgb","lda"),
                       modellabels = list("random forest","multinomial logit","XGBoost","Discriminant"),
                       targetname="Species")
-head(eval_tot)
-tail(eval_tot)
-dim(eval_tot)
+#head(eval_tot)
 
 input_modevalplots()
-head(eval_t_tot[eval_t_tot$modelname=="random forest"&
-                eval_t_tot$dataset=="train data"&
-                eval_t_tot$category=="setosa",],11)
-tail(eval_t_tot)
-scope_modevalplots(eval_type="CompareDatasets",
-                   select_model = "random forest")
+#head(eval_t_tot)
+
+scope_modevalplots(eval_type="CompareDatasets",select_model = "random forest")
 scope_modevalplots(eval_type="CompareModels")
 scope_modevalplots(eval_type="CompareTargetValues")
 scope_modevalplots()
 
-
-
-#scope_modevalplots(eval_type="TargetValues",select_model="Discriminant")
-head(eval_t_type)
-tail(eval_t_type)
+#head(eval_t_type)
 
 #`%>%` <- magrittr::`%>%`
 
 #eval_t_type %>% dplyr::group_by(legend) %>% dplyr::summarize(n=n())
 #test %>% dplyr::group_by(Species) %>% dplyr::summarize(n=n())
 
-cumgains <- cumgains()
-cumgains
-lift <- lift()
-lift
-response <- response()
-response
-cumresponse <- cumresponse()
-cumresponse
+cumgains1 <- cumgains()
+cumgains1
+lift1 <- lift()
+lift1
+response1 <- response()
+response1
+cumresponse1 <- cumresponse()
+cumresponse1
 multiplot(cumgains,lift,response,cumresponse,cols=2)
 
 # save plots
-savemodelplots()
-
+savemodelplots(c("cumgains1","lift1","response1","cumresponse1"))
 
 
 
