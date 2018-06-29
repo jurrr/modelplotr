@@ -1,27 +1,37 @@
 
 
-#' Build 'eval_tot' containing Actuals and Predictions
+#' Build 'eval_tot' containing Actuals, Probabilities and Deciles
 #'
 #' Build dataframe object 'eval_tot' that contains actuals and predictions on
-#' dependent variable for each dataset in datasets
-#' @param datasets List of strings. A list of the names of the dataframe
+#' the target variable for each dataset in datasets and each model in models
+#'
+#' @section When you want to build eval_tot yourself:
+#' To make plots with modelplotr, is not required to use this function to generate eval_tot.
+#' You can create your own dataframe containing actuals and predictions and deciles,
+#' Please do check the required input for the \code{input_modevalplots} function if you
+#' want to use that function to aggregate actuals and predictions
+
+#' @param datasets List of Strings. A list of the names of the dataframe
 #'   objects to include in model evaluation. All dataframes need to contain
-#'   target variable and feature variables. Default value is list("train","set"),
-#'   hence the presence of objects named "train" and "test" in the environment is
-#'   expected.
-#' @param datasetlabels List of strings. A list of labels for the datasets, user.
-#'   When not specified, the dataset name is used.
+#'   target variable and feature variables.
+#' @param datasetlabels List of Strings. A list of labels for the datasets, user.
+#'   When datasetlabels is not specified, the names from \code{datasets} are used.
 #' @param models List of Strings. Names of the model objects containing parameters to
-#'   apply models to data.
-#' @param modellabels List of String. Labels for the models to use in plots.
+#'   apply models to data. To use this function, model objects need to be generated
+#'   by the mlr package.
+#' @param modellabels List of Strings. Labels for the models to use in plots.
+#'   When modellabels is not specified, the names from \code{moddels} are used.
 #' @param targetname String. Name of the target variable in datasets. Target
 #'   can be either binary or multinomial. Continuous targets are not supported.
-#' @return Dataframe. Dataframe 'eval_tot' is built based on \code{datasets}.
-#'   It contains the dataset name, actuals on the target \code{target} , the
-#'   predicted probabilities for each class of the target and attribution to
+#' @return Dataframe. Dataframe \code{eval_tot} is built, based on the \code{datasets}
+#'   and \code{models} specified. It contains the dataset name, actuals on the \code{target} ,
+#'   the predicted probabilities for each class of the target and attribution to
 #'   deciles in the dataset for each class of the target.
+#'
 #' @seealso \code{\link{input_modevalplots}} for details on the function that
 #' aggregates the output to the input for the plots.
+#' @seealso \code{\link{scope_modevalplots}} for details on the function that
+#' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
 #' @seealso \url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
 #' @examples
@@ -31,11 +41,13 @@
 #' test = iris[-train_index,]
 #' trainTask <- makeClassifTask(data = train, target = "species")
 #' testTask <- makeClassifTask(data = test, target = "species")
-#' task = makeClassifTask(data = train, target = "species")
-#' lrn = makeLearner("classif.randomForest")
-#' rf = train(lrn, task)
-#' lrn = makeLearner("classif.multinom")
-#' mnl = train(mnl, task)
+#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+#' #estimate models
+#' task = mlr::makeClassifTask(data = train, target = "Species")
+#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+#' rf = mlr::train(lrn, task)
+#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+#' mnl = mlr::train(lrn, task)
 #' dataprep_modevalplots(datasets=list("train","test"),
 #'                       datasetlabels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
@@ -50,29 +62,44 @@
 #' multiplot(cumgains,lift,response,cumresponse,cols=2)
 #' @export
 #' @importFrom magrittr %>%
-dataprep_modevalplots <- function(datasets = list("train","test"),
+dataprep_modevalplots <- function(datasets,
                                   datasetlabels,
                                   models,
                                   modellabels ,
-                                  targetname="y"){
-  if(missing(datasetlabels)) datasetlabels = datasets
+                                  targetname){
+  if((typeof(datasets)!='character'&typeof(datasets)!="list")|typeof(datasets[[1]])!='character') {
+    stop('"datasets" should a be list with dataset names as strings! (e.g. "list("train","test")")')}
+  if(missing(datasetlabels)) {
+    datasetlabels = datasets
+  } else if((typeof(datasetlabels)!='character'&typeof(datasetlabels)!="list")|typeof(datasetlabels[[1]])!='character') {
+    stop('datasetlabels should be list with desctiption strings! (e.g. "list("train set","test set")")')}
+  if((typeof(models)!='character'&typeof(models)!="list")|typeof(models[[1]])!='character') {
+    stop('"models" should a be list with model object names as string!.
+      \n model objects need to be generated with mlr package!')}
   if(missing(modellabels)) modellabels = models
   # create per dataset (train, test,...) a set with y, y_pred, p_y and dec_y
   eval_tot = data.frame()
-  print('eval_tot created!')
+  if(typeof(targetname)!='character') {
+    stop('"targetname" needs to a be a string with the name of the target variable in all datasets!')}
+
   for (dataset in datasets) {
     for (mdl in models) {
+
+      if(max(class(try((mlr::getTaskDesc(get(mdl))),TRUE)))== "try-error") {
+        stop('model objects need to be generated with mlr package')}
 
       # 1.1. get category prediction from model (NOT YET DYNAMIC!) and prepare
       actuals = get(dataset) %>% dplyr::select_(y_true=targetname)
 
       # 1.2. get probabilities per target category from model and prepare
       mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+      # for binary targets
       if (!is.na(mlr::getTaskDesc(get(mdl))$positive)) {
           y_values <- c(mlr::getTaskDesc(get(mdl))$positive,mlr::getTaskDesc(get(mdl))$negative)
           prob_pos <- mlr::getPredictionProbabilities(predict(get(mdl),newdata=get(dataset)))
           probabilities <- data.frame(pos=prob_pos,neg=1-prob_pos)
       }
+      # for multiclass targets
       else {
         probabilities <- as.data.frame(mlr::getPredictionProbabilities(predict(get(mdl),newdata=get(dataset))))
         y_values <- colnames(probabilities)

@@ -2,39 +2,46 @@
 % Please edit documentation in R/dataprepmodelplots.R
 \name{dataprep_modevalplots}
 \alias{dataprep_modevalplots}
-\title{Build 'eval_tot' containing Actuals and Predictions}
+\title{Build 'eval_tot' containing Actuals, Probabilities and Deciles}
 \usage{
-dataprep_modevalplots(datasets = list("train", "test"), datasetlabels, models,
-  modellabels, targetname = "y")
+dataprep_modevalplots(datasets, datasetlabels, models, modellabels, targetname)
 }
 \arguments{
-\item{datasets}{List of strings. A list of the names of the dataframe
+\item{datasets}{List of Strings. A list of the names of the dataframe
 objects to include in model evaluation. All dataframes need to contain
-target variable and feature variables. Default value is list("train","set"),
-hence the presence of objects named "train" and "test" in the environment is
-expected.}
+target variable and feature variables.}
 
-\item{datasetlabels}{List of strings. A list of labels for the datasets, user.
-When not specified, the dataset name is used.}
+\item{datasetlabels}{List of Strings. A list of labels for the datasets, user.
+When datasetlabels is not specified, the names from \code{datasets} are used.}
 
 \item{models}{List of Strings. Names of the model objects containing parameters to
-apply models to data.}
+apply models to data. To use this function, model objects need to be generated
+by the mlr package.}
 
-\item{modellabels}{List of String. Labels for the models to use in plots.}
+\item{modellabels}{List of Strings. Labels for the models to use in plots.
+When modellabels is not specified, the names from \code{moddels} are used.}
 
 \item{targetname}{String. Name of the target variable in datasets. Target
 can be either binary or multinomial. Continuous targets are not supported.}
 }
 \value{
-Dataframe. Dataframe 'eval_tot' is built based on \code{datasets}.
-  It contains the dataset name, actuals on the target \code{target} , the
-  predicted probabilities for each class of the target and attribution to
+Dataframe. Dataframe \code{eval_tot} is built, based on the \code{datasets}
+  and \code{models} specified. It contains the dataset name, actuals on the \code{target} ,
+  the predicted probabilities for each class of the target and attribution to
   deciles in the dataset for each class of the target.
 }
 \description{
 Build dataframe object 'eval_tot' that contains actuals and predictions on
-dependent variable for each dataset in datasets
+the target variable for each dataset in datasets and each model in models
 }
+\section{When you want to build eval_tot yourself}{
+
+To make plots with modelplotr, is not required to use this function to generate eval_tot.
+You can create your own dataframe containing actuals and predictions and deciles,
+Please do check the required input for the \code{input_modevalplots} function if you
+want to use that function to aggregate actuals and predictions
+}
+
 \examples{
 data(iris)
 train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
@@ -42,11 +49,13 @@ train = iris[train_index,]
 test = iris[-train_index,]
 trainTask <- makeClassifTask(data = train, target = "species")
 testTask <- makeClassifTask(data = test, target = "species")
-task = makeClassifTask(data = train, target = "species")
-lrn = makeLearner("classif.randomForest")
-rf = train(lrn, task)
-lrn = makeLearner("classif.multinom")
-mnl = train(mnl, task)
+mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+#estimate models
+task = mlr::makeClassifTask(data = train, target = "Species")
+lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+rf = mlr::train(lrn, task)
+lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+mnl = mlr::train(lrn, task)
 dataprep_modevalplots(datasets=list("train","test"),
                       datasetlabels = list("train data","test data"),
                       models = list("rf","mnl"),
@@ -63,6 +72,9 @@ multiplot(cumgains,lift,response,cumresponse,cols=2)
 \seealso{
 \code{\link{input_modevalplots}} for details on the function that
 aggregates the output to the input for the plots.
+
+\code{\link{scope_modevalplots}} for details on the function that
+filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
 
 \url{https://github.com/jurrr/modelplotr} for details on the package
 

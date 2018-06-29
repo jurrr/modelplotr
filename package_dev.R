@@ -12,6 +12,7 @@ library(roxygen2)
 ?input_modevalplots
 ?scope_modevalplots
 
+?modelplotr
 
 devtools::use_vignette("modelplotr")
 devtools::use_testthat()
@@ -51,6 +52,12 @@ lrn = mlr::makeLearner("classif.xgboost", predict.type = "prob")
 xgb = mlr::train(lrn, task)
 lrn = mlr::makeLearner("classif.lda", predict.type = "prob")
 lda = mlr::train(lrn, task)
+
+dataprep_modevalplots(datasets=list("train","test"),
+  datasetlabels = list("train data","test data"),
+  models = list("rf","mnl","xgb","lda"),
+  modellabels = list("random forest","multinomial logit","XGBoost","Discriminant"),
+  targetname="Species")
 
 # apply modelplotr functions
 dataprep_modevalplots(datasets=list("train","test"),
@@ -184,7 +191,11 @@ cumresponse
 # save plots
 savemodelplots()
 
+codetools::findGlobals(response)
 
+codetools::findGlobals(dataprep_modevalplots)
+codetools::findGlobals(input_modevalplots)
+codetools::findGlobals(scope_modevalplots)
 
 ###################################################################################
 # tutorial mdl
