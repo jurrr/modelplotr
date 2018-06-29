@@ -81,8 +81,8 @@ tail(eval_t_type)
 
 #`%>%` <- magrittr::`%>%`
 
-eval_t_type %>% dplyr::group_by(legend) %>% dplyr::summarize(n=n())
-test %>% dplyr::group_by(Species) %>% dplyr::summarize(n=n())
+#eval_t_type %>% dplyr::group_by(legend) %>% dplyr::summarize(n=n())
+#test %>% dplyr::group_by(Species) %>% dplyr::summarize(n=n())
 
 cumgains <- cumgains()
 cumgains
@@ -161,10 +161,12 @@ scope_modevalplots(eval_type="CompareDatasets")
 head(eval_t_type)
 tail(eval_t_type)
 
-scope_modevalplots(eval_type="CompareDatasets",
-  select_model = "random forest")
+scope_modevalplots(eval_type="CompareDatasets")
 scope_modevalplots(eval_type="CompareModels")
 scope_modevalplots(eval_type="CompareTargetValues")
+scope_modevalplots()
+
+scope_modevalplots(select_model = "random forest",select_targetvalue = "no",select_dataset = "train data")
 
 cumgains <- cumgains()
 cumgains
@@ -175,6 +177,9 @@ response
 cumresponse <- cumresponse()
 cumresponse
 multiplot(cumgains,lift,response,cumresponse,cols=2)
+
+cumresponse <- cumresponse()
+cumresponse
 
 # save plots
 savemodelplots()

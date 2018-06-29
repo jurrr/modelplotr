@@ -238,7 +238,7 @@ lift <- function(plot_input=eval_t_type,customlinecolors=NA) {
     ggplot2::scale_alpha_manual(values=pp$liftalphas)+
     ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10,expand = c(0, 0.02)) +
     ggplot2::scale_y_continuous(name="cumulative lift" ,expand = c(0, 0.02)) +
-    ggplot2::expand_limits(y=0) +
+    ggplot2::expand_limits(y=c(0,max(2,max(plot_input$cumlift,na.rm = T)))) +
     ggplot2::labs(title=pp$plottitle,subtitle=pp$plotsubtitle) +
     ggplot2::theme_minimal() +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 14,hjust = 0.5),
@@ -275,11 +275,21 @@ response <- function(plot_input=eval_t_type,customlinecolors=NA) {
 
   # rearrange plot_input
   vallines <- plot_input %>% dplyr::filter(decile>0) %>% dplyr::select(eval_type:decile,response=pct,legend)
-  minrefline <- plot_input %>% dplyr::filter(decile>0) %>%
-    dplyr::mutate(legend=paste0('overall response (',legend,')'),response=pcttot) %>%
-    dplyr::select(eval_type:decile,response,legend)%>%
-    dplyr::distinct()
-  plot_input <- rbind(minrefline,vallines)
+  if (pp$seltype=="CompareModels") {
+    minreflines <- plot_input %>%
+      dplyr::filter(decile>0) %>%
+      dplyr::mutate(legend=paste0('overall response (',dataset,')'),modelname='',response=pcttot) %>%
+      dplyr::select(eval_type:decile,response,legend) %>%
+      dplyr::distinct()
+  } else {
+    minreflines <- plot_input%>%
+      dplyr::filter(decile>0) %>%
+      dplyr::mutate(legend=paste0('overall response (',legend,')'),response=pcttot) %>%
+      dplyr::select(eval_type:decile,response,legend) %>%
+      dplyr::distinct()
+  }
+
+  plot_input <- rbind(minreflines,vallines)
   plot_input$legend <- factor(plot_input$legend,levels=pp$resplevels)
 
   #make plot
@@ -328,11 +338,21 @@ cumresponse <- function(plot_input=eval_t_type,customlinecolors=NA) {
   #plot_input = eval_t_type
   # rearrange plot_input
   vallines <- plot_input %>% dplyr::filter(decile>0) %>% dplyr::select(eval_type:decile,cumresponse=cumpct,legend)
-  minrefline <- plot_input %>% dplyr::filter(decile>0) %>%
-    dplyr::mutate(legend=paste0('overall response (',legend,')'),cumresponse=pcttot) %>%
-    dplyr::select(eval_type:decile,cumresponse,legend)%>%
-    dplyr::distinct()
-  plot_input <- rbind(minrefline,vallines)
+  if (pp$seltype=="CompareModels") {
+    minreflines <- plot_input %>%
+      dplyr::filter(decile>0) %>%
+      dplyr::mutate(legend=paste0('overall response (',dataset,')'),modelname='',cumresponse=pcttot) %>%
+      dplyr::select(eval_type:decile,cumresponse,legend) %>%
+      dplyr::distinct()
+  } else {
+    minreflines <- plot_input %>%
+      dplyr::filter(decile>0) %>%
+      dplyr::mutate(legend=paste0('overall response (',legend,')'),cumresponse=pcttot) %>%
+      dplyr::select(eval_type:decile,cumresponse,legend) %>%
+      dplyr::distinct()
+  }
+
+  plot_input <- rbind(minreflines,vallines)
   plot_input$legend <- factor(plot_input$legend,levels=pp$resplevels)
 
   #make plot
