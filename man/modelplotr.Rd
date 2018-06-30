@@ -45,6 +45,15 @@ datapreparation and plotting.
 }
 
 \seealso{
+\code{\link{dataprep_modevalplots}} for details on the function \code{dataprep_modevalplots}
+that generates the required input.
+
+\code{\link{input_modevalplots}} for details on the function \code{input_modevalplots} that
+generates the required input.
+
+\code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
+filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
+
 \url{https://github.com/jurrr/modelplotr} for details on the package
 
 \url{https://cmotions.nl/publicaties/} for our blog post on using modelplotr

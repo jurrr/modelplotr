@@ -41,6 +41,12 @@
 #'      target class observations in the selection? }
 #'     \item{multiplot()}{Generates a canvas with all four evaluation plots combined}}
 #'
+#' @seealso \code{\link{dataprep_modevalplots}} for details on the function \code{dataprep_modevalplots}
+#' that generates the required input.
+#' @seealso \code{\link{input_modevalplots}} for details on the function \code{input_modevalplots} that
+#' generates the required input.
+#' @seealso \code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
+#' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
 #' @seealso \url{https://cmotions.nl/publicaties/} for our blog post on using modelplotr
 #'

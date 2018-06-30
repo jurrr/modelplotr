@@ -1,3 +1,6 @@
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### dataprep_modevalplots()      ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
 
 #' Build 'eval_tot' containing Actuals, Probabilities and Deciles
@@ -5,10 +8,10 @@
 #' Build dataframe object 'eval_tot' that contains actuals and predictions on
 #' the target variable for each dataset in datasets and each model in models
 #'
-#' @section When you want to build eval_tot yourself:
+#' @section When you build eval_tot yourself:
 #' To make plots with modelplotr, is not required to use this function to generate eval_tot.
 #' You can create your own dataframe containing actuals and predictions and deciles,
-#' Please do check the required input for the \code{input_modevalplots} function if you
+#' Please do check the required input for the \code{\link{input_modevalplots}} function if you
 #' want to use that function to aggregate actuals and predictions
 
 #' @param datasets List of Strings. A list of the names of the dataframe
@@ -28,9 +31,10 @@
 #'   the predicted probabilities for each class of the target and attribution to
 #'   deciles in the dataset for each class of the target.
 #'
-#' @seealso \code{\link{input_modevalplots}} for details on the function that
+#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{\link{input_modevalplots}} for details on the function \code{input_modevalplots} that
 #' aggregates the output to the input for the plots.
-#' @seealso \code{\link{scope_modevalplots}} for details on the function that
+#' @seealso \code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
 #' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
 #' @seealso \url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
@@ -39,8 +43,8 @@
 #' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 #' train = iris[train_index,]
 #' test = iris[-train_index,]
-#' trainTask <- makeClassifTask(data = train, target = "species")
-#' testTask <- makeClassifTask(data = test, target = "species")
+#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
+#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
 #' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
 #' #estimate models
 #' task = mlr::makeClassifTask(data = train, target = "Species")
@@ -52,14 +56,15 @@
 #'                       datasetlabels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
 #'                       modellabels = list("random forest","multinomial logit"),
-#'                       targetname="species")
+#'                       targetname="Species")
 #' head(eval_tot)
 #' input_modevalplots()
+#' scope_modevalplots()
 #' cumgains()
 #' lift()
 #' response()
 #' cumresponse()
-#' multiplot(cumgains,lift,response,cumresponse,cols=2)
+#' multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
 #' @export
 #' @importFrom magrittr %>%
 dataprep_modevalplots <- function(datasets,
@@ -135,12 +140,17 @@ dataprep_modevalplots <- function(datasets,
   return('Data preparation step 1 succeeded! Dataframe \'eval_tot\' created.')
 }
 
+
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### input_modevalplots()         ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+
 #' Build 'eval_t_tot' with aggregated evaluation measures
 #'
 #' Build dataframe 'eval_t_tot' with aggregated actuals and predictions .
-#' A record in 'eval_t_tot' is unique on the combination of datasets-decile.
-#' @param eval_tot Dataframe resulting from function dataprep_modevalplots().
-#' @return Dataframe \code{eval_t_tot} is built based on \code{eval_tot}.
+#' A record in 'eval_t_tot' is unique on the combination of models, datasets, targetvalues and deciles (m*d*t*10).
+#' @param eval_tot Dataframe resulting from function \code{\link{dataprep_modevalplots}}.
+#' @return Dataframe \code{eval_t_tot} is built based on \code{eval_tot}.\cr\cr
 #' \code{eval_t_tot} contains:
 #' \tabular{lll}{
 #'   \bold{column} \tab \bold{type} \tab \bold{definition} \cr
@@ -152,41 +162,95 @@ dataprep_modevalplots <- function(datasets,
 #'   pos\tab Integer\tab Number of cases belonging to category in dataset in decile\cr
 #'   tot\tab Integer\tab Total number of cases in dataset in decile\cr
 #'   pct\tab Decimal \tab Percentage of cases in dataset in decile that belongs to
-#'   category (pos/tot)\cr
+#'     category (pos/tot)\cr
 #'   negtot\tab Integer\tab Total number of cases not belonging to category in dataset\cr
 #'   postot\tab Integer\tab Total number of cases belonging to category in dataset\cr
 #'   tottot\tab Integer\tab Total number of cases in dataset\cr
 #'   pcttot\tab Decimal\tab Percentage of cases in dataset that belongs to
-#'   category (postot / tottot)\cr
+#'     category (postot / tottot)\cr
 #'   cumneg\tab Integer\tab Cumulative number of cases not belonging to category in
-#'   dataset from decile 1 up until decile\cr
+#'     dataset from decile 1 up until decile\cr
 #'   cumpos\tab Integer\tab Cumulative number of cases belonging to category in
-#'   dataset from decile 1 up until decile\cr
+#'     dataset from decile 1 up until decile\cr
 #'   cumpos\tab Integer\tab Cumulative number of cases belonging to category in
-#'   dataset from decile 1 up until decile\cr
+#'     dataset from decile 1 up until decile\cr
 #'   cumtot\tab Integer\tab Cumulative number of cases in dataset from decile 1
-#'   up until decile\cr
+#'     up until decile\cr
 #'   gain\tab Decimal\tab Gains value for dataset for decile (pos/postot)\cr
 #'   cumgain\tab Decimal\tab Cumulative gains value for dataset for decile
-#'   (cumpos/postot)\cr
+#'     (cumpos/postot)\cr
 #'   gain_ref\tab Decimal\tab Lower reference for gains value for dataset for decile
-#'   (decile/10)\cr
+#'     (decile/10)\cr
 #'   gain_opt\tab Decimal\tab Upper reference for gains value for dataset for decile\cr
 #'   lift\tab Decimal\tab Lift value for dataset for decile (pct/pcttot)\cr
 #'   cumlift\tab Decimal\tab Cumulative lift value for dataset for decile
-#'   ((cumpos/cumtot)/pcttot)\cr
+#'     ((cumpos/cumtot)/pcttot)\cr
 #'   cumlift_ref\tab Decimal\tab Reference value for Cumulative lift value (constant: 1)
 #'  }
-#' @seealso \code{\link{dataprep_modevalplots}} for details on the function that generated the required input.
+#' @section When you build eval_tot yourself:
+#' To make plots with modelplotr, is not required to use the function dataprep_modevalplots to generate eval_tot.
+#' You can create your own dataframe containing actuals and predictions and deciles (decile 1= 10 percent
+#' with highest model probability, 10= 10 percent with lowest probability according to model) ,
+#' In that case, make sure the input dataframe contains the folowing columns & formats:
+#' \tabular{lll}{
+#'   \bold{column} \tab \bold{type} \tab \bold{definition} \cr
+#'   modelname \tab Factor \tab Name of the model object \cr
+#'   dataset \tab Factor \tab Datasets to include in the plot as factor levels\cr
+#'   y_true \tab Factor \tab Target with actual values \cr
+#'   prob_[tv1] \tab Decimal \tab Probability according to model for target value 1 \cr
+#'   prob_[tv2] \tab Decimal \tab Probability according to model for target value 2 \cr
+#'   ... \tab ... \tab ... \cr
+#'   prob_[tvn] \tab Decimal \tab Probability according to model for target value n \cr
+#'   dcl_[tv1] \tab Integer \tab Decile based on probability according to model for target value 1 \cr
+#'   dcl_[tv2] \tab Integerl \tab Decile based on probability according to model for target value 2 \cr
+#'   ... \tab ... \tab ... \cr
+#'   dcl_[tvn] \tab Integer \tab Decile based on probability according to model for target value n
+#'  }
+#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{\link{dataprep_modevalplots}} for details on the function \code{dataprep_modevalplots}
+#' that generates the required input.
+#' @seealso \code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
+#' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
+#' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
+#' @seealso \url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
 #' @examples
-#' add(1, 1)
-#' add(10, 10)
+#' data(iris)
+#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
+#' train = iris[train_index,]
+#' test = iris[-train_index,]
+#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
+#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
+#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+#' #estimate models
+#' task = mlr::makeClassifTask(data = train, target = "Species")
+#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+#' rf = mlr::train(lrn, task)
+#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+#' mnl = mlr::train(lrn, task)
+#' dataprep_modevalplots(datasets=list("train","test"),
+#'                       datasetlabels = list("train data","test data"),
+#'                       models = list("rf","mnl"),
+#'                       modellabels = list("random forest","multinomial logit"),
+#'                       targetname="Species")
+#' head(eval_tot)
+#' input_modevalplots()
+#' scope_modevalplots()
+#' cumgains()
+#' lift()
+#' response()
+#' cumresponse()
+#' multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
 #' @export
 #' @importFrom magrittr %>%
 input_modevalplots <- function(prepared_input=eval_tot){
 
   # check if eval_tot exists, otherwise create
-  if (!(exists("eval_tot"))) dataprep_modevalplots()
+  if (missing(prepared_input)&!exists("eval_tot")) {
+    stop("Input dataframe (similar to) eval_tot not available!
+      First run dataprep_modevalplots() to generate eval_tot.")
+  }
+  if(!is.data.frame(prepared_input)) {
+    stop('"prepared_input" should a be a dataframe!')}
 
   modelgroups = levels(prepared_input$dataset)
   yvals = levels(prepared_input$y_true)
@@ -256,17 +320,71 @@ input_modevalplots <- function(prepared_input=eval_tot){
 }
 
 
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### scope_modevalplots()         ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+
 #' Build 'eval_t_type' with subset for selected evaluation type.
 #'
-#' Build dataframe 'eval_t_type' subset for selected evaluation type.
-#' There are three perspectives to take:
-#' .
-#' @param eval_t_tot Dataframe resulting from function dataprep_modevalplots().
+#' Build dataframe 'eval_t_type' with a subset of 'eval_t_tot' that meets the requested evaluation perspective.
+#' There are four perspectives:
+#' \describe{
+#'   \item{"NoComparison"}{(default) In this perspective, only one line is plotted in the plots.
+#'     Parameters \code{select_model}, \code{select_dataset} and \code{select_targetvalue} determine which group is
+#'     plotted. When not specified, the first alphabetic model, the first alphabetic dataset and
+#'     the smallest (when \code{select_smallesttargetvalue=TRUE}) or first alphabetic target value are selected }
+#'   \item{"CompareModels"}{Comparison between models available in eval_t_tot$modelname for selected dataset
+#'   (default: first alphabetic dataset) and for selected target value (default: smallest).}
+#'   \item{"CompareDatasets"}{Comparison between datasets available in eval_t_tot$dataset for selected model
+#'   (default: first alphabetic model) and for selected target value (default: smallest).}
+#'   \item{"CompareTargetValues"}{Comparison between target values available in eval_t_tot$category for selected model
+#'   (default: first alphabetic model) and for selected dataset (default: first alphabetic dataset).}}
+#' @param prepared_input Dataframe. Dataframe resulting from function dataprep_modevalplots() or with similar output format.
+#' @param eval_type String. Evaluation type of interest. Possible values:
+#' "CompareModels","CompareDatasets", "CompareTargetValues","NoComparison".
+#' Default is NA, equivalent to "NoComparison".
+#' @param select_model String. Selected model when eval_type is CompareDatasets or CompareTargetValues or NoComparison.
+#' Equivalent to model descriptions as specified in modellabels (or models when modellabels is not specified).
+#' @param select_dataset String. Selected dataset when eval_type is CompareModels or CompareTargetValues or NoComparison.
+#' Equivalent to dataset descriptions as specified in datasetlabels (or datasets when datasetlabels is not specified).
+#' @param select_targetvalue String. Selected target value when eval_type is CompareModels or CompareDatasets or NoComparison. Default is smallest value when select_smallesttargetvalue=TRUE, otherwise first alphabetical value.
+#' @param select_smallesttargetvalue Boolean. Select the target value with the smallest number of cases in dataset as group of interest. Default is True, hence the smallest group is selected.
 #' @return Dataframe \code{eval_t_type} is a subset of \code{eval_t_tot}.
-#' @seealso \code{\link{input_modevalplots}} for details on the function that generated the required input.
+#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{\link{input_modevalplots}} for details on the function \code{input_modevalplots} that
+#' generates the required input.
+#' @seealso \code{\link{dataprep_modevalplots}} for details on the function \code{dataprep_modevalplots}
+#' that generates the required input.
+#' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
+#' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
+#' @seealso \url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
 #' @examples
-#' add(1, 1)
-#' add(10, 10)
+#' data(iris)
+#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
+#' train = iris[train_index,]
+#' test = iris[-train_index,]
+#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
+#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
+#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+#' #estimate models
+#' task = mlr::makeClassifTask(data = train, target = "Species")
+#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+#' rf = mlr::train(lrn, task)
+#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+#' mnl = mlr::train(lrn, task)
+#' dataprep_modevalplots(datasets=list("train","test"),
+#'                       datasetlabels = list("train data","test data"),
+#'                       models = list("rf","mnl"),
+#'                       modellabels = list("random forest","multinomial logit"),
+#'                       targetname="Species")
+#' head(eval_tot)
+#' input_modevalplots()
+#' scope_modevalplots()
+#' cumgains()
+#' lift()
+#' response()
+#' cumresponse()
+#' multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
 #' @export
 #' @importFrom magrittr %>%
 #eval_type <- CompareDatasets
@@ -279,7 +397,43 @@ scope_modevalplots <- function(prepared_input=eval_t_tot,
                                select_smallesttargetvalue=TRUE){
 
   # check if eval_tot exists, otherwise create
-  if (!(exists("eval_t_tot"))) input_modevalplots()
+  if (missing(prepared_input)&!exists("eval_tot")) {
+    stop("Input dataframe (similar to) eval_tot not available!
+      First run dataprep_modevalplots() to generate eval_tot.")
+  }
+  if(!is.data.frame(prepared_input)) {
+    stop('"prepared_input" should a be a dataframe!')}
+
+
+  # check if eval_tot exists, otherwise create
+  if (!(exists("eval_t_tot"))) {
+    print('eval_t_tot not available; input_modelevalplots() is run...')
+    input_modevalplots()
+  }
+
+  # check if eval_type has a valid value
+  if (!eval_type %in% c(NA,"CompareModels","CompareDatasets", "CompareTargetValues","NoComparison")) {
+    stop('invalid value for eval_type.
+      Select "CompareModels","CompareDatasets", "CompareTargetValues","NoComparison" or NA')
+  }
+
+  # check if select_model has a valid value
+  if (!select_model %in% c(NA,as.character(unique(prepared_input$modelname)))) {
+    stop(paste0('invalid value for select_model
+      Select ',paste(as.character(unique(prepared_input$modelname)), collapse = ', '),' or NA'))
+  }
+
+  # check if select_dataset has a valid value
+  if (!select_dataset %in% c(NA,as.character(unique(prepared_input$dataset)))) {
+    stop(paste0('invalid value for select_dataset
+      Select ',paste(as.character(unique(prepared_input$dataset)), collapse = ', '),' or NA'))
+  }
+
+  # check if select_targetvalue has a valid value
+  if (!select_targetvalue %in% c(NA,as.character(unique(prepared_input$category)))) {
+    stop(paste0('invalid value for select_targetvalue
+      Select ',paste(as.character(unique(prepared_input$category)), collapse = ', '),' or NA'))
+  }
 
   #check if needed selections of model / dataset / targetvalues are set, else set to defaults
   # no model specified? take first model based on alphabetic name.

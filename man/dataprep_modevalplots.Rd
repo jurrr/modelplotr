@@ -34,11 +34,11 @@ Dataframe. Dataframe \code{eval_tot} is built, based on the \code{datasets}
 Build dataframe object 'eval_tot' that contains actuals and predictions on
 the target variable for each dataset in datasets and each model in models
 }
-\section{When you want to build eval_tot yourself}{
+\section{When you build eval_tot yourself}{
 
 To make plots with modelplotr, is not required to use this function to generate eval_tot.
 You can create your own dataframe containing actuals and predictions and deciles,
-Please do check the required input for the \code{input_modevalplots} function if you
+Please do check the required input for the \code{\link{input_modevalplots}} function if you
 want to use that function to aggregate actuals and predictions
 }
 
@@ -47,8 +47,8 @@ data(iris)
 train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 train = iris[train_index,]
 test = iris[-train_index,]
-trainTask <- makeClassifTask(data = train, target = "species")
-testTask <- makeClassifTask(data = test, target = "species")
+trainTask <- mlr::makeClassifTask(data = train, target = "Species")
+testTask <- mlr::makeClassifTask(data = test, target = "Species")
 mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
 #estimate models
 task = mlr::makeClassifTask(data = train, target = "Species")
@@ -60,20 +60,23 @@ dataprep_modevalplots(datasets=list("train","test"),
                       datasetlabels = list("train data","test data"),
                       models = list("rf","mnl"),
                       modellabels = list("random forest","multinomial logit"),
-                      targetname="species")
+                      targetname="Species")
 head(eval_tot)
 input_modevalplots()
+scope_modevalplots()
 cumgains()
 lift()
 response()
 cumresponse()
-multiplot(cumgains,lift,response,cumresponse,cols=2)
+multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
 }
 \seealso{
-\code{\link{input_modevalplots}} for details on the function that
+\code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+
+\code{\link{input_modevalplots}} for details on the function \code{input_modevalplots} that
 aggregates the output to the input for the plots.
 
-\code{\link{scope_modevalplots}} for details on the function that
+\code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
 filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
 
 \url{https://github.com/jurrr/modelplotr} for details on the package

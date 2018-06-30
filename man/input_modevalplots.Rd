@@ -7,10 +7,10 @@
 input_modevalplots(prepared_input = eval_tot)
 }
 \arguments{
-\item{eval_tot}{Dataframe resulting from function dataprep_modevalplots().}
+\item{eval_tot}{Dataframe resulting from function \code{\link{dataprep_modevalplots}}.}
 }
 \value{
-Dataframe \code{eval_t_tot} is built based on \code{eval_tot}.
+Dataframe \code{eval_t_tot} is built based on \code{eval_tot}.\cr\cr
 \code{eval_t_tot} contains:
 \tabular{lll}{
   \bold{column} \tab \bold{type} \tab \bold{definition} \cr
@@ -22,40 +22,96 @@ Dataframe \code{eval_t_tot} is built based on \code{eval_tot}.
   pos\tab Integer\tab Number of cases belonging to category in dataset in decile\cr
   tot\tab Integer\tab Total number of cases in dataset in decile\cr
   pct\tab Decimal \tab Percentage of cases in dataset in decile that belongs to
-  category (pos/tot)\cr
+    category (pos/tot)\cr
   negtot\tab Integer\tab Total number of cases not belonging to category in dataset\cr
   postot\tab Integer\tab Total number of cases belonging to category in dataset\cr
   tottot\tab Integer\tab Total number of cases in dataset\cr
   pcttot\tab Decimal\tab Percentage of cases in dataset that belongs to
-  category (postot / tottot)\cr
+    category (postot / tottot)\cr
   cumneg\tab Integer\tab Cumulative number of cases not belonging to category in
-  dataset from decile 1 up until decile\cr
+    dataset from decile 1 up until decile\cr
   cumpos\tab Integer\tab Cumulative number of cases belonging to category in
-  dataset from decile 1 up until decile\cr
+    dataset from decile 1 up until decile\cr
   cumpos\tab Integer\tab Cumulative number of cases belonging to category in
-  dataset from decile 1 up until decile\cr
+    dataset from decile 1 up until decile\cr
   cumtot\tab Integer\tab Cumulative number of cases in dataset from decile 1
-  up until decile\cr
+    up until decile\cr
   gain\tab Decimal\tab Gains value for dataset for decile (pos/postot)\cr
   cumgain\tab Decimal\tab Cumulative gains value for dataset for decile
-  (cumpos/postot)\cr
+    (cumpos/postot)\cr
   gain_ref\tab Decimal\tab Lower reference for gains value for dataset for decile
-  (decile/10)\cr
+    (decile/10)\cr
   gain_opt\tab Decimal\tab Upper reference for gains value for dataset for decile\cr
   lift\tab Decimal\tab Lift value for dataset for decile (pct/pcttot)\cr
   cumlift\tab Decimal\tab Cumulative lift value for dataset for decile
-  ((cumpos/cumtot)/pcttot)\cr
+    ((cumpos/cumtot)/pcttot)\cr
   cumlift_ref\tab Decimal\tab Reference value for Cumulative lift value (constant: 1)
  }
 }
 \description{
 Build dataframe 'eval_t_tot' with aggregated actuals and predictions .
-A record in 'eval_t_tot' is unique on the combination of datasets-decile.
+A record in 'eval_t_tot' is unique on the combination of models, datasets, targetvalues and deciles (m*d*t*10).
 }
+\section{When you build eval_tot yourself}{
+
+To make plots with modelplotr, is not required to use the function dataprep_modevalplots to generate eval_tot.
+You can create your own dataframe containing actuals and predictions and deciles (decile 1= 10 percent
+with highest model probability, 10= 10 percent with lowest probability according to model) ,
+In that case, make sure the input dataframe contains the folowing columns & formats:
+\tabular{lll}{
+  \bold{column} \tab \bold{type} \tab \bold{definition} \cr
+  modelname \tab Factor \tab Name of the model object \cr
+  dataset \tab Factor \tab Datasets to include in the plot as factor levels\cr
+  y_true \tab Factor \tab Target with actual values \cr
+  prob_[tv1] \tab Decimal \tab Probability according to model for target value 1 \cr
+  prob_[tv2] \tab Decimal \tab Probability according to model for target value 2 \cr
+  ... \tab ... \tab ... \cr
+  prob_[tvn] \tab Decimal \tab Probability according to model for target value n \cr
+  dcl_[tv1] \tab Integer \tab Decile based on probability according to model for target value 1 \cr
+  dcl_[tv2] \tab Integerl \tab Decile based on probability according to model for target value 2 \cr
+  ... \tab ... \tab ... \cr
+  dcl_[tvn] \tab Integer \tab Decile based on probability according to model for target value n
+ }
+}
+
 \examples{
-add(1, 1)
-add(10, 10)
+data(iris)
+train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
+train = iris[train_index,]
+test = iris[-train_index,]
+trainTask <- mlr::makeClassifTask(data = train, target = "Species")
+testTask <- mlr::makeClassifTask(data = test, target = "Species")
+mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+#estimate models
+task = mlr::makeClassifTask(data = train, target = "Species")
+lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+rf = mlr::train(lrn, task)
+lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+mnl = mlr::train(lrn, task)
+dataprep_modevalplots(datasets=list("train","test"),
+                      datasetlabels = list("train data","test data"),
+                      models = list("rf","mnl"),
+                      modellabels = list("random forest","multinomial logit"),
+                      targetname="Species")
+head(eval_tot)
+input_modevalplots()
+scope_modevalplots()
+cumgains()
+lift()
+response()
+cumresponse()
+multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
 }
 \seealso{
-\code{\link{dataprep_modevalplots}} for details on the function that generated the required input.
+\code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+
+\code{\link{dataprep_modevalplots}} for details on the function \code{dataprep_modevalplots}
+that generates the required input.
+
+\code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
+filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
+
+\url{https://github.com/jurrr/modelplotr} for details on the package
+
+\url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
 }

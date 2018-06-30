@@ -61,16 +61,22 @@ dataprep_modevalplots(datasets=list("train","test"),
                       modellabels = list("random forest","multinomial logit","XGBoost","Discriminant"),
                       targetname="Species")
 #head(eval_tot)
-
 input_modevalplots()
+
+input_modevalplots(prepared_input = eval_tot)
 #head(eval_t_tot)
 
 scope_modevalplots(eval_type="CompareDatasets",select_model = "random forest")
 scope_modevalplots(eval_type="CompareModels")
 scope_modevalplots(eval_type="CompareTargetValues")
-scope_modevalplots()
-
+scope_modevalplots(eval_type = "CompareDatasets",select_targetvalue = NA)
+?modelplotr
+?dataprep_modevalplots
+?input_modevalplots
+?scope_modevalplots
 #head(eval_t_type)
+
+
 
 #`%>%` <- magrittr::`%>%`
 
@@ -85,7 +91,7 @@ response1 <- response()
 response1
 cumresponse1 <- cumresponse()
 cumresponse1
-multiplot(cumgains,lift,response,cumresponse,cols=2)
+multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
 
 # save plots
 savemodelplots(c("cumgains1","lift1","response1","cumresponse1"))
