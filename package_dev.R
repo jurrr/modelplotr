@@ -62,7 +62,11 @@ dataprep_modevalplots(datasets=list("train","test"),
                       targetname="Species")
 #head(eval_tot)
 input_modevalplots()
+scope_modevalplots()
 
+cumgains(customlinecolors=list("green","brown"))
+
+?cumgains()
 input_modevalplots(prepared_input = eval_tot)
 #head(eval_t_tot)
 

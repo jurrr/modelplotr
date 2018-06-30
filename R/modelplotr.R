@@ -25,10 +25,10 @@
 #' @section Plotting functions:
 #'   The plotting functions are:
 #' \describe{
-#'   \item{cumgains()}{Generates the cumulative gains chart. This plot, often named gains chart,
+#'   \item{cumgains()}{Generates the cumulative gains plot. This plot, often referred to as the gains chart,
 #'     helps answering the question: When we apply the model and select the best X deciles,
 #'     what percentage of the actual target class observations can we expect to target? }
-#'     \item{lift()}{Generates the cumulative lift chart, often referred to as lift chart or index chart,
+#'     \item{lift()}{Generates the cumulative lift plot, often referred to as lift plot or index plot,
 #'     helps you answer the question: When we apply the model and select the best X deciles,
 #'     how many times better is that than using no model at all?}
 #'     \item{response()}{Generates the response plot. It plots the percentage of target class observations

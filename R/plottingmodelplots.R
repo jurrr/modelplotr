@@ -1,4 +1,6 @@
-# multiplot
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### multiplot()                  ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
 
 #' Create multiplot
@@ -48,6 +50,11 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   }
 }
 
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### setplotparams()              ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+
+
 setplotparams <- function(plot_input,plottype,customlinecolors) {
 
 #  plot_input <- eval_t_type
@@ -66,12 +73,17 @@ setplotparams <- function(plot_input,plottype,customlinecolors) {
   pp$levelcols <- pp$randcols[1:pp$nlevels]
   if(!is.na(customlinecolors) & length(customlinecolors)==pp$nlevels) {
     pp$levelcols <- customlinecolors
-  } else if (!is.na(customlinecolors)) {
-    print('specified customlinecolors vector not of required length! \
-      It is cropped or extended with extra colors to match required length')
+  } else if (length(customlinecolors)<pp$nlevels) {
+    print('specified customlinecolors vector smaller than required length! \
+      It is extended with extra colors to match required length')
     pp$lencustcols <- length(customlinecolors)
     pp$levelcols <- c(customlinecolors[1:pp$nlevels],
-      randcols[which(!pp$randcols %in% customlinecolors)][1:(pp$nlevels-pp$lencustcols)])
+      pp$randcols[which(!pp$randcols %in% customlinecolors)][1:(pp$nlevels-pp$lencustcols)])
+  } else if (length(customlinecolors)>pp$nlevels) {
+    print('specified customlinecolors vector greater than required length! \
+      It is cropped to match required length')
+    pp$lencustcols <- length(customlinecolors)
+    pp$levelcols <- customlinecolors[1:pp$nlevels]
   } else {
     pp$levelcols <- pp$randcols[1:pp$nlevels]
   }
@@ -137,19 +149,58 @@ setplotparams <- function(plot_input,plottype,customlinecolors) {
 }
 
 
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### cumgains()                   ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+
 #' Cumulative gains plot
 #'
-#'
-#' @param plot_input Dataframe. Dataframe needs to be created with input_modevalplots
-#' or else meet required input format (see link to format in "See Also" section)
-#' @param customlinecolors String.
-#' @return Cumulative gains plot.
+#' Generates the cumulative gains plot. This plot, often referred to as the gains chart,
+#' helps answering the question: When we apply the model and select the best X deciles,
+#' what percentage of the actual target class observations can we expect to target?
+#' @param plot_input Dataframe. Dataframe needs to be created with \code{\link{scope_modevalplots}}
+#' or else meet required input format.
+#' @param customlinecolors Vector of Strings. Specifying colors for the lines in the plot.
+#' When not specified, colors from the RColorBrewer palet "Set1" are used.
+#' @return ggplot object. Cumulative gains plot.
 #' @examples
-#' add(1, 1)
-#' add(10, 10)
+#' data(iris)
+#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
+#' train = iris[train_index,]
+#' test = iris[-train_index,]
+#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
+#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
+#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+#' #estimate models
+#' task = mlr::makeClassifTask(data = train, target = "Species")
+#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+#' rf = mlr::train(lrn, task)
+#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+#' mnl = mlr::train(lrn, task)
+#' dataprep_modevalplots(datasets=list("train","test"),
+#'                       datasetlabels = list("train data","test data"),
+#'                       models = list("rf","mnl"),
+#'                       modellabels = list("random forest","multinomial logit"),
+#'                       targetname="Species")
+#' head(eval_tot)
+#' input_modevalplots()
+#' scope_modevalplots()
+#' cumgains()
+#' lift()
+#' response()
+#' cumresponse()
+#' multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
 #' @export
 #' @importFrom magrittr %>%
-#' @seealso \code{\link{input_modevalplots}} for details on the required input dataframe format.
+#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{\link{dataprep_modevalplots}} for details on the function \code{dataprep_modevalplots}
+#' that generates the required input.
+#' @seealso \code{\link{input_modevalplots}} for details on the function \code{input_modevalplots} that
+#' generates the required input.
+#' @seealso \code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
+#' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
+#' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
+#' @seealso \url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
 cumgains <- function(plot_input=eval_t_type,customlinecolors=NA) {
 
   customlinecolors <- customlinecolors
@@ -199,19 +250,58 @@ cumgains <- function(plot_input=eval_t_type,customlinecolors=NA) {
   }
 
 
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### lift()                       ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
-
-#' Lift plot
+#' Cumulative Lift plot
 #'
-#'
-#' @param plot_input Dataframe.
-#' @param targetcat String.
-#' @return Lift plot.
+#' Generates the cumulative lift plot, often referred to as lift plot or index plot,
+#' helps you answer the question: When we apply the model and select the best X deciles,
+#' how many times better is that than using no model at all?
+#' @param plot_input Dataframe. Dataframe needs to be created with \code{\link{scope_modevalplots}}
+#' or else meet required input format.
+#' @param customlinecolors Vector of Strings. Specifying colors for the lines in the plot.
+#' When not specified, colors from the RColorBrewer palet "Set1" are used.
+#' @return ggplot object. Lift plot.
 #' @examples
-#' add(1, 1)
-#' add(10, 10)
+#' data(iris)
+#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
+#' train = iris[train_index,]
+#' test = iris[-train_index,]
+#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
+#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
+#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+#' #estimate models
+#' task = mlr::makeClassifTask(data = train, target = "Species")
+#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+#' rf = mlr::train(lrn, task)
+#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+#' mnl = mlr::train(lrn, task)
+#' dataprep_modevalplots(datasets=list("train","test"),
+#'                       datasetlabels = list("train data","test data"),
+#'                       models = list("rf","mnl"),
+#'                       modellabels = list("random forest","multinomial logit"),
+#'                       targetname="Species")
+#' head(eval_tot)
+#' input_modevalplots()
+#' scope_modevalplots()
+#' cumgains()
+#' lift()
+#' response()
+#' cumresponse()
+#' multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
 #' @export
 #' @importFrom magrittr %>%
+#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{\link{dataprep_modevalplots}} for details on the function \code{dataprep_modevalplots}
+#' that generates the required input.
+#' @seealso \code{\link{input_modevalplots}} for details on the function \code{input_modevalplots} that
+#' generates the required input.
+#' @seealso \code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
+#' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
+#' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
+#' @seealso \url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
 lift <- function(plot_input=eval_t_type,customlinecolors=NA) {
 
   customlinecolors <- customlinecolors
@@ -253,20 +343,59 @@ lift <- function(plot_input=eval_t_type,customlinecolors=NA) {
 }
 
 
-#lift()
-
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### response()                   ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
 #' Response plot
 #'
-#'
-#' @param plot_input Dataframe.
-#' @param targetcat String.
-#' @return Lift plot.
+#' Generates the response plot. It plots the percentage of target class observations
+#' per decile. It can be used to answer the following business question: When we apply
+#' the model and select decile X, what is the expected percentage of target class observations
+#' in that decile?
+#' @param plot_input Dataframe. Dataframe needs to be created with \code{\link{scope_modevalplots}}
+#' or else meet required input format.
+#' @param customlinecolors Vector of Strings. Specifying colors for the lines in the plot.
+#' When not specified, colors from the RColorBrewer palet "Set1" are used.
+#' @return ggplot object. Response plot.
 #' @examples
-#' add(1, 1)
-#' add(10, 10)
+#' data(iris)
+#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
+#' train = iris[train_index,]
+#' test = iris[-train_index,]
+#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
+#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
+#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+#' #estimate models
+#' task = mlr::makeClassifTask(data = train, target = "Species")
+#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+#' rf = mlr::train(lrn, task)
+#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+#' mnl = mlr::train(lrn, task)
+#' dataprep_modevalplots(datasets=list("train","test"),
+#'                       datasetlabels = list("train data","test data"),
+#'                       models = list("rf","mnl"),
+#'                       modellabels = list("random forest","multinomial logit"),
+#'                       targetname="Species")
+#' head(eval_tot)
+#' input_modevalplots()
+#' scope_modevalplots()
+#' cumgains()
+#' lift()
+#' response()
+#' cumresponse()
+#' multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
 #' @export
 #' @importFrom magrittr %>%
+#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{\link{dataprep_modevalplots}} for details on the function \code{dataprep_modevalplots}
+#' that generates the required input.
+#' @seealso \code{\link{input_modevalplots}} for details on the function \code{input_modevalplots} that
+#' generates the required input.
+#' @seealso \code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
+#' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
+#' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
+#' @seealso \url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
 response <- function(plot_input=eval_t_type,customlinecolors=NA) {
 
   customlinecolors <- customlinecolors
@@ -317,19 +446,59 @@ response <- function(plot_input=eval_t_type,customlinecolors=NA) {
 }
 
 
-#response()
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### cumresponse()                ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
-#' Cumulative response plot
+#' Cumulative Respose plot
 #'
-#'
-#' @param plot_input Dataframe.
-#' @param targetcat String.
-#' @return Cumulative response plot.
+#' Generates the cumulative response plot. It plots the cumulative percentage of
+#' target class observations up until that decile. It helps answering the question:
+#' When we apply the model and select up until decile X, what is the expected percentage of
+#' target class observations in the selection?
+#' @param plot_input Dataframe. Dataframe needs to be created with \code{\link{scope_modevalplots}}
+#' or else meet required input format.
+#' @param customlinecolors Vector of Strings. Specifying colors for the lines in the plot.
+#' When not specified, colors from the RColorBrewer palet "Set1" are used.
+#' @return ggplot object. Cumulative Response plot.
 #' @examples
-#' add(1, 1)
-#' add(10, 10)
+#' data(iris)
+#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
+#' train = iris[train_index,]
+#' test = iris[-train_index,]
+#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
+#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
+#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+#' #estimate models
+#' task = mlr::makeClassifTask(data = train, target = "Species")
+#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+#' rf = mlr::train(lrn, task)
+#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+#' mnl = mlr::train(lrn, task)
+#' dataprep_modevalplots(datasets=list("train","test"),
+#'                       datasetlabels = list("train data","test data"),
+#'                       models = list("rf","mnl"),
+#'                       modellabels = list("random forest","multinomial logit"),
+#'                       targetname="Species")
+#' head(eval_tot)
+#' input_modevalplots()
+#' scope_modevalplots()
+#' cumgains()
+#' lift()
+#' response()
+#' cumresponse()
+#' multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
 #' @export
 #' @importFrom magrittr %>%
+#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{\link{dataprep_modevalplots}} for details on the function \code{dataprep_modevalplots}
+#' that generates the required input.
+#' @seealso \code{\link{input_modevalplots}} for details on the function \code{input_modevalplots} that
+#' generates the required input.
+#' @seealso \code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
+#' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
+#' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
+#' @seealso \url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
 cumresponse <- function(plot_input=eval_t_type,customlinecolors=NA) {
 
   customlinecolors <- customlinecolors
@@ -380,22 +549,59 @@ cumresponse <- function(plot_input=eval_t_type,customlinecolors=NA) {
 
 }
 
-#cumresponse()
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### savemodelplots()             ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
-#multiplot(cumgains,lift,response,cumresponse,cols=2)
-
-#' Save Model Plots to file.
+#' Cumulative Respose plot
 #'
-#'
-#' @param plots list of strings. List of plot names as strings.
-#' @param dir String. Directory on file system where to save plots to.
-#'   Default: working directory.
-#' @return Save model plots to file
+#' Generates the cumulative response plot. It plots the cumulative percentage of
+#' target class observations up until that decile. It helps answering the question:
+#' When we apply the model and select up until decile X, what is the expected percentage of
+#' target class observations in the selection?
+#' @param plot_input Dataframe. Dataframe needs to be created with \code{\link{scope_modevalplots}}
+#' or else meet required input format.
+#' @param customlinecolors Vector of Strings. Specifying colors for the lines in the plot.
+#' When not specified, colors from the RColorBrewer palet "Set1" are used.
+#' @return ggplot object. Cumulative Response plot.
 #' @examples
-#' add(1, 1)
-#' add(10, 10)
+#' data(iris)
+#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
+#' train = iris[train_index,]
+#' test = iris[-train_index,]
+#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
+#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
+#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+#' #estimate models
+#' task = mlr::makeClassifTask(data = train, target = "Species")
+#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+#' rf = mlr::train(lrn, task)
+#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+#' mnl = mlr::train(lrn, task)
+#' dataprep_modevalplots(datasets=list("train","test"),
+#'                       datasetlabels = list("train data","test data"),
+#'                       models = list("rf","mnl"),
+#'                       modellabels = list("random forest","multinomial logit"),
+#'                       targetname="Species")
+#' head(eval_tot)
+#' input_modevalplots()
+#' scope_modevalplots()
+#' cumgains()
+#' lift()
+#' response()
+#' cumresponse()
+#' multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
 #' @export
-#'
+#' @importFrom magrittr %>%
+#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{\link{dataprep_modevalplots}} for details on the function \code{dataprep_modevalplots}
+#' that generates the required input.
+#' @seealso \code{\link{input_modevalplots}} for details on the function \code{input_modevalplots} that
+#' generates the required input.
+#' @seealso \code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
+#' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
+#' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
+#' @seealso \url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
 savemodelplots <- function(plots=c("cumgains","lift","response","cumresponse"), dir = getwd()) {
   for (plot in plots) {
     png(paste0(dir, "/", plot, ".png"))

@@ -7,17 +7,62 @@
 response(plot_input = eval_t_type, customlinecolors = NA)
 }
 \arguments{
-\item{plot_input}{Dataframe.}
+\item{plot_input}{Dataframe. Dataframe needs to be created with \code{\link{scope_modevalplots}}
+or else meet required input format.}
 
-\item{targetcat}{String.}
+\item{customlinecolors}{Vector of Strings. Specifying colors for the lines in the plot.
+When not specified, colors from the RColorBrewer palet "Set1" are used.}
 }
 \value{
-Lift plot.
+ggplot object. Response plot.
 }
 \description{
-Response plot
+Generates the response plot. It plots the percentage of target class observations
+per decile. It can be used to answer the following business question: When we apply
+the model and select decile X, what is the expected percentage of target class observations
+in that decile?
 }
 \examples{
-add(1, 1)
-add(10, 10)
+data(iris)
+train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
+train = iris[train_index,]
+test = iris[-train_index,]
+trainTask <- mlr::makeClassifTask(data = train, target = "Species")
+testTask <- mlr::makeClassifTask(data = test, target = "Species")
+mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+#estimate models
+task = mlr::makeClassifTask(data = train, target = "Species")
+lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+rf = mlr::train(lrn, task)
+lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+mnl = mlr::train(lrn, task)
+dataprep_modevalplots(datasets=list("train","test"),
+                      datasetlabels = list("train data","test data"),
+                      models = list("rf","mnl"),
+                      modellabels = list("random forest","multinomial logit"),
+                      targetname="Species")
+head(eval_tot)
+input_modevalplots()
+scope_modevalplots()
+cumgains()
+lift()
+response()
+cumresponse()
+multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
+}
+\seealso{
+\code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+
+\code{\link{dataprep_modevalplots}} for details on the function \code{dataprep_modevalplots}
+that generates the required input.
+
+\code{\link{input_modevalplots}} for details on the function \code{input_modevalplots} that
+generates the required input.
+
+\code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
+filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
+
+\url{https://github.com/jurrr/modelplotr} for details on the package
+
+\url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
 }
