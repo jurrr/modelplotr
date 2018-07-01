@@ -20,6 +20,7 @@ LazyData: true
 Imports:
     ggplot2 (>= 2.2.1),
     grid (>= 3.5.0),
+    gridExtra (>= 2.3.0),
     magrittr,
     tidyverse (>= 1.2.1),
     RColorBrewer (>= 1.1.2),

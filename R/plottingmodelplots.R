@@ -1,56 +1,4 @@
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-#### multiplot()                  ####
-##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-
-
-#' Create multiplot
-#'
-#'
-#' @param plotlist List of plot objects.
-#' @param file ???
-#' @param cols Integer. Number of columns
-#' @param layout ???
-#' @return Multiplot constisting of plots in \code{plotlist}.
-#' @examples
-#' add(1, 1)
-#' add(10, 10)
-#' @export
-multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
-
-  # Make a list from the ... arguments and plotlist
-  plots <- c(list(...), plotlist)
-
-  numPlots = length(plots)
-
-  # If layout is NULL, then use 'cols' to determine layout
-  if (is.null(layout)) {
-    # Make the panel
-    # ncol: Number of columns of plots
-    # nrow: Number of rows needed, calculated from # of cols
-    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
-      ncol = cols, nrow = ceiling(numPlots/cols))
-  }
-
-  if (numPlots==1) {
-    print(plots[[1]])
-
-  } else {
-    # Set up the page
-    grid::grid.newpage()
-    grid::pushViewport(grid::viewport(layout = grid::grid.layout(nrow(layout), ncol(layout))))
-
-    # Make each plot, in the correct location
-    for (i in 1:numPlots) {
-      # Get the i,j matrix positions of the regions that contain this subplot
-      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
-
-      print(plots[[i]], vp = grid::viewport(layout.pos.row = matchidx$row,
-        layout.pos.col = matchidx$col))
-    }
-  }
-}
-
-##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 #### setplotparams()              ####
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
@@ -59,6 +7,7 @@ setplotparams <- function(plot_input,plottype,customlinecolors) {
 
 #  plot_input <- eval_t_type
 #  plottype <- "Lift"
+# customlinecolors <- NA
   pp <- list()
 
   # ALL PLOTS
@@ -71,16 +20,17 @@ setplotparams <- function(plot_input,plottype,customlinecolors) {
   pp$nlevels <- length(pp$levels)
   pp$randcols <- RColorBrewer::brewer.pal(n = 8, name = "Set1")
   pp$levelcols <- pp$randcols[1:pp$nlevels]
-  if(!is.na(customlinecolors) & length(customlinecolors)==pp$nlevels) {
+  if (length(customlinecolors)==1 & is.na(customlinecolors[1])){
+    pp$levelcols <- pp$randcols[1:pp$nlevels]
+  } else if(length(customlinecolors)==pp$nlevels) {
     pp$levelcols <- customlinecolors
   } else if (length(customlinecolors)<pp$nlevels) {
-    print('specified customlinecolors vector smaller than required length! \
+    cat('specified customlinecolors vector smaller than required length!
       It is extended with extra colors to match required length')
     pp$lencustcols <- length(customlinecolors)
-    pp$levelcols <- c(customlinecolors[1:pp$nlevels],
-      pp$randcols[which(!pp$randcols %in% customlinecolors)][1:(pp$nlevels-pp$lencustcols)])
+    pp$levelcols <- c(customlinecolors,pp$randcols[which(!pp$randcols %in% customlinecolors)][1:(pp$nlevels-pp$lencustcols)])
   } else if (length(customlinecolors)>pp$nlevels) {
-    print('specified customlinecolors vector greater than required length! \
+    cat('specified customlinecolors vector greater than required length!
       It is cropped to match required length')
     pp$lencustcols <- length(customlinecolors)
     pp$levelcols <- customlinecolors[1:pp$nlevels]
@@ -102,6 +52,11 @@ setplotparams <- function(plot_input,plottype,customlinecolors) {
       ifelse(pp$seltype=="CompareModels",paste0('dataset: "',pp$seldata,'"  &  target value: "',pp$selval,'"'),
         ifelse(pp$seltype=="CompareTargetValues",paste0('dataset: "',pp$seldata,'"  &  model: "',pp$selmod,'"'),
           paste0('model: "',pp$selmod,'"  &  dataset: "',pp$seldata,'"  &  target value: "',pp$selval,'"'))))
+
+  pp$multiplottitle <- paste0('4 evaluation charts',
+    ifelse(pp$seltype=="CompareDatasets",' - comparing datasets',
+      ifelse(pp$seltype=="CompareModels",' - comparing models',
+        ifelse(pp$seltype=="CompareTargetValues",' - comparing target values',''))))
 
   # GAINS
   if (pp$seltype=='CompareModels') {
@@ -241,7 +196,7 @@ cumgains <- function(plot_input=eval_t_type,customlinecolors=NA) {
     ggplot2::theme(plot.title = ggplot2::element_text(size = 14,hjust = 0.5),
                    plot.subtitle = ggplot2::element_text(size = 10,hjust = 0.5,face="italic")) +
     ggplot2::theme(legend.title = ggplot2::element_blank() ,
-      legend.position = c(1-0.15*pp$gainslegendcolumns, (pp$ngainslevels/pp$gainslegendcolumns)/10),
+      legend.position=c(0.975,0.025),legend.justification=c(1, 0),
       legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("lightgray",0.2), size = 0),
       panel.grid.minor.x = ggplot2::element_blank(),
       panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
@@ -327,14 +282,14 @@ lift <- function(plot_input=eval_t_type,customlinecolors=NA) {
     ggplot2::scale_size_manual(values=pp$liftlinesizes)+
     ggplot2::scale_alpha_manual(values=pp$liftalphas)+
     ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10,expand = c(0, 0.02)) +
-    ggplot2::scale_y_continuous(name="cumulative lift" ,expand = c(0, 0.02)) +
+    ggplot2::scale_y_continuous(name="cumulative lift" ,labels = scales::percent,expand = c(0, 0.02)) +
     ggplot2::expand_limits(y=c(0,max(2,max(plot_input$cumlift,na.rm = T)))) +
     ggplot2::labs(title=pp$plottitle,subtitle=pp$plotsubtitle) +
     ggplot2::theme_minimal() +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 14,hjust = 0.5),
       plot.subtitle = ggplot2::element_text(size = 10,hjust = 0.5,face="italic")) +
     ggplot2::theme(legend.title = ggplot2::element_blank() ,
-      legend.position = c(1-0.15*pp$liftlegendcolumns, 1-(pp$nliftlevels/pp$liftlegendcolumns)/10),
+      legend.position=c(0.975,0.975),legend.justification=c(1, 1),
       legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("lightgray",0.2), size = 0),
       panel.grid.minor.x = ggplot2::element_blank(),
       panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
@@ -437,7 +392,7 @@ response <- function(plot_input=eval_t_type,customlinecolors=NA) {
     ggplot2::theme(plot.title = ggplot2::element_text(size = 14,hjust = 0.5),
       plot.subtitle = ggplot2::element_text(size = 10,hjust = 0.5,face="italic")) +
     ggplot2::theme(legend.title = ggplot2::element_blank() ,
-      legend.position = c(1-0.15*pp$resplegendcolumns, 1-(pp$nresplevels/pp$resplegendcolumns)/10),
+      legend.position=c(0.975,0.975),legend.justification=c(1, 1),
       legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("lightgray",0.2), size = 0),
       panel.grid.minor.x = ggplot2::element_blank(),
       panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
@@ -540,7 +495,7 @@ cumresponse <- function(plot_input=eval_t_type,customlinecolors=NA) {
     ggplot2::theme(plot.title = ggplot2::element_text(size = 14,hjust = 0.5),
       plot.subtitle = ggplot2::element_text(size = 10,hjust = 0.5,face="italic")) +
     ggplot2::theme(legend.title = ggplot2::element_blank() ,
-      legend.position = c(1-0.15*pp$resplegendcolumns, 1-(pp$nresplevels/pp$resplegendcolumns)/10),
+      legend.position=c(0.975,0.975),legend.justification=c(1, 1),
       legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("lightgray",0.2), size = 0),
       panel.grid.minor.x = ggplot2::element_blank(),
       panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
@@ -609,5 +564,105 @@ savemodelplots <- function(plots=c("cumgains","lift","response","cumresponse"), 
     dev.off()
     print(paste0('saved ',plot,' to ',dir, "/", plot, ".png", sep = ''))
   }
+}
+
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### multiplot()                  ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+
+
+#' Create multiplot
+#'
+#'
+#' @param plotlist List of plot objects.
+#' @param file ???
+#' @param cols Integer. Number of columns
+#' @param layout ???
+#' @return Multiplot constisting of plots in \code{plotlist}.
+#' @examples
+#' add(1, 1)
+#' add(10, 10)
+#' @export
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+      ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+  if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid::grid.newpage()
+    grid::pushViewport(grid::viewport(layout = grid::grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = grid::viewport(layout.pos.row = matchidx$row,
+        layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### fourevalplots()              ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+
+
+#' Create plot with all four evaluation plots
+#'
+#'
+#' @param plotlist List of plot objects.
+#' @param file ???
+#' @param cols Integer. Number of columns
+#' @param layout ???
+#' @return Multiplot constisting of plots in \code{plotlist}.
+#' @examples
+#' add(1, 1)
+#' add(10, 10)
+#' @export
+fourevalplots <- function(plot_input=eval_t_type,customlinecolors=NA) {
+
+  pp <- setplotparams(plot_input = plot_input,plottype = "ALL",customlinecolors=customlinecolors)
+
+  # make cumgains without
+  cumgainsplot <- cumgains() + ggplot2::labs(title="Cumulative gains chart",subtitle=NA) +
+    ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),plot.subtitle = ggplot2::element_blank())
+  # make lift
+  liftplot <- lift() + ggplot2::labs(title="Lift chart",subtitle=NA) +
+    ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),plot.subtitle = ggplot2::element_blank())
+  # make response
+  responseplot <- response() + ggplot2::labs(title="Response chart",subtitle=NA) +
+    ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),plot.subtitle = ggplot2::element_blank())
+  # make gains
+  cumresponseplot <- cumresponse()+ ggplot2::labs(title="Cumulative Response chart",subtitle=NA) +
+    ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),plot.subtitle = ggplot2::element_blank())
+
+  title <- grid::textGrob(pp$multiplottitle, gp=grid::gpar(fontsize=24))
+  subtitle <- grid::textGrob(pp$plotsubtitle, gp=grid::gpar(fontsize=16,fontface="italic",col="darkgray"))
+
+  lay <- rbind(c(1,1,1,1),
+    c(2,2,2,2),
+    c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),
+    c(5,5,6,6),c(5,5,6,6),c(5,5,6,6),c(5,5,6,6),c(5,5,6,6),c(5,5,6,6),c(5,5,6,6),c(5,5,6,6),c(5,5,6,6))
+  gridExtra::grid.arrange(title,subtitle,cumgainsplot,
+    liftplot,
+    responseplot,
+    cumresponseplot, layout_matrix = lay)
 }
 

@@ -2,7 +2,7 @@
 # GENERAL CHECKS
 ###################################################################################
 
-packageVersion("mlr")
+packageVersion("gridExtra")
 devtools::load_all('C:/TEMP/modelplotr')
 library(roxygen2)
 #library(modelplotr)
@@ -64,8 +64,8 @@ dataprep_modevalplots(datasets=list("train","test"),
 input_modevalplots()
 scope_modevalplots()
 
-cumgains(customlinecolors=list("green","brown"))
-
+cumgains(customlinecolors=RColorBrewer::brewer.pal(n=8,name="Accent"))
+RColorBrewer::display.brewer.all()
 ?cumgains()
 input_modevalplots(prepared_input = eval_tot)
 #head(eval_t_tot)
@@ -79,7 +79,6 @@ scope_modevalplots(eval_type = "CompareDatasets",select_targetvalue = NA)
 ?input_modevalplots
 ?scope_modevalplots
 #head(eval_t_type)
-
 
 
 #`%>%` <- magrittr::`%>%`
@@ -96,6 +95,7 @@ response1
 cumresponse1 <- cumresponse()
 cumresponse1
 multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
+fourevalplots()
 
 # save plots
 savemodelplots(c("cumgains1","lift1","response1","cumresponse1"))
@@ -170,8 +170,8 @@ scope_modevalplots()
 
 scope_modevalplots(select_model = "random forest",select_targetvalue = "no",select_dataset = "train data")
 
-cumgains <- cumgains()
-cumgains
+cumgains <- cumgains(customlinecolors=c("green"))
+cumgains + ggplot2::ggtitle("Gains plot") + ggplot2::theme(legend.position=c(0.975,0.025),legend.justification=c(1, 0))
 lift <- lift()
 lift
 response <- response()
