@@ -69,7 +69,7 @@ cumgains()
 lift()
 response()
 cumresponse()
-multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
+fourevalplots()
 }
 \seealso{
 \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}

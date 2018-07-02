@@ -144,7 +144,7 @@ setplotparams <- function(plot_input,plottype,customlinecolors) {
 #' lift()
 #' response()
 #' cumresponse()
-#' multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
+#' fourevalplots()
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
@@ -197,7 +197,7 @@ cumgains <- function(plot_input=eval_t_type,customlinecolors=NA) {
                    plot.subtitle = ggplot2::element_text(size = 10,hjust = 0.5,face="italic")) +
     ggplot2::theme(legend.title = ggplot2::element_blank() ,
       legend.position=c(0.975,0.025),legend.justification=c(1, 0),
-      legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("lightgray",0.2), size = 0),
+      legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("white",0.2), size = 0),
       panel.grid.minor.x = ggplot2::element_blank(),
       panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
       axis.line.x=ggplot2::element_line(),
@@ -245,7 +245,7 @@ cumgains <- function(plot_input=eval_t_type,customlinecolors=NA) {
 #' lift()
 #' response()
 #' cumresponse()
-#' multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
+#' fourevalplots()
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
@@ -290,7 +290,7 @@ lift <- function(plot_input=eval_t_type,customlinecolors=NA) {
       plot.subtitle = ggplot2::element_text(size = 10,hjust = 0.5,face="italic")) +
     ggplot2::theme(legend.title = ggplot2::element_blank() ,
       legend.position=c(0.975,0.975),legend.justification=c(1, 1),
-      legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("lightgray",0.2), size = 0),
+      legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("white",0.2), size = 0),
       panel.grid.minor.x = ggplot2::element_blank(),
       panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
       axis.line.x=ggplot2::element_line(),
@@ -339,7 +339,7 @@ lift <- function(plot_input=eval_t_type,customlinecolors=NA) {
 #' lift()
 #' response()
 #' cumresponse()
-#' multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
+#' fourevalplots()
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
@@ -393,7 +393,7 @@ response <- function(plot_input=eval_t_type,customlinecolors=NA) {
       plot.subtitle = ggplot2::element_text(size = 10,hjust = 0.5,face="italic")) +
     ggplot2::theme(legend.title = ggplot2::element_blank() ,
       legend.position=c(0.975,0.975),legend.justification=c(1, 1),
-      legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("lightgray",0.2), size = 0),
+      legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("white",0.2), size = 0),
       panel.grid.minor.x = ggplot2::element_blank(),
       panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
       axis.line.x=ggplot2::element_line(),
@@ -442,7 +442,7 @@ response <- function(plot_input=eval_t_type,customlinecolors=NA) {
 #' lift()
 #' response()
 #' cumresponse()
-#' multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
+#' fourevalplots()
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
@@ -496,7 +496,7 @@ cumresponse <- function(plot_input=eval_t_type,customlinecolors=NA) {
       plot.subtitle = ggplot2::element_text(size = 10,hjust = 0.5,face="italic")) +
     ggplot2::theme(legend.title = ggplot2::element_blank() ,
       legend.position=c(0.975,0.975),legend.justification=c(1, 1),
-      legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("lightgray",0.2), size = 0),
+      legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("white",0.2), size = 0),
       panel.grid.minor.x = ggplot2::element_blank(),
       panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
       axis.line.x=ggplot2::element_line(),
@@ -545,7 +545,7 @@ cumresponse <- function(plot_input=eval_t_type,customlinecolors=NA) {
 #' lift()
 #' response()
 #' cumresponse()
-#' multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
+#' fourevalplots()
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
@@ -572,7 +572,6 @@ savemodelplots <- function(plots=c("cumgains","lift","response","cumresponse"), 
 
 
 #' Create multiplot
-#'
 #'
 #' @param plotlist List of plot objects.
 #' @param file ???
@@ -627,17 +626,44 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 #' Create plot with all four evaluation plots
 #'
 #'
-#' @param plotlist List of plot objects.
-#' @param file ???
-#' @param cols Integer. Number of columns
-#' @param layout ???
-#' @return Multiplot constisting of plots in \code{plotlist}.
+#' Generates a layout containing a number graphical elements, including title, subtitle and the four
+#' model evaluation plots: cumulative gains plot, lift plot, response plot and cumulative response plot.
+#' @param plot_input Dataframe. Dataframe needs to be created with \code{\link{scope_modevalplots}}
+#' or else meet required input format.
+#' @param customlinecolors Vector of Strings. Specifying colors for the lines in the plot.
+#' When not specified, colors from the RColorBrewer palet "Set1" are used.
+#' @return gtable, containing 6 grobs.
 #' @examples
-#' add(1, 1)
-#' add(10, 10)
+#' data(iris)
+#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
+#' train = iris[train_index,]
+#' test = iris[-train_index,]
+#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
+#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
+#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+#' #estimate models
+#' task = mlr::makeClassifTask(data = train, target = "Species")
+#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+#' rf = mlr::train(lrn, task)
+#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+#' mnl = mlr::train(lrn, task)
+#' dataprep_modevalplots(datasets=list("train","test"),
+#'                       datasetlabels = list("train data","test data"),
+#'                       models = list("rf","mnl"),
+#'                       modellabels = list("random forest","multinomial logit"),
+#'                       targetname="Species")
+#' head(eval_tot)
+#' input_modevalplots()
+#' scope_modevalplots()
+#' cumgains()
+#' lift()
+#' response()
+#' cumresponse()
+#' fourevalplots()
 #' @export
 fourevalplots <- function(plot_input=eval_t_type,customlinecolors=NA) {
 
+  customlinecolors <- customlinecolors
   pp <- setplotparams(plot_input = plot_input,plottype = "ALL",customlinecolors=customlinecolors)
 
   # make cumgains without

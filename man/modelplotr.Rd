@@ -44,6 +44,35 @@ datapreparation and plotting.
     \item{multiplot()}{Generates a canvas with all four evaluation plots combined}}
 }
 
+\examples{
+data(iris)
+train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
+train = iris[train_index,]
+test = iris[-train_index,]
+trainTask <- mlr::makeClassifTask(data = train, target = "Species")
+testTask <- mlr::makeClassifTask(data = test, target = "Species")
+mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+#estimate models
+task = mlr::makeClassifTask(data = train, target = "Species")
+lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+rf = mlr::train(lrn, task)
+lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+mnl = mlr::train(lrn, task)
+dataprep_modevalplots(datasets=list("train","test"),
+                      datasetlabels = list("train data","test data"),
+                      models = list("rf","mnl"),
+                      modellabels = list("random forest","multinomial logit"),
+                      targetname="Species")
+head(eval_tot)
+input_modevalplots()
+scope_modevalplots()
+cumgains()
+lift()
+response()
+cumresponse()
+fourevalplots()
+
+}
 \seealso{
 \code{\link{dataprep_modevalplots}} for details on the function \code{dataprep_modevalplots}
 that generates the required input.

@@ -64,7 +64,7 @@
 #' lift()
 #' response()
 #' cumresponse()
-#' multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
+#' fourevalplots()
 #' @export
 #' @importFrom magrittr %>%
 dataprep_modevalplots <- function(datasets,
@@ -239,7 +239,7 @@ dataprep_modevalplots <- function(datasets,
 #' lift()
 #' response()
 #' cumresponse()
-#' multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
+#' fourevalplots()
 #' @export
 #' @importFrom magrittr %>%
 input_modevalplots <- function(prepared_input=eval_tot){
@@ -384,7 +384,7 @@ input_modevalplots <- function(prepared_input=eval_tot){
 #' lift()
 #' response()
 #' cumresponse()
-#' multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
+#' fourevalplots()
 #' @export
 #' @importFrom magrittr %>%
 #eval_type <- CompareDatasets
