@@ -2,7 +2,7 @@
 # GENERAL CHECKS
 ###################################################################################
 
-packageVersion("gridExtra")
+packageVersion("randomForest")
 devtools::load_all('C:/TEMP/modelplotr')
 library(roxygen2)
 #library(modelplotr)
@@ -18,10 +18,15 @@ devtools::use_vignette("modelplotr")
 devtools::use_testthat()
 usethis::use_testthat()
 
+install.packages("rlang")
+# install package modelplotr from Github
+library(devtools)
+install_github("jurrr/modelplotr")
+library(modelplotr)
+
 ###################################################################################
 # PACHAGE EXAMPLE
 ###################################################################################
-
 data(iris)
 train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 train = iris[train_index,]
@@ -42,7 +47,7 @@ dataprep_modevalplots(datasets=list("train","test"),
   targetname="Species")
 head(eval_tot)
 input_modevalplots()
-scope_modevalplots()
+scope_modevalplots(eval_type = "CompareDatasets")
 cumgains()
 lift()
 response()
