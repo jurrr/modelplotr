@@ -686,6 +686,8 @@ fourevalplots <- function(plot_input=eval_t_type,customlinecolors=NA) {
     c(2,2,2,2),
     c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),
     c(5,5,6,6),c(5,5,6,6),c(5,5,6,6),c(5,5,6,6),c(5,5,6,6),c(5,5,6,6),c(5,5,6,6),c(5,5,6,6),c(5,5,6,6))
+
+
   gridExtra::grid.arrange(title,subtitle,cumgainsplot,
     liftplot,
     responseplot,

@@ -4,7 +4,7 @@
 \name{modelplotr}
 \alias{modelplotr}
 \alias{modelplotr-package}
-\title{modelplotr: A package for creating evaluation plots to WOW your business.}
+\title{modelplotr: Plots to Evaluate the Business Performance of a Predictive Model.}
 \description{
 The modelplotr package provides two categories of important functions:
 datapreparation and plotting.
@@ -13,13 +13,13 @@ datapreparation and plotting.
 
  The datapreparation functions are:
 \describe{
-  \item{dataprep_modevalplots()}{a
+  \item{\code{\link{dataprep_modevalplots}}}{a
   function that builds a dataframe object \code{'eval_tot'} that contains
   actuals and predictions on dependent variable for each dataset in datasets.}
-  \item{input_modevalplots()}{a function that creates a dataframe \code{'eval_t_tot'} with aggregated
+  \item{\code{\link{input_modevalplots}}}{a function that creates a dataframe \code{'eval_t_tot'} with aggregated
     actuals and predictions. A record in 'eval_t_tot' is unique on the combination
     of datasets-decile.}
-  \item{scope_modevalplots()}{a function that creates a dataframe \code{'eval_t_type'}  with a subset
+  \item{\code{\link{scope_modevalplots}}}{a function that creates a dataframe \code{'eval_t_type'}  with a subset
     of 'eval_t_tot', relevant to the selected scope of evaluation. }}
 }
 
@@ -27,21 +27,21 @@ datapreparation and plotting.
 
   The plotting functions are:
 \describe{
-  \item{cumgains()}{Generates the cumulative gains plot. This plot, often referred to as the gains chart,
+  \item{\code{\link{cumgains}}}{Generates the cumulative gains plot. This plot, often referred to as the gains chart,
     helps answering the question: When we apply the model and select the best X deciles,
     what percentage of the actual target class observations can we expect to target? }
-    \item{lift()}{Generates the cumulative lift plot, often referred to as lift plot or index plot,
+    \item{\code{\link{lift}}}{Generates the cumulative lift plot, often referred to as lift plot or index plot,
     helps you answer the question: When we apply the model and select the best X deciles,
     how many times better is that than using no model at all?}
-    \item{response()}{Generates the response plot. It plots the percentage of target class observations
+    \item{\code{\link{response}}}{Generates the response plot. It plots the percentage of target class observations
     per decile. It can be used to answer the following business question: When we apply
     the model and select decile X, what is the expected percentage of target class observations
     in that decile?}
-    \item{cumresponse()}{Generates the cumulative response plot. It plots the cumulative percentage of
+    \item{\code{\link{cumresponse}}}{Generates the cumulative response plot. It plots the cumulative percentage of
      target class observations up until that decile. It helps answering the question:
      When we apply the model and select up until decile X, what is the expected percentage of
      target class observations in the selection? }
-    \item{multiplot()}{Generates a canvas with all four evaluation plots combined}}
+    \item{\code{\link{fourevalplots}}}{Generates a canvas with all four evaluation plots combined}}
 }
 
 \examples{
@@ -74,15 +74,6 @@ fourevalplots()
 
 }
 \seealso{
-\code{\link{dataprep_modevalplots}} for details on the function \code{dataprep_modevalplots}
-that generates the required input.
-
-\code{\link{input_modevalplots}} for details on the function \code{input_modevalplots} that
-generates the required input.
-
-\code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
-filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
-
 \url{https://github.com/jurrr/modelplotr} for details on the package
 
 \url{https://cmotions.nl/publicaties/} for our blog post on using modelplotr

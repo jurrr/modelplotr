@@ -18,10 +18,9 @@ devtools::use_vignette("modelplotr")
 devtools::use_testthat()
 usethis::use_testthat()
 
-install.packages("rlang")
+
 # install package modelplotr from Github
-library(devtools)
-install_github("jurrr/modelplotr")
+devtools::install_github("jurrr/modelplotr")
 library(modelplotr)
 
 ###################################################################################
@@ -52,7 +51,15 @@ cumgains()
 lift()
 response()
 cumresponse()
+fourevalplots(customlinecolors = ["blue"])
+
+
+png(file="fourplots.png",width=28,height=16,units = 'cm',res=200)
+par(mar=c(1,1,1,1))
 fourevalplots()
+dev.off()
+
+
 
 ###################################################################################
 # TEST WITH IRIS
