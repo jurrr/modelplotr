@@ -13,7 +13,6 @@
 #' You can create your own dataframe containing actuals and predictions and deciles,
 #' Please do check the required input for the \code{\link{input_modevalplots}} function if you
 #' want to use that function to aggregate actuals and predictions
-
 #' @param datasets List of Strings. A list of the names of the dataframe
 #'   objects to include in model evaluation. All dataframes need to contain
 #'   target variable and feature variables.

@@ -1,7 +1,30 @@
 ###################################################################################
 # GENERAL CHECKS
 ###################################################################################
+# install.packages('devtools')
+# install.packages('roxygen2')
+# install.packages('testthat')
+# install.packages('ggplot2')
+# install.packages('gridExtra')
+# install.packages('magrittr')
+# install.packages('tidyverse')
+# install.packages('RColorBrewer')
+# install.packages('mlr')
+# install.packages('randomForest')
+# install.packages('knitr')
+# install.packages('rmarkdown')
+devtools::install_github("r-lib/devtools")
+library(devtools)
+library(roxygen2)
 
+library(grid)
+
+R.home()
+file.edit(file.path("~", ".Rprofile")) # edit .Rprofile in HOME
+
+
+
+devtools::install_github('jurrr/modelplotr')
 packageVersion("randomForest")
 devtools::load_all('C:/TEMP/modelplotr')
 library(roxygen2)
@@ -22,6 +45,9 @@ usethis::use_testthat()
 # install package modelplotr from Github
 devtools::install_github("jurrr/modelplotr")
 library(modelplotr)
+chooseCRANmirror()
+
+chooseCRANmirror(graphics=FALSE, ind=1)
 
 ###################################################################################
 # PACHAGE EXAMPLE
@@ -47,11 +73,12 @@ dataprep_modevalplots(datasets=list("train","test"),
 head(eval_tot)
 input_modevalplots()
 scope_modevalplots(eval_type = "CompareDatasets")
+scope_modevalplots()
 cumgains()
 lift()
 response()
 cumresponse()
-fourevalplots(customlinecolors = ["blue"])
+fourevalplots(customlinecolors = "blue")
 
 
 png(file="fourplots.png",width=28,height=16,units = 'cm',res=200)
@@ -239,7 +266,6 @@ codetools::findGlobals(scope_modevalplots)
 # tutorial mdl
 ###################################################################################
 # https://www.analyticsvidhya.com/blog/2016/08/practicing-machine-learning-techniques-in-r-with-mlr-package/
-install.packages("mlr")
 library(mlr)
 
 summarizeColumns(train)
