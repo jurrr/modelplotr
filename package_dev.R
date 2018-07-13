@@ -49,6 +49,8 @@ chooseCRANmirror()
 
 chooseCRANmirror(graphics=FALSE, ind=1)
 
+
+
 ###################################################################################
 # PACHAGE EXAMPLE
 ###################################################################################
@@ -65,15 +67,27 @@ lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 rf = mlr::train(lrn, task)
 lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 mnl = mlr::train(lrn, task)
+lrn = mlr::makeLearner("classif.xgboost", predict.type = "prob")
+xgb = mlr::train(lrn, task)
+lrn = mlr::makeLearner("classif.lda", predict.type = "prob")
+lda = mlr::train(lrn, task)
 dataprep_modevalplots(datasets=list("train","test"),
   datasetlabels = list("train data","test data"),
-  models = list("rf","mnl"),
-  modellabels = list("random forest","multinomial logit"),
+  models = list("rf","mnl","xgb","lda"),
+  modellabels = list("random forest","multinomial logit","xg boost","discriminant"),
   targetname="Species")
 head(eval_tot)
 input_modevalplots()
-scope_modevalplots(eval_type = "CompareDatasets")
-scope_modevalplots()
+scope_modevalplots(eval_type = "NoComparison",select_smallesttargetvalue = FALSE)
+scope_modevalplots(eval_type = "CompareModels",select_smallesttargetvalue = FALSE)
+scope_modevalplots(eval_type = "CompareDatasets",select_dataset = "train data")
+scope_modevalplots(eval_type = "CompareTargetValues",select_dataset = list("train data","test data"))
+scope_modevalplots(eval_type = "CompareTargetValues",select_targetvalue = "setosa")
+scope_modevalplots(eval_type = "CompareTargetValues", select_targetvalue = list("setosa", "virginica"))
+scope_modevalplots(eval_type = "CompareModels",select_model = list("multinomial logit", "xg boost"))
+scope_modevalplots(eval_type = "CompareModels")
+head(eval_t_type)
+
 cumgains()
 lift()
 response()
@@ -183,9 +197,16 @@ csvname = 'bank-additional/bank-additional.csv'
 temp <- tempfile()
 download.file(zipname,temp, mode="wb")
 bank <- read.table(unzip(temp,csvname),sep=";", stringsAsFactors=FALSE,header = T)
+bank <- bank[,c('duration','campaign','pdays','previous','euribor3m','y')]
 summary(bank)
 unlink(temp)
 
+data = iris
+task = mlr::makeClassifTask(data = bank, target = "y")
+availableAlgorithms = mlr::listLearners(task, check.packages = FALSE)$name
+print(paste0('Number of alorithms: ',length(availableAlgorithms)))
+print(paste0('Algorithms (first 20): ',paste(availableAlgorithms[1:20],collapse = ', '),' ,...'))
+?mlr::listLearners
 bank$y = as.factor(bank$y)
 
 
@@ -198,7 +219,49 @@ test = bank[-train_index,]
 train <- train[,c('duration','campaign','pdays','previous','euribor3m','y')]
 test <- test[,c('duration','campaign','pdays','previous','euribor3m','y')]
 
+install.packages('xgboost')
+# prepare data for training and train models
+bank$y = as.factor(bank$y)
+test_size = 0.3
+train_index =  sample(seq(1, nrow(bank)),size = (1 - test_size)*nrow(bank) ,replace = F )
+train = bank[train_index,]
+test = bank[-train_index,]
 
+# estimate models with mlr
+library(mlr)
+#models
+task = makeClassifTask(data = train, target = "y")
+lrn = makeLearner("classif.randomForest", predict.type = "prob")
+rf = train(lrn, task)
+lrn = makeLearner("classif.multinom", predict.type = "prob")
+mnl = train(lrn, task)
+lrn = makeLearner("classif.xgboost", predict.type = "prob")
+xgb = train(lrn, task)
+lrn = makeLearner("classif.lda", predict.type = "prob")
+lda = train(lrn, task)
+
+
+# estimate models with mlr
+library(mlr)
+#models
+task = makeClassifTask(data = train, target = "y")
+lrn = makeLearner("classif.randomForest", predict.type = "prob")
+rf = train(lrn, task)
+lrn = makeLearner("classif.multinom", predict.type = "prob")
+mnl = train(lrn, task)
+lrn = makeLearner("classif.xgboost", predict.type = "prob")
+xgb = train(lrn, task)
+lrn = makeLearner("classif.lda", predict.type = "prob")
+lda = train(lrn, task)
+
+# apply modelplotr
+library(modelplotr)
+dataprep_modevalplots(datasets=list("train","test"),
+  datasetlabels = list("train data","test data"),
+  models = list("rf","mnl","xgb","lda"),
+  modellabels = list("random forest","multinomial logit","XGBoost","Discriminant"),
+  targetname="y")
+head(eval_tot)
 
 # estimate models with mlr
 # this line is needed when usin mlr without loading it (mlr::)
@@ -223,6 +286,17 @@ dataprep_modevalplots(datasets=list("train","test"),
 head(eval_tot)
 tail(eval_tot)
 dim(eval_tot)
+
+# apply modelplotr
+library(modelplotr)
+dataprep_modevalplots(datasets=list("train","test"),
+  datasetlabels = list("train data","test data"),
+  models = list("rf","mnl","xgb","lda"),
+  modellabels = list("random forest","multinomial logit","XGBoost","Discriminant"),
+  targetname="y")
+head(eval_tot)
+input_modevalplots()
+scope_modevalplots()
 
 input_modevalplots()
 tail(eval_t_tot)
