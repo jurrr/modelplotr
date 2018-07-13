@@ -54,57 +54,14 @@ chooseCRANmirror(graphics=FALSE, ind=1)
 ###################################################################################
 # PACHAGE EXAMPLE
 ###################################################################################
-data(iris)
-train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-train = iris[train_index,]
-test = iris[-train_index,]
-trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-testTask <- mlr::makeClassifTask(data = test, target = "Species")
-mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#estimate models
-task = mlr::makeClassifTask(data = train, target = "Species")
-lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
-rf = mlr::train(lrn, task)
-lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
-mnl = mlr::train(lrn, task)
-lrn = mlr::makeLearner("classif.xgboost", predict.type = "prob")
-xgb = mlr::train(lrn, task)
-lrn = mlr::makeLearner("classif.lda", predict.type = "prob")
-lda = mlr::train(lrn, task)
-dataprep_modevalplots(datasets=list("train","test"),
-  datasetlabels = list("train data","test data"),
-  models = list("rf","mnl","xgb","lda"),
-  modellabels = list("random forest","multinomial logit","xg boost","discriminant"),
-  targetname="Species")
-head(eval_tot)
-input_modevalplots()
-scope_modevalplots(eval_type = "NoComparison",select_smallesttargetvalue = FALSE)
-scope_modevalplots(eval_type = "CompareModels",select_smallesttargetvalue = FALSE)
-scope_modevalplots(eval_type = "CompareDatasets",select_dataset = "train data")
-scope_modevalplots(eval_type = "CompareTargetValues",select_dataset = list("train data","test data"))
-scope_modevalplots(eval_type = "CompareTargetValues",select_targetvalue = "setosa")
-scope_modevalplots(eval_type = "CompareTargetValues", select_targetvalue = list("setosa", "virginica"))
-scope_modevalplots(eval_type = "CompareModels",select_model = list("multinomial logit", "xg boost"))
-scope_modevalplots(eval_type = "CompareModels")
-head(eval_t_type)
-
-cumgains()
-lift()
-response()
-cumresponse()
-fourevalplots(customlinecolors = "blue")
-
-
-png(file="fourplots.png",width=28,height=16,units = 'cm',res=200)
-par(mar=c(1,1,1,1))
-fourevalplots()
-dev.off()
 
 
 
 ###################################################################################
 # TEST WITH IRIS
 ###################################################################################
+
+library(modelplotr)
 
 # prepare iris dataset
 data(iris)
@@ -147,9 +104,7 @@ dataprep_modevalplots(datasets=list("train","test"),
 input_modevalplots()
 scope_modevalplots()
 
-cumgains(customlinecolors=RColorBrewer::brewer.pal(n=8,name="Accent"))
-RColorBrewer::display.brewer.all()
-?cumgains()
+cumgains(highlight_decile = 5)
 input_modevalplots(prepared_input = eval_tot)
 #head(eval_t_tot)
 
@@ -158,12 +113,26 @@ scope_modevalplots(eval_type="CompareModels")
 scope_modevalplots(eval_type="CompareTargetValues")
 scope_modevalplots(eval_type="CompareDatasets",select_model = "multinomial logit")
 scope_modevalplots(eval_type = "CompareDatasets",select_targetvalue = NA)
+scope_modevalplots(eval_type = "NoComparison",select_smallesttargetvalue = FALSE)
+scope_modevalplots(eval_type = "CompareModels",select_smallesttargetvalue = FALSE)
+scope_modevalplots(eval_type = "CompareDatasets",select_dataset = "train data")
+scope_modevalplots(eval_type = "CompareTargetValues",select_dataset = list("train data","test data"))
+scope_modevalplots(eval_type = "CompareTargetValues",select_targetvalue = "setosa")
+scope_modevalplots(eval_type = "CompareTargetValues", select_targetvalue = list("setosa", "virginica"))
+scope_modevalplots(eval_type = "CompareModels",select_model = list("multinomial logit", "XGBoost"))
+scope_modevalplots(eval_type = "CompareModels")
+
+fourevalplots()
+
+cumgains() + ggplot2::geom_point()
+
 ?modelplotr
 ?dataprep_modevalplots
 ?input_modevalplots
 ?scope_modevalplots
 #head(eval_t_type)
 
+cumgains(explainAtDecile = 3)
 
 #`%>%` <- magrittr::`%>%`
 
