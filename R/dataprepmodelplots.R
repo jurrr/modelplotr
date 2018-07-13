@@ -386,8 +386,6 @@ input_modevalplots <- function(prepared_input=eval_tot){
 #' fourevalplots()
 #' @export
 #' @importFrom magrittr %>%
-#eval_type <- CompareDatasets
-#select_smallesttargetvalue <- TRUE
 scope_modevalplots <- function(prepared_input=eval_t_tot,
                                eval_type="NoComparison",
                                select_model=NA,
@@ -417,39 +415,44 @@ scope_modevalplots <- function(prepared_input=eval_t_tot,
   }
 
   # check if select_model has a valid value
-  if (!select_model %in% c(NA,as.character(unique(prepared_input$modelname)))) {
+  for (selmod in select_model) {
+    if (!selmod %in% c(NA,as.character(unique(prepared_input$modelname)))) {
     stop(paste0('invalid value for select_model
       Select ',paste(as.character(unique(prepared_input$modelname)), collapse = ', '),' or NA'))
-  }
+  }}
 
   # check if select_dataset has a valid value
-  if (!select_dataset %in% c(NA,as.character(unique(prepared_input$dataset)))) {
+  for (selds in select_dataset) {
+    if (!selds %in% c(NA,as.character(unique(prepared_input$dataset)))) {
     stop(paste0('invalid value for select_dataset
       Select ',paste(as.character(unique(prepared_input$dataset)), collapse = ', '),' or NA'))
-  }
+  }}
 
   # check if select_targetvalue has a valid value
-  if (!select_targetvalue %in% c(NA,as.character(unique(prepared_input$category)))) {
+  for (seltv in select_targetvalue) {
+    if (!seltv %in% c(NA,as.character(unique(prepared_input$category)))) {
     stop(paste0('invalid value for select_targetvalue
       Select ',paste(as.character(unique(prepared_input$category)), collapse = ', '),' or NA'))
-  }
+  }}
 
   #check if needed selections of model / dataset / targetvalues are set, else set to defaults
   # no model specified? take first model based on alphabetic name.
   models <- as.character(unique(prepared_input$modelname))
-  if (is.na(select_model)) {
-    select_model <- sort(models)[1]
+  if (is.na(as.list(select_model)[1])) {
+    if (eval_type=="CompareModels") {
+      select_model <- as.list(models)
+    } else {select_model <- sort(models)[1]}
     selmodelprint <- (paste0(select_model,' (alphabetical first)'))
-  }
-  else selmodprint <- (paste0(select_model,' (specified by user)'))
+  } else selmodprint <- (paste0(paste(select_model,collapse = ', '),' (specified by user)'))
 
   # no dataset specified? take first model based on alphabetic name.
   datasets <- as.character(unique(prepared_input$dataset))
-  if (is.na(select_dataset)) {
-    select_dataset <- sort(datasets)[1]
+  if (is.na(as.list(select_dataset)[1])) {
+    if (eval_type=="CompareDatasets") {
+      select_dataset <- sort(datasets)[1]
+    } else {select_dataset <- sort(datasets)[1]}
     seldatasetprint <- (paste0(select_dataset,' (alphabetical first)'))
-  }
-  else seldatasetprint <- (paste0(select_dataset,' (specified by user)'))
+  } else seldatasetprint <- (paste0(paste(select_dataset,collapse = ', '),' (specified by user)'))
 
   # no target value specified? take smallest targetvalue
   targetvalues <- as.character(unique(prepared_input$category))
@@ -457,39 +460,39 @@ scope_modevalplots <- function(prepared_input=eval_t_tot,
     smallest <- prepared_input%>%dplyr::select(category,postot)%>%
       dplyr::group_by(category)%>%dplyr::summarize(n=min(postot,na.rm = T))%>%
       dplyr::arrange(n)%>%dplyr::top_n(n=1, -n)%>%dplyr::select(category)%>%as.character()
-  if (is.na(select_targetvalue)){
+  if (is.na(as.list(select_targetvalue)[1])){
     if (select_smallesttargetvalue==TRUE) {
       select_targetvalue <- smallest
       seltargetvalueprint <- (paste0(select_targetvalue,' (smallest group)'))
-    }
-    else {
-      select_targetvalue <- sort(targetvalues)[1]
+    } else {
+      if (eval_type=="CompareTargetValues") {
+        select_targetvalue <- sort(targetvalues)[1]
+      } else {select_targetvalue <- sort(targetvalues)[1]}
       seltargetvalueprint <- (paste0(select_targetvalue,' (alphabetical first)'))
     }
-  }
-  else  seltargetvalueprint <- (paste0(select_targetvalue,' (specified by user)'))
+  } else  seltargetvalueprint <- (paste0(paste(select_targetvalue,collapse = ', '),' (specified by user)'))
 
 
   #check evaluation type and print relevant processing output
     if (eval_type=="CompareDatasets") {
       eval_t_type <- prepared_input %>%
-        dplyr::filter(., modelname == select_model & category == select_targetvalue) %>%
+        dplyr::filter(., modelname %in% select_model & dataset %in% select_dataset & category %in% select_targetvalue) %>%
         dplyr::mutate(.,legend=as.factor(dataset))
-        datasets_print <- paste('"', datasets, '"', sep = "", collapse = ", ")
+        datasets_print <- paste('"', select_dataset, '"', sep = "", collapse = ", ")
         type_print <- (paste0('Datasets ',datasets_print,' compared for model "',
           select_model,'" and target value "',select_targetvalue,'".'))
     } else if (eval_type=="CompareModels") {
       eval_t_type <- prepared_input %>%
-        dplyr::filter(., dataset == select_dataset & category == select_targetvalue) %>%
+        dplyr::filter(., modelname %in% select_model & dataset %in% select_dataset & category %in% select_targetvalue) %>%
         dplyr::mutate(.,legend=as.factor(modelname))
-        models_print <- paste('"', models, '"', sep = "", collapse = ", ")
+        models_print <- paste('"', select_model, '"', sep = "", collapse = ", ")
         type_print <- (paste0('Models ',models_print,' compared for dataset "',
           select_dataset,'" and target value "',select_targetvalue,'".'))
     } else if (eval_type=="CompareTargetValues") {
       eval_t_type <- prepared_input %>%
-        dplyr::filter(., modelname == select_model & dataset == select_dataset)%>%
+        dplyr::filter(., modelname %in% select_model & dataset %in% select_dataset & category %in% select_targetvalue)%>%
         dplyr::mutate(.,legend=as.factor(category))
-        targetvalues_print <- paste('"', targetvalues, '"', sep = "", collapse = ", ")
+        targetvalues_print <- paste('"', select_targetvalue, '"', sep = "", collapse = ", ")
         type_print <- (paste0('Target values ',targetvalues_print,' compared for dataset "',
           select_dataset,'" and model "',select_model,'".'))
     } else {

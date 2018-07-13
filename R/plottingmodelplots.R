@@ -16,7 +16,7 @@ setplotparams <- function(plot_input,plottype,customlinecolors) {
   pp$selmod <- max(as.character(plot_input$modelname))
   pp$seldata <- max(as.character(plot_input$dataset))
   pp$selval <- max(as.character(plot_input$category))
-  pp$levels <- levels(plot_input$legend)
+  pp$levels <- unique(as.character(plot_input$legend))
   pp$nlevels <- length(pp$levels)
   pp$randcols <- RColorBrewer::brewer.pal(n = 8, name = "Set1")
   pp$levelcols <- pp$randcols[1:pp$nlevels]
