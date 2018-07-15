@@ -20,6 +20,7 @@ setplotparams <- function(plot_input,plottype,customlinecolors) {
   pp$nlevels <- length(pp$levels)
   pp$randcols <- RColorBrewer::brewer.pal(n = 8, name = "Set1")
   pp$levelcols <- pp$randcols[1:pp$nlevels]
+  pp$decile0 <- ifelse(pp$plottype=="Gains",1,0)
   if (length(customlinecolors)==1 & is.na(customlinecolors[1])){
     pp$levelcols <- pp$randcols[1:pp$nlevels]
   } else if(length(customlinecolors)==pp$nlevels) {
@@ -106,8 +107,15 @@ setplotparams <- function(plot_input,plottype,customlinecolors) {
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 #### annotate_plot()              ####
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-annotate_plot <- function(plot=plot,plot_input=plot_input,highlight_decile=highlight_decile){
+
+annotate_plot <- function(plot=plot,plot_input=plot_input,highlight_decile=highlight_decile,pp=pp){
   if(!is.na(highlight_decile)) {
+
+    # check if eval_tot exists, otherwise create
+    if (highlight_decile<1 | highlight_decile>10) {
+      stop("Value for highlight_decile not valid! Choose decile value to highlight in range [1:10]")
+    }
+
     plot <- plot +
       # add highlighting cicle(s) to plot at decile value
       ggplot2::geom_point(data = plot_input %>% dplyr::filter(decile==highlight_decile & refline==0),
@@ -118,19 +126,66 @@ annotate_plot <- function(plot=plot,plot_input=plot_input,highlight_decile=highl
         linetype="dotted",size=0.5,show.legend = FALSE)+
       # add line(s) from annotated point(s) to X axis
       ggplot2::geom_segment(data = plot_input %>% dplyr::filter(decile==highlight_decile & refline==0),
-        ggplot2::aes(x=decile,y=0,xend=decile,yend=plotvalue+0.05,colour=legend),
-        linetype="dotted",size=0.5,show.legend = FALSE) +
+        ggplot2::aes(x=decile,y=0,xend=decile,yend=plotvalue+0.05),colour="gray",
+        linetype="dotted",size=1,show.legend = FALSE) +
       # add value labels for annotated points to X axis
       ggplot2::coord_cartesian(clip = 'off' )+
       ggplot2::geom_label(data=plot_input %>% dplyr::filter(decile==highlight_decile & refline==0),
         ggplot2::aes(x=-Inf,y=plotvalue,label = sprintf("%1.0f%%", 100*plotvalue),color=legend),fill="white",
-        hjust = 1.1, fontface = "bold",show.legend = FALSE)+
-      # add value labels for chosen decile to X axis
-      ggplot2::geom_label(data=data.frame(decile=highlight_decile),
-        ggplot2::aes(x=decile,y=-Inf,label = highlight_decile),fill="white",color="black",
-        vjust=1.1, fontface = "bold",show.legend = FALSE)
-  }
-  return(plot)
+        hjust = 0, fontface = "bold",show.legend = FALSE) +
+      # emphasize decile for which annotation is added
+      ggplot2::theme(
+        plot.title = ggplot2::element_blank(),
+        plot.subtitle = ggplot2::element_blank(),
+        axis.text.x = ggplot2::element_text(
+          face=c(rep("plain",pp$decile0+highlight_decile-1),"bold",rep("plain",10+pp$decile0-highlight_decile-1)),
+          size=c(rep(10,pp$decile0+highlight_decile-1),12,rep(10,10+pp$decile0-highlight_decile-1))))
+
+    annovalues <- plot_input %>% dplyr::filter(decile==highlight_decile & refline==0) %>%
+      dplyr::mutate(xmin=rep(0,pp$nlevels),
+      xmax=rep(100,pp$nlevels),
+      ymin=seq(1,pp$nlevels,1),
+      ymax=seq(2,pp$nlevels+1,1),
+      gainstext = paste0("When we select ",highlight_decile*10,"% with the highest probability according to ",
+        modelname,", this selection holds ",sprintf("%1.0f%%", 100*plotvalue),
+        " of all ",category," cases in ",dataset,"."),
+      lifttext = paste0("When we select ",highlight_decile*10,"% with the highest probability according to model ",
+          modelname," in ",dataset,", this selection for ",category," cases is ",sprintf("%1.1f", plotvalue),
+          ' times better than selecting without a model.'),
+      responsetext = paste0("When we select decile ",highlight_decile," according to model ",
+          modelname," in dataset ",dataset," the % of ",category," cases in the selection is ",
+          sprintf("%1.0f%%", 100*plotvalue),"."),
+      cumresponsetext = paste0("When we select deciles 1 until ",highlight_decile," according to model ",
+        modelname," in dataset ",dataset," the % of ",category," cases in the selection is ",
+        sprintf("%1.0f%%", 100*plotvalue),".")
+      )
+
+    if(pp$plottype=="Gains") annovalues$text <- annovalues$gainstext
+    if(pp$plottype=="Lift") annovalues$text <- annovalues$lifttext
+    if(pp$plottype=="Response") annovalues$text <- annovalues$responsetext
+    if(pp$plottype=="Cumulative Response") annovalues$text <- annovalues$cumresponsetext
+
+    annotextplot <- ggplot2::ggplot(annovalues,
+      ggplot2::aes(label = text, xmin = xmin, xmax = xmax, ymin = ymin,ymax = ymax,color=legend)) +
+      ggplot2::geom_rect(fill=NA,color=NA) +
+      ggplot2::scale_color_manual(values=pp$levelcols)+
+      ggfittext::geom_fit_text(place = "center",grow = TRUE,reflow = FALSE) +
+      ggplot2::theme_minimal() +
+      ggplot2::theme(legend.position="none",
+        line =ggplot2::element_blank(),
+        title=ggplot2::element_blank(),
+        axis.text=ggplot2::element_blank())+
+      ggplot2::scale_y_reverse()
+
+    title <- grid::textGrob(pp$plottitle, gp=grid::gpar(fontsize=22))
+    subtitle <- grid::textGrob(pp$plotsubtitle, gp=grid::gpar(fontsize=14,fontface="italic",col="darkgray"))
+
+    lay <- as.matrix(c(1,2,rep(3,20),rep(4,1+pp$nlevels)))
+    plot <- gridExtra::grid.arrange(title,subtitle,plot,annotextplot, layout_matrix = lay,newpage = TRUE)
+
+    }
+
+    return(plot)
 }
 
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
@@ -235,7 +290,10 @@ cumgains <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile
       axis.line.x=ggplot2::element_line(),
       axis.line.y=ggplot2::element_line())
 
-  plot <- annotate_plot(plot=plot,plot_input = plot_input,highlight_decile=highlight_decile)
+  #annotate plot at decile value
+  plot <- annotate_plot(plot=plot,plot_input = plot_input,highlight_decile=highlight_decile,pp=pp)
+
+
   return(plot)
   }
 
@@ -338,7 +396,8 @@ lift <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=NA)
       axis.line.x=ggplot2::element_line(),
       axis.line.y=ggplot2::element_line())
 
-  plot <- annotate_plot(plot=plot,plot_input = plot_input,highlight_decile=highlight_decile)
+  #annotate plot at decile value
+  plot <- annotate_plot(plot=plot,plot_input = plot_input,highlight_decile=highlight_decile,pp=pp)
   return(plot)
 }
 
@@ -422,6 +481,7 @@ response <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile
       dplyr::distinct()
   }
 
+  #annotate plot at decile value
   plot_input <- rbind(minreflines,vallines)
   plot_input$legend <- factor(plot_input$legend,levels=pp$resplevels)
 
@@ -448,7 +508,7 @@ response <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile
       axis.line.x=ggplot2::element_line(),
       axis.line.y=ggplot2::element_line())
 
-  plot <- annotate_plot(plot=plot,plot_input = plot_input,highlight_decile=highlight_decile)
+  plot <- annotate_plot(plot=plot,plot_input = plot_input,highlight_decile=highlight_decile,pp=pp)
   return(plot)
 }
 
@@ -533,6 +593,7 @@ cumresponse <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_dec
       dplyr::distinct()
   }
 
+  #annotate plot at decile value
   plot_input <- rbind(minreflines,vallines)
   plot_input$legend <- factor(plot_input$legend,levels=pp$resplevels)
 
@@ -559,7 +620,7 @@ cumresponse <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_dec
       axis.line.x=ggplot2::element_line(),
       axis.line.y=ggplot2::element_line())
 
-  plot <- annotate_plot(plot=plot,plot_input = plot_input,highlight_decile=highlight_decile)
+  plot <- annotate_plot(plot=plot,plot_input = plot_input,highlight_decile=highlight_decile,pp=pp)
   return(plot)
 }
 

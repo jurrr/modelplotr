@@ -13,6 +13,8 @@
 # install.packages('randomForest')
 # install.packages('knitr')
 # install.packages('rmarkdown')
+# install.packages("ggfittext")
+??ggfittext
 devtools::install_github("r-lib/devtools")
 library(devtools)
 library(roxygen2)
@@ -102,9 +104,14 @@ dataprep_modevalplots(datasets=list("train","test"),
                       targetname="Species")
 #head(eval_tot)
 input_modevalplots()
-scope_modevalplots()
+scope_modevalplots(eval_type = "CompareTargetValues")
+cumgains()
+cumgains(highlight_decile = 3)
+lift()
+lift(highlight_decile = 2)
+response()
+response(highlight_decile = 2)
 
-cumgains(highlight_decile = 5)
 input_modevalplots(prepared_input = eval_tot)
 #head(eval_t_tot)
 
@@ -120,11 +127,14 @@ scope_modevalplots(eval_type = "CompareTargetValues",select_dataset = list("trai
 scope_modevalplots(eval_type = "CompareTargetValues",select_targetvalue = "setosa")
 scope_modevalplots(eval_type = "CompareTargetValues", select_targetvalue = list("setosa", "virginica"))
 scope_modevalplots(eval_type = "CompareModels",select_model = list("multinomial logit", "XGBoost"))
-scope_modevalplots(eval_type = "CompareModels")
-
+scope_modevalplots(eval_type = "CompareModels",select_dataset = "train data" )
+scope_modevalplots(eval_type = "CompareModels", select_targetvalue = list("setosa", "virginica"))
+scope_modevalplots()
 fourevalplots()
 
-cumgains() + ggplot2::geom_point()
+cumgains()
+
+cumgains(highlight_decile = 2)
 
 ?modelplotr
 ?dataprep_modevalplots
