@@ -4,13 +4,18 @@
 \alias{cumresponse}
 \title{Cumulative Respose plot}
 \usage{
-cumresponse(plot_input = eval_t_type, customlinecolors = NA)
+cumresponse(plot_input = eval_t_type, customlinecolors = NA,
+  highlight_decile = NA)
 }
 \arguments{
 \item{plot_input}{Dataframe. Dataframe needs to be created with \code{\link{scope_modevalplots}}
 or else meet required input format.}
 
 \item{customlinecolors}{Vector of Strings. Specifying colors for the lines in the plot.
+When not specified, colors from the RColorBrewer palet "Set1" are used.}
+
+\item{highlight_decile}{Integer. Specifying the decile at which the plot is annotated
+and performances are highlighted.
 When not specified, colors from the RColorBrewer palet "Set1" are used.}
 }
 \value{

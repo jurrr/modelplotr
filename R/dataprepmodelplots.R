@@ -435,43 +435,41 @@ scope_modevalplots <- function(prepared_input=eval_t_tot,
       Select ',paste(as.character(unique(prepared_input$category)), collapse = ', '),' or NA'))
   }}
 
-  #check if needed selections of model / dataset / targetvalues are set, else set to defaults
+  #check eval_type to decide: max 1 value of select_... required?
+  #then check if needed selections of model / dataset / targetvalues are set, else set to defaults
   # no model specified? take first model based on alphabetic name.
   models <- as.character(unique(prepared_input$modelname))
-  if (is.na(as.list(select_model)[1])) {
-    if (eval_type=="CompareModels") {
-      select_model <- as.list(models)
-    } else {select_model <- sort(models)[1]}
-    selmodelprint <- (paste0(select_model,' (alphabetical first)'))
-  } else selmodprint <- (paste0(paste(select_model,collapse = ', '),' (specified by user)'))
+  no_model_selected <- is.na(as.list(select_model)[1])
+  if (eval_type=="CompareModels") {
+    if (no_model_selected) select_model <- as.list(models) else select_model = select_model
+  } else {
+    if (no_model_selected) select_model <- sort(models)[1] else select_model <- select_model[1]
+  }
 
   # no dataset specified? take first model based on alphabetic name.
   datasets <- as.character(unique(prepared_input$dataset))
-  if (is.na(as.list(select_dataset)[1])) {
-    if (eval_type=="CompareDatasets") {
-      select_dataset <- sort(datasets)[1]
-    } else {select_dataset <- sort(datasets)[1]}
-    seldatasetprint <- (paste0(select_dataset,' (alphabetical first)'))
-  } else seldatasetprint <- (paste0(paste(select_dataset,collapse = ', '),' (specified by user)'))
+  no_dataset_selected <- is.na(as.list(select_dataset)[1])
+  if (eval_type=="CompareDatasets") {
+    if (no_dataset_selected) select_dataset <- as.list(datasets) else select_dataset = select_dataset
+  } else {
+    if (no_dataset_selected) select_dataset <- sort(datasets)[1] else select_dataset <- select_dataset[1]
+  }
 
   # no target value specified? take smallest targetvalue
   targetvalues <- as.character(unique(prepared_input$category))
+  no_targetvalue_selected <- is.na(as.list(select_targetvalue)[1])
   #`%>%` <- magrittr::`%>%`
-    smallest <- prepared_input%>%dplyr::select(category,postot)%>%
+  smallest <- prepared_input%>%dplyr::select(category,postot)%>%
       dplyr::group_by(category)%>%dplyr::summarize(n=min(postot,na.rm = T))%>%
       dplyr::arrange(n)%>%dplyr::top_n(n=1, -n)%>%dplyr::select(category)%>%as.character()
-  if (is.na(as.list(select_targetvalue)[1])){
-    if (select_smallesttargetvalue==TRUE) {
-      select_targetvalue <- smallest
-      seltargetvalueprint <- (paste0(select_targetvalue,' (smallest group)'))
-    } else {
-      if (eval_type=="CompareTargetValues") {
-        select_targetvalue <- sort(targetvalues)[1]
-      } else {select_targetvalue <- sort(targetvalues)[1]}
-      seltargetvalueprint <- (paste0(select_targetvalue,' (alphabetical first)'))
-    }
-  } else  seltargetvalueprint <- (paste0(paste(select_targetvalue,collapse = ', '),' (specified by user)'))
 
+  if (eval_type=="CompareTargetValues") {
+    if (no_targetvalue_selected) select_targetvalue <- as.list(targetvalues) else select_targetvalue = select_targetvalue
+  } else {
+    if (no_targetvalue_selected) {
+      if (select_smallesttargetvalue==TRUE) select_targetvalue <- smallest else select_targetvalue <- sort(targetvalues)[1]
+      } else select_targetvalue <- select_targetvalue[1]
+  }
 
   #check evaluation type and print relevant processing output
     if (eval_type=="CompareDatasets") {
@@ -509,6 +507,6 @@ scope_modevalplots <- function(prepared_input=eval_t_tot,
     }
   eval_t_type <<- cbind(eval_type=eval_type,
                         eval_t_type)
-  cat(paste0('Data preparation step 3 succeeded! Dataframe \'eval_t_type\' created.\n\n',type_print))
+  cat(paste0('Data preparation step 3 succeeded! Dataframe \'eval_t_type\' created.\n\n',type_print,'\n\n'))
 }
 

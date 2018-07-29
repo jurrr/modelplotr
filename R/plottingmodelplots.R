@@ -20,6 +20,7 @@ setplotparams <- function(plot_input,plottype,customlinecolors) {
   pp$nlevels <- length(pp$levels)
   pp$randcols <- RColorBrewer::brewer.pal(n = 8, name = "Set1")
   pp$levelcols <- pp$randcols[1:pp$nlevels]
+  pp$decile0 <- ifelse(pp$plottype=="Gains",1,0)
   if (length(customlinecolors)==1 & is.na(customlinecolors[1])){
     pp$levelcols <- pp$randcols[1:pp$nlevels]
   } else if(length(customlinecolors)==pp$nlevels) {
@@ -103,6 +104,89 @@ setplotparams <- function(plot_input,plottype,customlinecolors) {
   return(pp)
 }
 
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### annotate_plot()              ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+
+annotate_plot <- function(plot=plot,plot_input=plot_input,highlight_decile=highlight_decile,pp=pp){
+  if(!is.na(highlight_decile)) {
+
+    # check if eval_tot exists, otherwise create
+    if (highlight_decile<1 | highlight_decile>10) {
+      stop("Value for highlight_decile not valid! Choose decile value to highlight in range [1:10]")
+    }
+
+    plot <- plot +
+      # add highlighting cicle(s) to plot at decile value
+      ggplot2::geom_point(data = plot_input %>% dplyr::filter(decile==highlight_decile & refline==0),
+        ggplot2::aes(x=decile,y=plotvalue,color=legend),shape=1,size=5,show.legend = FALSE)+
+      # add line(s) from annotated point(s) to Y axis
+      ggplot2::geom_segment(data = plot_input %>% dplyr::filter(decile==highlight_decile & refline==0),
+        ggplot2::aes(x=-Inf,y=plotvalue,xend=decile+0.5,yend=plotvalue,colour=legend),
+        linetype="dotted",size=0.5,show.legend = FALSE)+
+      # add line(s) from annotated point(s) to X axis
+      ggplot2::geom_segment(data = plot_input %>% dplyr::filter(decile==highlight_decile & refline==0),
+        ggplot2::aes(x=decile,y=0,xend=decile,yend=plotvalue+0.05),colour="gray",
+        linetype="dotted",size=1,show.legend = FALSE) +
+      # add value labels for annotated points to X axis
+      ggplot2::coord_cartesian(clip = 'off' )+
+      ggplot2::geom_label(data=plot_input %>% dplyr::filter(decile==highlight_decile & refline==0),
+        ggplot2::aes(x=-Inf,y=plotvalue,label = sprintf("%1.0f%%", 100*plotvalue),color=legend),fill="white",
+        hjust = 0, fontface = "bold",show.legend = FALSE) +
+      # emphasize decile for which annotation is added
+      ggplot2::theme(
+        plot.title = ggplot2::element_blank(),
+        plot.subtitle = ggplot2::element_blank(),
+        axis.text.x = ggplot2::element_text(
+          face=c(rep("plain",pp$decile0+highlight_decile-1),"bold",rep("plain",10+pp$decile0-highlight_decile-1)),
+          size=c(rep(10,pp$decile0+highlight_decile-1),12,rep(10,10+pp$decile0-highlight_decile-1))))
+
+    annovalues <- plot_input %>% dplyr::filter(decile==highlight_decile & refline==0) %>%
+      dplyr::mutate(xmin=rep(0,pp$nlevels),
+      xmax=rep(100,pp$nlevels),
+      ymin=seq(1,pp$nlevels,1),
+      ymax=seq(2,pp$nlevels+1,1),
+      gainstext = paste0("When we select ",highlight_decile*10,"% with the highest probability according to ",
+        modelname,", this selection holds ",sprintf("%1.0f%%", 100*plotvalue),
+        " of all ",category," cases in ",dataset,"."),
+      lifttext = paste0("When we select ",highlight_decile*10,"% with the highest probability according to model ",
+          modelname," in ",dataset,", this selection for ",category," cases is ",sprintf("%1.1f", plotvalue),
+          ' times better than selecting without a model.'),
+      responsetext = paste0("When we select decile ",highlight_decile," according to model ",
+          modelname," in dataset ",dataset," the % of ",category," cases in the selection is ",
+          sprintf("%1.0f%%", 100*plotvalue),"."),
+      cumresponsetext = paste0("When we select deciles 1 until ",highlight_decile," according to model ",
+        modelname," in dataset ",dataset," the % of ",category," cases in the selection is ",
+        sprintf("%1.0f%%", 100*plotvalue),".")
+      )
+
+    if(pp$plottype=="Gains") annovalues$text <- annovalues$gainstext
+    if(pp$plottype=="Lift") annovalues$text <- annovalues$lifttext
+    if(pp$plottype=="Response") annovalues$text <- annovalues$responsetext
+    if(pp$plottype=="Cumulative Response") annovalues$text <- annovalues$cumresponsetext
+
+    annotextplot <- ggplot2::ggplot(annovalues,
+      ggplot2::aes(label = text, xmin = xmin, xmax = xmax, ymin = ymin,ymax = ymax,color=legend)) +
+      ggplot2::geom_rect(fill=NA,color=NA) +
+      ggplot2::scale_color_manual(values=pp$levelcols)+
+      ggfittext::geom_fit_text(place = "center",grow = TRUE,reflow = FALSE) +
+      ggplot2::theme_minimal() +
+      ggplot2::theme(legend.position="none",
+        line =ggplot2::element_blank(),
+        title=ggplot2::element_blank(),
+        axis.text=ggplot2::element_blank())+
+      ggplot2::scale_y_reverse()
+
+    title <- grid::textGrob(pp$plottitle, gp=grid::gpar(fontsize=22))
+    subtitle <- grid::textGrob(pp$plotsubtitle, gp=grid::gpar(fontsize=14,fontface="italic",col="darkgray"))
+
+    lay <- as.matrix(c(1,2,rep(3,20),rep(4,1+pp$nlevels)))
+    plot <- gridExtra::grid.arrange(title,subtitle,plot,annotextplot, layout_matrix = lay,newpage = TRUE)
+
+    }
+
+    return(plot)
+}
 
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 #### cumgains()                   ####
@@ -117,6 +201,8 @@ setplotparams <- function(plot_input,plottype,customlinecolors) {
 #' or else meet required input format.
 #' @param customlinecolors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
+#' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
+#' and performances are highlighted.
 #' @return ggplot object. Cumulative gains plot.
 #' @examples
 #' data(iris)
@@ -156,35 +242,36 @@ setplotparams <- function(plot_input,plottype,customlinecolors) {
 #' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
 #' @seealso \url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
-cumgains <- function(plot_input=eval_t_type,customlinecolors=NA) {
+cumgains <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=NA) {
 
   customlinecolors <- customlinecolors
+  highlight_decile <- highlight_decile
 
   pp <- setplotparams(plot_input = plot_input,plottype = "Gains",customlinecolors=customlinecolors)
 
   # rearrange plot_input
-  vallines <- plot_input %>% dplyr::select(eval_type:decile,cumgain,legend)
+  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::select(eval_type:decile,plotvalue=cumgain,legend,refline)
   if (pp$seltype=="CompareModels") {
     optreflines <- plot_input %>%
-      dplyr::mutate(legend=paste0('optimal gains (',dataset,')'),modelname='',cumgain=gain_opt) %>%
-      dplyr::select(eval_type:decile,cumgain,legend) %>%
+      dplyr::mutate(legend=paste0('optimal gains (',dataset,')'),modelname='',plotvalue=gain_opt,refline=1) %>%
+      dplyr::select(eval_type:decile,plotvalue,legend,refline) %>%
       dplyr::distinct()
   } else {
     optreflines <- plot_input%>%
-      dplyr::mutate(legend=paste0('optimal gains (',legend,')'),cumgain=gain_opt) %>%
-      dplyr::select(eval_type:decile,cumgain,legend)
+      dplyr::mutate(legend=paste0('optimal gains (',legend,')'),plotvalue=gain_opt,refline=1) %>%
+      dplyr::select(eval_type:decile,plotvalue,legend,refline)
   }
   minrefline <- plot_input %>%
-    dplyr::mutate(legend=paste0('minimal gains'),modelname='',dataset='',category='',cumgain=gain_ref) %>%
-    dplyr::select(eval_type:decile,cumgain,legend)%>%
+    dplyr::mutate(legend=paste0('minimal gains'),modelname='',dataset='',category='',plotvalue=gain_ref,refline=1) %>%
+    dplyr::select(eval_type:decile,plotvalue,legend,refline)%>%
     dplyr::distinct()
   plot_input <- rbind(minrefline,optreflines,vallines)
   plot_input$legend <- factor(plot_input$legend,levels=pp$gainslevels)
 
   #make plot
-  plot_input %>%
+  plot <- plot_input %>%
     ggplot2::ggplot() +
-    ggplot2::geom_line(ggplot2::aes(x=decile,y=cumgain, colour=legend,linetype=legend,size=legend,alpha=legend)) +
+    ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
     ggplot2::scale_linetype_manual(values=pp$gainslinetypes,guide=ggplot2::guide_legend(ncol=pp$gainslegendcolumns))+
     ggplot2::scale_color_manual(values=pp$gainslinecols)+
     ggplot2::scale_size_manual(values=pp$gainslinesizes)+
@@ -202,7 +289,16 @@ cumgains <- function(plot_input=eval_t_type,customlinecolors=NA) {
       panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
       axis.line.x=ggplot2::element_line(),
       axis.line.y=ggplot2::element_line())
+
+  #annotate plot at decile value
+  plot <- annotate_plot(plot=plot,plot_input = plot_input,highlight_decile=highlight_decile,pp=pp)
+
+
+  return(plot)
   }
+
+
+
 
 
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
@@ -218,6 +314,8 @@ cumgains <- function(plot_input=eval_t_type,customlinecolors=NA) {
 #' or else meet required input format.
 #' @param customlinecolors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
+#' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
+#' and performances are highlighted.
 #' @return ggplot object. Lift plot.
 #' @examples
 #' data(iris)
@@ -257,33 +355,35 @@ cumgains <- function(plot_input=eval_t_type,customlinecolors=NA) {
 #' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
 #' @seealso \url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
-lift <- function(plot_input=eval_t_type,customlinecolors=NA) {
+lift <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=NA) {
 
   customlinecolors <- customlinecolors
+  highlight_decile <- highlight_decile
 
   pp <- setplotparams(plot_input = plot_input,plottype = "Lift",customlinecolors=customlinecolors)
 
   # rearrange plot_input
-  vallines <- plot_input %>% dplyr::filter(decile>0) %>% dplyr::select(eval_type:decile,cumlift,legend)
+  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(decile>0) %>%
+    dplyr::select(eval_type:decile,plotvalue=cumlift,legend,refline)
   minrefline <- plot_input %>% dplyr::filter(decile>0) %>%
-    dplyr::mutate(legend=pp$liftreflabel,modelname='',dataset='',category='',cumlift=cumlift_ref) %>%
-    dplyr::select(eval_type:decile,cumlift,legend)%>%
+    dplyr::mutate(legend=pp$liftreflabel,modelname='',dataset='',category='',plotvalue=cumlift_ref,refline=1) %>%
+    dplyr::select(eval_type:decile,plotvalue,legend,refline)%>%
     dplyr::distinct()
   plot_input <- rbind(minrefline,vallines)
   plot_input$legend <- factor(plot_input$legend,levels=pp$liftlevels)
 
 
   #make plot
-  plot_input %>%
+  plot <- plot_input %>%
     ggplot2::ggplot() +
-    ggplot2::geom_line(ggplot2::aes(x=decile,y=cumlift, colour=legend,linetype=legend,size=legend,alpha=legend)) +
+    ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
     ggplot2::scale_linetype_manual(values=pp$liftlinetypes,guide=ggplot2::guide_legend(ncol=pp$liftlegendcolumns))+
     ggplot2::scale_color_manual(values=pp$liftlinecols)+
     ggplot2::scale_size_manual(values=pp$liftlinesizes)+
     ggplot2::scale_alpha_manual(values=pp$liftalphas)+
     ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10,expand = c(0, 0.02)) +
     ggplot2::scale_y_continuous(name="cumulative lift" ,labels = scales::percent,expand = c(0, 0.02)) +
-    ggplot2::expand_limits(y=c(0,max(2,max(plot_input$cumlift,na.rm = T)))) +
+    ggplot2::expand_limits(y=c(0,max(2,max(plot_input$plotvalue,na.rm = T)))) +
     ggplot2::labs(title=pp$plottitle,subtitle=pp$plotsubtitle) +
     ggplot2::theme_minimal() +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 14,hjust = 0.5),
@@ -295,6 +395,10 @@ lift <- function(plot_input=eval_t_type,customlinecolors=NA) {
       panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
       axis.line.x=ggplot2::element_line(),
       axis.line.y=ggplot2::element_line())
+
+  #annotate plot at decile value
+  plot <- annotate_plot(plot=plot,plot_input = plot_input,highlight_decile=highlight_decile,pp=pp)
+  return(plot)
 }
 
 
@@ -312,6 +416,8 @@ lift <- function(plot_input=eval_t_type,customlinecolors=NA) {
 #' or else meet required input format.
 #' @param customlinecolors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
+#' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
+#' and performances are highlighted.
 #' @return ggplot object. Response plot.
 #' @examples
 #' data(iris)
@@ -351,35 +457,38 @@ lift <- function(plot_input=eval_t_type,customlinecolors=NA) {
 #' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
 #' @seealso \url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
-response <- function(plot_input=eval_t_type,customlinecolors=NA) {
+response <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=NA) {
 
   customlinecolors <- customlinecolors
+  highlight_decile <- highlight_decile
 
   pp <- setplotparams(plot_input = plot_input,plottype = "Response",customlinecolors=customlinecolors)
 
   # rearrange plot_input
-  vallines <- plot_input %>% dplyr::filter(decile>0) %>% dplyr::select(eval_type:decile,response=pct,legend)
+  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(decile>0) %>%
+    dplyr::select(eval_type:decile,plotvalue=pct,legend,refline)
   if (pp$seltype=="CompareModels") {
     minreflines <- plot_input %>%
       dplyr::filter(decile>0) %>%
-      dplyr::mutate(legend=paste0('overall response (',dataset,')'),modelname='',response=pcttot) %>%
-      dplyr::select(eval_type:decile,response,legend) %>%
+      dplyr::mutate(legend=paste0('overall response (',dataset,')'),modelname='',plotvalue=pcttot,refline=1) %>%
+      dplyr::select(eval_type:decile,plotvalue,legend,refline) %>%
       dplyr::distinct()
   } else {
     minreflines <- plot_input%>%
       dplyr::filter(decile>0) %>%
-      dplyr::mutate(legend=paste0('overall response (',legend,')'),response=pcttot) %>%
-      dplyr::select(eval_type:decile,response,legend) %>%
+      dplyr::mutate(legend=paste0('overall response (',legend,')'),plotvalue=pcttot,refline=1) %>%
+      dplyr::select(eval_type:decile,plotvalue,legend,refline) %>%
       dplyr::distinct()
   }
 
+  #annotate plot at decile value
   plot_input <- rbind(minreflines,vallines)
   plot_input$legend <- factor(plot_input$legend,levels=pp$resplevels)
 
   #make plot
-  plot_input %>%
+  plot <- plot_input %>%
     ggplot2::ggplot() +
-    ggplot2::geom_line(ggplot2::aes(x=decile,y=response, colour=legend,linetype=legend,size=legend,alpha=legend)) +
+    ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
     ggplot2::scale_linetype_manual(values=pp$resplinetypes,guide=ggplot2::guide_legend(ncol=pp$resplegendcolumns))+
     ggplot2::scale_color_manual(values=pp$resplinecols)+
     ggplot2::scale_size_manual(values=pp$resplinesizes)+
@@ -398,6 +507,9 @@ response <- function(plot_input=eval_t_type,customlinecolors=NA) {
       panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
       axis.line.x=ggplot2::element_line(),
       axis.line.y=ggplot2::element_line())
+
+  plot <- annotate_plot(plot=plot,plot_input = plot_input,highlight_decile=highlight_decile,pp=pp)
+  return(plot)
 }
 
 
@@ -414,6 +526,9 @@ response <- function(plot_input=eval_t_type,customlinecolors=NA) {
 #' @param plot_input Dataframe. Dataframe needs to be created with \code{\link{scope_modevalplots}}
 #' or else meet required input format.
 #' @param customlinecolors Vector of Strings. Specifying colors for the lines in the plot.
+#' When not specified, colors from the RColorBrewer palet "Set1" are used.
+#' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
+#' and performances are highlighted.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
 #' @return ggplot object. Cumulative Response plot.
 #' @examples
@@ -454,35 +569,38 @@ response <- function(plot_input=eval_t_type,customlinecolors=NA) {
 #' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
 #' @seealso \url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
-cumresponse <- function(plot_input=eval_t_type,customlinecolors=NA) {
+cumresponse <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=NA) {
 
   customlinecolors <- customlinecolors
+  highlight_decile <- highlight_decile
 
   pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative Response",customlinecolors=customlinecolors)
   #plot_input = eval_t_type
   # rearrange plot_input
-  vallines <- plot_input %>% dplyr::filter(decile>0) %>% dplyr::select(eval_type:decile,cumresponse=cumpct,legend)
+  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(decile>0) %>%
+    dplyr::select(eval_type:decile,plotvalue=cumpct,legend,refline)
   if (pp$seltype=="CompareModels") {
     minreflines <- plot_input %>%
       dplyr::filter(decile>0) %>%
-      dplyr::mutate(legend=paste0('overall response (',dataset,')'),modelname='',cumresponse=pcttot) %>%
-      dplyr::select(eval_type:decile,cumresponse,legend) %>%
+      dplyr::mutate(legend=paste0('overall response (',dataset,')'),modelname='',plotvalue=pcttot,refline=1) %>%
+      dplyr::select(eval_type:decile,plotvalue,legend,refline) %>%
       dplyr::distinct()
   } else {
     minreflines <- plot_input %>%
       dplyr::filter(decile>0) %>%
-      dplyr::mutate(legend=paste0('overall response (',legend,')'),cumresponse=pcttot) %>%
-      dplyr::select(eval_type:decile,cumresponse,legend) %>%
+      dplyr::mutate(legend=paste0('overall response (',legend,')'),plotvalue=pcttot,refline=1) %>%
+      dplyr::select(eval_type:decile,plotvalue,legend,refline) %>%
       dplyr::distinct()
   }
 
+  #annotate plot at decile value
   plot_input <- rbind(minreflines,vallines)
   plot_input$legend <- factor(plot_input$legend,levels=pp$resplevels)
 
   #make plot
-  plot_input %>%
+  plot <- plot_input %>%
     ggplot2::ggplot() +
-    ggplot2::geom_line(ggplot2::aes(x=decile,y=cumresponse, colour=legend,linetype=legend,size=legend,alpha=legend)) +
+    ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
     ggplot2::scale_linetype_manual(values=pp$resplinetypes,guide=ggplot2::guide_legend(ncol=pp$resplegendcolumns))+
     ggplot2::scale_color_manual(values=pp$resplinecols)+
     ggplot2::scale_size_manual(values=pp$resplinesizes)+
@@ -502,6 +620,8 @@ cumresponse <- function(plot_input=eval_t_type,customlinecolors=NA) {
       axis.line.x=ggplot2::element_line(),
       axis.line.y=ggplot2::element_line())
 
+  plot <- annotate_plot(plot=plot,plot_input = plot_input,highlight_decile=highlight_decile,pp=pp)
+  return(plot)
 }
 
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
