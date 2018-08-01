@@ -1,13 +1,13 @@
 Package: modelplotr
 Type: Package
-Title: Plots to Evaluate the Business Performance of a Predictive Model
+Title: Plots to Evaluate the Business Performance of Predictive Models
 Version: 0.1
 Authors@R: as.person(c(
     "Jurriaan Nagelkerke <jurriaan.nagelkerke@gmail.com> [aut, cre]", 
     "Pieter Marcus <pieter.marcus@persgroep.net> [aut]"))
 URL: https://github.com/jurrr/modelplotr
 BugReports: https://github.com/jurrr/modelplotr/issues
-Description: Plots to evaluate the business performance of a predictive model in R.
+Description: Plots to evaluate the business performance of predictive models in R.
     A number of widely used plots to assess the quality of a predictive model from 
     a business perspective can easily be created.Using these plots, it can be shown
     how implementation of the model will impact business targets like response on a

@@ -44,6 +44,11 @@ want to use that function to aggregate actuals and predictions
 
 \examples{
 data(iris)
+# add some noise to iris to prevent perfect models
+addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
+iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
+iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
+iris <- rbind(iris,iris_addnoise)
 train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 train = iris[train_index,]
 test = iris[-train_index,]
@@ -65,7 +70,7 @@ head(eval_tot)
 input_modevalplots()
 scope_modevalplots()
 cumgains()
-lift()
+cumlift()
 response()
 cumresponse()
 fourevalplots()
@@ -79,7 +84,7 @@ aggregates the output to the input for the plots.
 \code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
 filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
 
-\url{https://github.com/jurrr/modelplotr} for details on the package
+\url{https://github.com/modelplot/modelplotr} for details on the package
 
-\url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
+\url{https://modelplot.github.io/} for our blog on the value of the model plots
 }

@@ -9,21 +9,28 @@ scope_modevalplots(prepared_input = eval_t_tot, eval_type = "NoComparison",
   select_smallesttargetvalue = TRUE)
 }
 \arguments{
-\item{prepared_input}{Dataframe. Dataframe resulting from function dataprep_modevalplots() or with similar output format.}
+\item{prepared_input}{Dataframe. Dataframe resulting from function \code{\link{input_modevalplots}()} or with similar
+format. Default value is eval_t_tot, the output of \code{input_modevalplots()}. When eval_t_tot is not found, function
+\code{input_modevalplots()} is automatically called.}
 
 \item{eval_type}{String. Evaluation type of interest. Possible values:
 "CompareModels","CompareDatasets", "CompareTargetValues","NoComparison".
 Default is NA, equivalent to "NoComparison".}
 
-\item{select_model}{String. Selected model when eval_type is CompareDatasets or CompareTargetValues or NoComparison.
-Equivalent to model descriptions as specified in modellabels (or models when modellabels is not specified).}
+\item{select_model}{String. Selected model when eval_type is "CompareDatasets" or "CompareTargetValues" or "NoComparison".
+Needs to be identical to model descriptions as specified in modellabels (or models when modellabels is not specified).
+When eval_type is "CompareModels", select_model can be used to take a subset of available models.}
 
 \item{select_dataset}{String. Selected dataset when eval_type is CompareModels or CompareTargetValues or NoComparison.
-Equivalent to dataset descriptions as specified in datasetlabels (or datasets when datasetlabels is not specified).}
+Needs to be identical to dataset descriptions as specified in datasetlabels (or datasets when datasetlabels is not
+specified). When eval_type is "CompareDatasets", select_dataset can be used to take a subset of available datasets.}
 
-\item{select_targetvalue}{String. Selected target value when eval_type is CompareModels or CompareDatasets or NoComparison. Default is smallest value when select_smallesttargetvalue=TRUE, otherwise first alphabetical value.}
+\item{select_targetvalue}{String. Selected target value when eval_type is CompareModels or CompareDatasets or NoComparison.
+Default is smallest value when select_smallesttargetvalue=TRUE, otherwise first alphabetical value.
+When eval_type is "CompareTargetValues", select_targetvalue can be used to take a subset of available target values.}
 
-\item{select_smallesttargetvalue}{Boolean. Select the target value with the smallest number of cases in dataset as group of interest. Default is True, hence the smallest group is selected.}
+\item{select_smallesttargetvalue}{Boolean. Select the target value with the smallest number of cases in dataset as group of
+interest. Default is True, hence the target value with the least observations is selected.}
 }
 \value{
 Dataframe \code{eval_t_type} is a subset of \code{eval_t_tot}.
@@ -32,19 +39,30 @@ Dataframe \code{eval_t_type} is a subset of \code{eval_t_tot}.
 Build dataframe 'eval_t_type' with a subset of 'eval_t_tot' that meets the requested evaluation perspective.
 There are four perspectives:
 \describe{
-  \item{"NoComparison"}{(default) In this perspective, only one line is plotted in the plots.
-    Parameters \code{select_model}, \code{select_dataset} and \code{select_targetvalue} determine which group is
+  \item{"NoComparison" (default)}{In this perspective, you're interested in the performance of one model on one dataset
+    for one target class. Therefore, only one line is plotted in the plots.
+    The parameters \code{select_model}, \code{select_dataset} and \code{select_targetvalue} determine which group is
     plotted. When not specified, the first alphabetic model, the first alphabetic dataset and
     the smallest (when \code{select_smallesttargetvalue=TRUE}) or first alphabetic target value are selected }
-  \item{"CompareModels"}{Comparison between models available in eval_t_tot$modelname for selected dataset
-  (default: first alphabetic dataset) and for selected target value (default: smallest).}
-  \item{"CompareDatasets"}{Comparison between datasets available in eval_t_tot$dataset for selected model
-  (default: first alphabetic model) and for selected target value (default: smallest).}
-  \item{"CompareTargetValues"}{Comparison between target values available in eval_t_tot$category for selected model
-  (default: first alphabetic model) and for selected dataset (default: first alphabetic dataset).}}
+  \item{"CompareModels"}{In this perspective, you're interested in how well different models perform in comparison to
+    each other on the same dataset and for the same target value. This results in a comparison between models available
+    in eval_t_tot$modelname for a selected dataset (default: first alphabetic dataset) and for a selected target value
+    (default: smallest (when \code{select_smallesttargetvalue=TRUE}) or first alphabetic target value).}
+  \item{"CompareDatasets"}{In this perspective, you're interested in how well a model performs in different datasets
+  for a specific model on the same target value. This results in a comparison between datasets available in
+  eval_t_tot$dataset for a selected model (default: first alphabetic model) and for a selected target value (default:
+  smallest (when \code{select_smallesttargetvalue=TRUE}) or first alphabetic target value).}
+  \item{"CompareTargetValues"}{In this perspective, you're interested in how well a model performs for different target
+   values on a specific dataset.This resuls in a comparison between target values available in eval_t_tot$category for
+   a selected model (default: first alphabetic model) and for a selected dataset (default: first alphabetic dataset).}}
 }
 \examples{
 data(iris)
+# add some noise to iris to prevent perfect models
+addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
+iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
+iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
+iris <- rbind(iris,iris_addnoise)
 train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 train = iris[train_index,]
 test = iris[-train_index,]
@@ -66,7 +84,7 @@ head(eval_tot)
 input_modevalplots()
 scope_modevalplots()
 cumgains()
-lift()
+cumlift()
 response()
 cumresponse()
 fourevalplots()
@@ -81,7 +99,7 @@ generates the required input.
 that generates the required input.
 filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
 
-\url{https://github.com/jurrr/modelplotr} for details on the package
+\url{https://github.com/modelplot/modelplotr} for details on the package
 
-\url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
+\url{https://modelplot.github.io/} for our blog on the value of the model plots
 }

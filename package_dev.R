@@ -26,6 +26,7 @@ file.edit(file.path("~", ".Rprofile")) # edit .Rprofile in HOME
 
 
 
+RColorBrewer::display.brewer.all(n=4)
 devtools::install_github('jurrr/modelplotr')
 packageVersion("randomForest")
 devtools::load_all('C:/TEMP/modelplotr')
@@ -67,6 +68,14 @@ library(modelplotr)
 
 # prepare iris dataset
 data(iris)
+
+# add some noise to iris to prevent perfect models
+addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
+iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
+iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
+iris <- rbind(iris,iris_addnoise)
+
+
 # add some noise to iris to prevent perfect models
 
 iris_addnoise = data.frame(
@@ -107,8 +116,8 @@ input_modevalplots()
 scope_modevalplots(eval_type = "CompareTargetValues")
 cumgains()
 cumgains(highlight_decile = 3)
-lift()
-lift(highlight_decile = 2)
+cumlift()
+cumlift(highlight_decile = 2)
 response()
 response(highlight_decile = 2)
 
@@ -151,17 +160,17 @@ cumgains(explainAtDecile = 3)
 
 cumgains1 <- cumgains()
 cumgains1
-lift1 <- lift()
-lift1
+cumlift1 <- cumlift()
+cumlift1
 response1 <- response()
 response1
 cumresponse1 <- cumresponse()
 cumresponse1
-multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
+multiplot(cumgains(),cumlift(),response(),cumresponse(),cols=2)
 str(fourevalplots())
 
 # save plots
-savemodelplots(c("cumgains1","lift1","response1","cumresponse1"))
+savemodelplots(c("cumgains1","cumlift1","response1","cumresponse1"))
 
 
 
@@ -295,13 +304,13 @@ scope_modevalplots(select_model = "random forest",select_targetvalue = "no",sele
 
 cumgains <- cumgains(customlinecolors=c("green"))
 cumgains + ggplot2::ggtitle("Gains plot") + ggplot2::theme(legend.position=c(0.975,0.025),legend.justification=c(1, 0))
-lift <- lift()
-lift
+cumlift <- cumlift()
+cumlift
 response <- response()
 response
 cumresponse <- cumresponse()
 cumresponse
-multiplot(cumgains,lift,response,cumresponse,cols=2)
+multiplot(cumgains,cumlift,response,cumresponse,cols=2)
 
 cumresponse <- cumresponse()
 cumresponse
@@ -381,4 +390,8 @@ pred = predict(rf, newdata = cd_test)
 
 # Get probabilities for all classes
 head(getPredictionProbabilities(pred))
+
+
+
+??modelplotr
 

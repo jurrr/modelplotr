@@ -3,7 +3,7 @@
 }
 
 
-#' modelplotr: Plots to Evaluate the Business Performance of a Predictive Model.
+#' modelplotr: Plots to Evaluate the Business Performance of Predictive Models.
 #'
 #' The modelplotr package provides two categories of important functions:
 #' datapreparation and plotting.
@@ -28,7 +28,7 @@
 #'   \item{\code{\link{cumgains}}}{Generates the cumulative gains plot. This plot, often referred to as the gains chart,
 #'     helps answering the question: When we apply the model and select the best X deciles,
 #'     what percentage of the actual target class observations can we expect to target? }
-#'     \item{\code{\link{lift}}}{Generates the cumulative lift plot, often referred to as lift plot or index plot,
+#'     \item{\code{\link{cumlift}}}{Generates the cumulative lift plot, often referred to as lift plot or index plot,
 #'     helps you answer the question: When we apply the model and select the best X deciles,
 #'     how many times better is that than using no model at all?}
 #'     \item{\code{\link{response}}}{Generates the response plot. It plots the percentage of target class observations
@@ -41,10 +41,15 @@
 #'      target class observations in the selection? }
 #'     \item{\code{\link{fourevalplots}}}{Generates a canvas with all four evaluation plots combined}}
 #'
-#' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
-#' @seealso \url{https://cmotions.nl/publicaties/} for our blog post on using modelplotr
+#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
+#' @seealso \url{https://modelplot.github.io/} for our blog posts on using modelplotr
 #' @examples
 #' data(iris)
+#' # add some noise to iris to prevent perfect models
+#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
+#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
+#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
+#' iris <- rbind(iris,iris_addnoise)
 #' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 #' train = iris[train_index,]
 #' test = iris[-train_index,]
@@ -66,7 +71,7 @@
 #' input_modevalplots()
 #' scope_modevalplots()
 #' cumgains()
-#' lift()
+#' cumlift()
 #' response()
 #' cumresponse()
 #' fourevalplots()

@@ -195,8 +195,8 @@ annotate_plot <- function(plot=plot,plot_input=plot_input,highlight_decile=highl
 #' Cumulative gains plot
 #'
 #' Generates the cumulative gains plot. This plot, often referred to as the gains chart,
-#' helps answering the question: When we apply the model and select the best X deciles,
-#' what percentage of the actual target class observations can we expect to target?
+#' helps answering the question: \bold{\emph{When we apply the model and select the best X deciles,
+#' what percentage of the actual target class observations can we expect to target?}}
 #' @param plot_input Dataframe. Dataframe needs to be created with \code{\link{scope_modevalplots}}
 #' or else meet required input format.
 #' @param customlinecolors Vector of Strings. Specifying colors for the lines in the plot.
@@ -206,6 +206,11 @@ annotate_plot <- function(plot=plot,plot_input=plot_input,highlight_decile=highl
 #' @return ggplot object. Cumulative gains plot.
 #' @examples
 #' data(iris)
+#' # add some noise to iris to prevent perfect models
+#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
+#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
+#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
+#' iris <- rbind(iris,iris_addnoise)
 #' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 #' train = iris[train_index,]
 #' test = iris[-train_index,]
@@ -225,12 +230,10 @@ annotate_plot <- function(plot=plot,plot_input=plot_input,highlight_decile=highl
 #'                       targetname="Species")
 #' head(eval_tot)
 #' input_modevalplots()
-#' scope_modevalplots()
+#' scope_modevalplots(eval_type="CompareModels")
 #' cumgains()
-#' lift()
-#' response()
-#' cumresponse()
-#' fourevalplots()
+#' cumgains(customlinecolors=c("orange","purple"))
+#' cumgains(highlight_decile=2)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
@@ -240,8 +243,8 @@ annotate_plot <- function(plot=plot,plot_input=plot_input,highlight_decile=highl
 #' generates the required input.
 #' @seealso \code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
 #' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
-#' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
-#' @seealso \url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
+#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
+#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 cumgains <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=NA) {
 
   customlinecolors <- customlinecolors
@@ -302,7 +305,7 @@ cumgains <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile
 
 
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-#### lift()                       ####
+#### cumlift()                       ####
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
 #' Cumulative Lift plot
@@ -319,6 +322,11 @@ cumgains <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile
 #' @return ggplot object. Lift plot.
 #' @examples
 #' data(iris)
+#' # add some noise to iris to prevent perfect models
+#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
+#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
+#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
+#' iris <- rbind(iris,iris_addnoise)
 #' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 #' train = iris[train_index,]
 #' test = iris[-train_index,]
@@ -338,12 +346,10 @@ cumgains <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile
 #'                       targetname="Species")
 #' head(eval_tot)
 #' input_modevalplots()
-#' scope_modevalplots()
-#' cumgains()
-#' lift()
-#' response()
-#' cumresponse()
-#' fourevalplots()
+#' scope_modevalplots(eval_type="CompareDatasets")
+#' cumlift()
+#' cumlift(customlinecolors=c("orange","purple"))
+#' cumlift(highlight_decile=2)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
@@ -353,9 +359,9 @@ cumgains <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile
 #' generates the required input.
 #' @seealso \code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
 #' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
-#' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
-#' @seealso \url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
-lift <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=NA) {
+#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
+#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
+cumlift <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=NA) {
 
   customlinecolors <- customlinecolors
   highlight_decile <- highlight_decile
@@ -421,6 +427,11 @@ lift <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=NA)
 #' @return ggplot object. Response plot.
 #' @examples
 #' data(iris)
+#' # add some noise to iris to prevent perfect models
+#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
+#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
+#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
+#' iris <- rbind(iris,iris_addnoise)
 #' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 #' train = iris[train_index,]
 #' test = iris[-train_index,]
@@ -440,12 +451,10 @@ lift <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=NA)
 #'                       targetname="Species")
 #' head(eval_tot)
 #' input_modevalplots()
-#' scope_modevalplots()
-#' cumgains()
-#' lift()
+#' scope_modevalplots(eval_type="CompareTargetValues")
 #' response()
-#' cumresponse()
-#' fourevalplots()
+#' response(customlinecolors=RColorBrewer::brewer.pal(3,"Dark2"))
+#' response(highlight_decile=2)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
@@ -455,8 +464,8 @@ lift <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=NA)
 #' generates the required input.
 #' @seealso \code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
 #' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
-#' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
-#' @seealso \url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
+#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
+#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 response <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=NA) {
 
   customlinecolors <- customlinecolors
@@ -533,6 +542,11 @@ response <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile
 #' @return ggplot object. Cumulative Response plot.
 #' @examples
 #' data(iris)
+#' # add some noise to iris to prevent perfect models
+#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
+#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
+#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
+#' iris <- rbind(iris,iris_addnoise)
 #' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 #' train = iris[train_index,]
 #' test = iris[-train_index,]
@@ -553,11 +567,9 @@ response <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile
 #' head(eval_tot)
 #' input_modevalplots()
 #' scope_modevalplots()
-#' cumgains()
-#' lift()
-#' response()
 #' cumresponse()
-#' fourevalplots()
+#' cumresponse(customlinecolors="pink")
+#' cumresponse(highlight_decile=3)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
@@ -567,8 +579,8 @@ response <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile
 #' generates the required input.
 #' @seealso \code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
 #' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
-#' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
-#' @seealso \url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
+#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
+#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 cumresponse <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=NA) {
 
   customlinecolors <- customlinecolors
@@ -641,6 +653,11 @@ cumresponse <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_dec
 #' @return ggplot object. Cumulative Response plot.
 #' @examples
 #' data(iris)
+#' # add some noise to iris to prevent perfect models
+#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
+#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
+#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
+#' iris <- rbind(iris,iris_addnoise)
 #' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 #' train = iris[train_index,]
 #' test = iris[-train_index,]
@@ -662,7 +679,7 @@ cumresponse <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_dec
 #' input_modevalplots()
 #' scope_modevalplots()
 #' cumgains()
-#' lift()
+#' cumlift()
 #' response()
 #' cumresponse()
 #' fourevalplots()
@@ -675,65 +692,14 @@ cumresponse <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_dec
 #' generates the required input.
 #' @seealso \code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
 #' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
-#' @seealso \url{https://github.com/jurrr/modelplotr} for details on the package
-#' @seealso \url{https://cmotions.nl/publicaties/} for our blog on the value of the model plots
-savemodelplots <- function(plots=c("cumgains","lift","response","cumresponse"), dir = getwd()) {
+#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
+#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
+savemodelplots <- function(plots=c("cumgains","cumlift","response","cumresponse"), dir = getwd()) {
   for (plot in plots) {
     png(paste0(dir, "/", plot, ".png"))
     print(get(plot))
     dev.off()
     print(paste0('saved ',plot,' to ',dir, "/", plot, ".png", sep = ''))
-  }
-}
-
-##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-#### multiplot()                  ####
-##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-
-
-#' Create multiplot
-#'
-#' @param plotlist List of plot objects.
-#' @param file ???
-#' @param cols Integer. Number of columns
-#' @param layout ???
-#' @return Multiplot constisting of plots in \code{plotlist}.
-#' @examples
-#' add(1, 1)
-#' add(10, 10)
-#' @export
-multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
-
-  # Make a list from the ... arguments and plotlist
-  plots <- c(list(...), plotlist)
-
-  numPlots = length(plots)
-
-  # If layout is NULL, then use 'cols' to determine layout
-  if (is.null(layout)) {
-    # Make the panel
-    # ncol: Number of columns of plots
-    # nrow: Number of rows needed, calculated from # of cols
-    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
-      ncol = cols, nrow = ceiling(numPlots/cols))
-  }
-
-  if (numPlots==1) {
-    print(plots[[1]])
-
-  } else {
-    # Set up the page
-    grid::grid.newpage()
-    grid::pushViewport(grid::viewport(layout = grid::grid.layout(nrow(layout), ncol(layout))))
-
-    # Make each plot, in the correct location
-    for (i in 1:numPlots) {
-      # Get the i,j matrix positions of the regions that contain this subplot
-      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
-
-      print(plots[[i]], vp = grid::viewport(layout.pos.row = matchidx$row,
-        layout.pos.col = matchidx$col))
-    }
   }
 }
 
@@ -755,6 +721,11 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 #' @return gtable, containing 6 grobs.
 #' @examples
 #' data(iris)
+#' # add some noise to iris to prevent perfect models
+#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
+#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
+#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
+#' iris <- rbind(iris,iris_addnoise)
 #' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 #' train = iris[train_index,]
 #' test = iris[-train_index,]
@@ -776,7 +747,7 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 #' input_modevalplots()
 #' scope_modevalplots()
 #' cumgains()
-#' lift()
+#' cumlift()
 #' response()
 #' cumresponse()
 #' fourevalplots()
@@ -787,10 +758,10 @@ fourevalplots <- function(plot_input=eval_t_type,customlinecolors=NA) {
   pp <- setplotparams(plot_input = plot_input,plottype = "ALL",customlinecolors=customlinecolors)
 
   # make cumgains without
-  cumgainsplot <- cumgains() + ggplot2::labs(title="Cumulative gains chart",subtitle=NA) +
+  cumgainsplot <- cumgains() + ggplot2::labs(title="Cumulative Gains chart",subtitle=NA) +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),plot.subtitle = ggplot2::element_blank())
   # make lift
-  liftplot <- lift() + ggplot2::labs(title="Lift chart",subtitle=NA) +
+  cumliftplot <- cumlift() + ggplot2::labs(title="Cumulative Lift chart",subtitle=NA) +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),plot.subtitle = ggplot2::element_blank())
   # make response
   responseplot <- response() + ggplot2::labs(title="Response chart",subtitle=NA) +
@@ -809,7 +780,7 @@ fourevalplots <- function(plot_input=eval_t_type,customlinecolors=NA) {
 
 
   gridExtra::grid.arrange(title,subtitle,cumgainsplot,
-    liftplot,
+    cumliftplot,
     responseplot,
     cumresponseplot, layout_matrix = lay)
 }
