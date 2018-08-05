@@ -4,14 +4,14 @@
 \alias{savemodelplots}
 \title{Cumulative Respose plot}
 \usage{
-savemodelplots(plots = c("cumgains", "cumlift", "response", "cumresponse"),
-  dir = getwd())
+savemodelplots(plots = c("plot_cumgains", "plot_cumlift", "plot_response",
+  "plot_cumresponse"), dir = getwd())
 }
 \arguments{
-\item{plot_input}{Dataframe. Dataframe needs to be created with \code{\link{scope_modevalplots}}
+\item{plot_input}{Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
 or else meet required input format.}
 
-\item{customlinecolors}{Vector of Strings. Specifying colors for the lines in the plot.
+\item{custom_line_colors}{Vector of Strings. Specifying colors for the lines in the plot.
 When not specified, colors from the RColorBrewer palet "Set1" are used.}
 }
 \value{
@@ -42,31 +42,31 @@ lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 rf = mlr::train(lrn, task)
 lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 mnl = mlr::train(lrn, task)
-dataprep_modevalplots(datasets=list("train","test"),
-                      datasetlabels = list("train data","test data"),
+prepare_scores_and_deciles(datasets=list("train","test"),
+                      dataset_labels = list("train data","test data"),
                       models = list("rf","mnl"),
-                      modellabels = list("random forest","multinomial logit"),
-                      targetname="Species")
-head(eval_tot)
-input_modevalplots()
-scope_modevalplots()
-cumgains()
-cumlift()
-response()
-cumresponse()
-fourevalplots()
+                      model_labels = list("random forest","multinomial logit"),
+                      target_column="Species")
+head(scores_and_deciles)
+aggregate_over_deciles()
+plotting_scope()
+plot_cumgains()
+plot_cumlift()
+plot_response()
+plot_cumresponse()
+plot_all()
 }
 \seealso{
 \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
 
-\code{\link{dataprep_modevalplots}} for details on the function \code{dataprep_modevalplots}
+\code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
 that generates the required input.
 
-\code{\link{input_modevalplots}} for details on the function \code{input_modevalplots} that
+\code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
 generates the required input.
 
-\code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
-filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
+\code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
+filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
 
 \url{https://github.com/modelplot/modelplotr} for details on the package
 

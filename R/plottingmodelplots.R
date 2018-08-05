@@ -3,16 +3,16 @@
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
 
-setplotparams <- function(plot_input,plottype,customlinecolors) {
+setplotparams <- function(plot_input,plottype,custom_line_colors) {
 
-#  plot_input <- eval_t_type
+#  plot_input <- plot_input
 #  plottype <- "Lift"
-# customlinecolors <- NA
+# custom_line_colors <- NA
   pp <- list()
 
   # ALL PLOTS
   pp$plottype <- plottype
-  pp$seltype <- max(as.character(plot_input$eval_type))
+  pp$seltype <- max(as.character(plot_input$scope))
   pp$selmod <- max(as.character(plot_input$modelname))
   pp$seldata <- max(as.character(plot_input$dataset))
   pp$selval <- max(as.character(plot_input$category))
@@ -20,21 +20,21 @@ setplotparams <- function(plot_input,plottype,customlinecolors) {
   pp$nlevels <- length(pp$levels)
   pp$randcols <- RColorBrewer::brewer.pal(n = 8, name = "Set1")
   pp$levelcols <- pp$randcols[1:pp$nlevels]
-  pp$decile0 <- ifelse(pp$plottype=="Gains",1,0)
-  if (length(customlinecolors)==1 & is.na(customlinecolors[1])){
+  pp$decile0 <- ifelse(pp$plottype=="Cumulative gains",1,0)
+  if (length(custom_line_colors)==1 & is.na(custom_line_colors[1])){
     pp$levelcols <- pp$randcols[1:pp$nlevels]
-  } else if(length(customlinecolors)==pp$nlevels) {
-    pp$levelcols <- customlinecolors
-  } else if (length(customlinecolors)<pp$nlevels) {
-    cat('specified customlinecolors vector smaller than required length!
+  } else if(length(custom_line_colors)==pp$nlevels) {
+    pp$levelcols <- custom_line_colors
+  } else if (length(custom_line_colors)<pp$nlevels) {
+    cat('specified custom_line_colors vector smaller than required length!
       It is extended with extra colors to match required length')
-    pp$lencustcols <- length(customlinecolors)
-    pp$levelcols <- c(customlinecolors,pp$randcols[which(!pp$randcols %in% customlinecolors)][1:(pp$nlevels-pp$lencustcols)])
-  } else if (length(customlinecolors)>pp$nlevels) {
-    cat('specified customlinecolors vector greater than required length!
+    pp$lencustcols <- length(custom_line_colors)
+    pp$levelcols <- c(custom_line_colors,pp$randcols[which(!pp$randcols %in% custom_line_colors)][1:(pp$nlevels-pp$lencustcols)])
+  } else if (length(custom_line_colors)>pp$nlevels) {
+    cat('specified custom_line_colors vector greater than required length!
       It is cropped to match required length')
-    pp$lencustcols <- length(customlinecolors)
-    pp$levelcols <- customlinecolors[1:pp$nlevels]
+    pp$lencustcols <- length(custom_line_colors)
+    pp$levelcols <- custom_line_colors[1:pp$nlevels]
   } else {
     pp$levelcols <- pp$randcols[1:pp$nlevels]
   }
@@ -44,29 +44,28 @@ setplotparams <- function(plot_input,plottype,customlinecolors) {
   pp$linecols <- c(pp$levelcols,'gray')
   pp$linesizes <- c(rep(1,pp$nlevels),0.5)
 
-  pp$plottitle <- paste0(pp$plottype,' chart',
-    ifelse(pp$seltype=="CompareDatasets",' - comparing datasets',
-      ifelse(pp$seltype=="CompareModels",' - comparing models',
-        ifelse(pp$seltype=="CompareTargetValues",' - comparing target values',''))))
+  pp$plottitle <- pp$plottype
   pp$plotsubtitle <-
-    ifelse(pp$seltype=="CompareDatasets",paste0('model: "',pp$selmod,'"  &  target value: "' ,pp$selval,'"'),
-      ifelse(pp$seltype=="CompareModels",paste0('dataset: "',pp$seldata,'"  &  target value: "',pp$selval,'"'),
-        ifelse(pp$seltype=="CompareTargetValues",paste0('dataset: "',pp$seldata,'"  &  model: "',pp$selmod,'"'),
+    ifelse(pp$seltype=="CompareDatasets",paste0('scope: comparing datasets & model: ',
+      pp$selmod,' & target value: ' ,pp$selval),
+      ifelse(pp$seltype=="compare_models",paste0('scope: comparing datasets & dataset: ',
+        pp$seldata,' & target value: ',pp$selval),
+        ifelse(pp$seltype=="compare_targetclasses",paste0('scope: comparing target classes & dataset: "',
+          pp$seldata,'"  &  model: "',pp$selmod,'"'),
           paste0('model: "',pp$selmod,'"  &  dataset: "',pp$seldata,'"  &  target value: "',pp$selval,'"'))))
 
-  pp$multiplottitle <- paste0('4 evaluation charts',
-    ifelse(pp$seltype=="CompareDatasets",' - comparing datasets',
-      ifelse(pp$seltype=="CompareModels",' - comparing models',
-        ifelse(pp$seltype=="CompareTargetValues",' - comparing target values',''))))
+  pp$multiplottitle <- ifelse(pp$seltype=="CompareDatasets",' scope: comparing datasets',
+      ifelse(pp$seltype=="compare_models",' scope: comparing models',
+        ifelse(pp$seltype=="compare_targetclasses",' scope: comparing target classes','scope: no comparison')))
 
   # GAINS
-  if (pp$seltype=='CompareModels') {
+  if (pp$seltype=='compare_models') {
     pp$optgainsreflevels <- paste0('optimal gains (',unique(plot_input$dataset),')')
   } else {
     pp$optgainsreflevels <- paste0('optimal gains (',pp$levels,')')
   }
-  pp$noptgainsreflevels <- ifelse(pp$seltype=='CompareModels',1,pp$nlevels)
-  if (pp$seltype=='CompareModels') pp$optgainsreflevelcols <- 'gray' else pp$optgainsreflevelcols <- pp$levelcols
+  pp$noptgainsreflevels <- ifelse(pp$seltype=='compare_models',1,pp$nlevels)
+  if (pp$seltype=='compare_models') pp$optgainsreflevelcols <- 'gray' else pp$optgainsreflevelcols <- pp$levelcols
   pp$gainslevels <- c(pp$levels,'minimal gains',pp$optgainsreflevels)
   pp$ngainslevels <- length(pp$gainslevels)
   pp$gainslegendcolumns <- ifelse(pp$ngainslevels>6,2,1)
@@ -86,13 +85,13 @@ setplotparams <- function(plot_input,plottype,customlinecolors) {
   pp$liftlinesizes <- c(rep(1,pp$nlevels),0.5)
 
   # RESPONSE
-  if (pp$seltype=='CompareModels') {
+  if (pp$seltype=='compare_models') {
     pp$respreflevels <- paste0('overall response (',unique(plot_input$dataset),')')
   } else {
     pp$respreflevels <- paste0('overall response (',pp$levels,')')
   }
-  pp$nrespreflevels <- ifelse(pp$seltype=='CompareModels',1,pp$nlevels)
-  if (pp$seltype=='CompareModels') pp$respreflevelcols <- 'gray' else pp$respreflevelcols <- pp$levelcols
+  pp$nrespreflevels <- ifelse(pp$seltype=='compare_models',1,pp$nlevels)
+  if (pp$seltype=='compare_models') pp$respreflevelcols <- 'gray' else pp$respreflevelcols <- pp$levelcols
   pp$resplevels <- c(pp$levels,pp$respreflevels)
   pp$nresplevels <- length(pp$resplevels)
   pp$resplegendcolumns <- ifelse(pp$nresplevels>6,2,1)
@@ -108,10 +107,10 @@ setplotparams <- function(plot_input,plottype,customlinecolors) {
 #### annotate_plot()              ####
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
-annotate_plot <- function(plot=plot,plot_input=plot_input,highlight_decile=highlight_decile,pp=pp){
+annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,highlight_decile=highlight_decile,pp=pp){
   if(!is.na(highlight_decile)) {
 
-    # check if eval_tot exists, otherwise create
+    # check if scores_and_deciles exists, otherwise create
     if (highlight_decile<1 | highlight_decile>10) {
       stop("Value for highlight_decile not valid! Choose decile value to highlight in range [1:10]")
     }
@@ -160,10 +159,10 @@ annotate_plot <- function(plot=plot,plot_input=plot_input,highlight_decile=highl
         sprintf("%1.0f%%", 100*plotvalue),".")
       )
 
-    if(pp$plottype=="Gains") annovalues$text <- annovalues$gainstext
-    if(pp$plottype=="Lift") annovalues$text <- annovalues$lifttext
+    if(pp$plottype=="Cumulative gains") annovalues$text <- annovalues$gainstext
+    if(pp$plottype=="Cumulative lift") annovalues$text <- annovalues$lifttext
     if(pp$plottype=="Response") annovalues$text <- annovalues$responsetext
-    if(pp$plottype=="Cumulative Response") annovalues$text <- annovalues$cumresponsetext
+    if(pp$plottype=="Cumulative response") annovalues$text <- annovalues$cumresponsetext
 
     annotextplot <- ggplot2::ggplot(annovalues,
       ggplot2::aes(label = text, xmin = xmin, xmax = xmax, ymin = ymin,ymax = ymax,color=legend)) +
@@ -189,7 +188,7 @@ annotate_plot <- function(plot=plot,plot_input=plot_input,highlight_decile=highl
 }
 
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-#### cumgains()                   ####
+#### plot_cumgains()                   ####
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
 #' Cumulative gains plot
@@ -197,9 +196,9 @@ annotate_plot <- function(plot=plot,plot_input=plot_input,highlight_decile=highl
 #' Generates the cumulative gains plot. This plot, often referred to as the gains chart,
 #' helps answering the question: \bold{\emph{When we apply the model and select the best X deciles,
 #' what percentage of the actual target class observations can we expect to target?}}
-#' @param plot_input Dataframe. Dataframe needs to be created with \code{\link{scope_modevalplots}}
+#' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
 #' or else meet required input format.
-#' @param customlinecolors Vector of Strings. Specifying colors for the lines in the plot.
+#' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
 #' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
 #' and performances are highlighted.
@@ -223,56 +222,57 @@ annotate_plot <- function(plot=plot,plot_input=plot_input,highlight_decile=highl
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
-#' dataprep_modevalplots(datasets=list("train","test"),
-#'                       datasetlabels = list("train data","test data"),
+#' prepare_scores_and_deciles(datasets=list("train","test"),
+#'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
-#'                       modellabels = list("random forest","multinomial logit"),
-#'                       targetname="Species")
-#' head(eval_tot)
-#' input_modevalplots()
-#' scope_modevalplots(eval_type="CompareModels")
-#' cumgains()
-#' cumgains(customlinecolors=c("orange","purple"))
-#' cumgains(highlight_decile=2)
+#'                       model_labels = list("random forest","multinomial logit"),
+#'                       target_column="Species")
+#' head(scores_and_deciles)
+#' aggregate_over_deciles()
+#' plotting_scope(scope="compare_models")
+#' plot_cumgains()
+#' plot_cumgains(custom_line_colors=c("orange","purple"))
+#' plot_cumgains(highlight_decile=2)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
-#' @seealso \code{\link{dataprep_modevalplots}} for details on the function \code{dataprep_modevalplots}
+#' @seealso \code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
 #' that generates the required input.
-#' @seealso \code{\link{input_modevalplots}} for details on the function \code{input_modevalplots} that
+#' @seealso \code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
 #' generates the required input.
-#' @seealso \code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
-#' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
+#' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
+#' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-cumgains <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=NA) {
+plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA) {
 
-  customlinecolors <- customlinecolors
+  plot_input <- data
+  custom_line_colors <- custom_line_colors
   highlight_decile <- highlight_decile
 
-  pp <- setplotparams(plot_input = plot_input,plottype = "Gains",customlinecolors=customlinecolors)
+  pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative gains",custom_line_colors=custom_line_colors)
 
   # rearrange plot_input
-  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::select(eval_type:decile,plotvalue=cumgain,legend,refline)
-  if (pp$seltype=="CompareModels") {
+  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::select(scope:decile,plotvalue=cumgain,legend,refline)
+  if (pp$seltype=="compare_models") {
     optreflines <- plot_input %>%
       dplyr::mutate(legend=paste0('optimal gains (',dataset,')'),modelname='',plotvalue=gain_opt,refline=1) %>%
-      dplyr::select(eval_type:decile,plotvalue,legend,refline) %>%
+      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
       dplyr::distinct()
   } else {
     optreflines <- plot_input%>%
       dplyr::mutate(legend=paste0('optimal gains (',legend,')'),plotvalue=gain_opt,refline=1) %>%
-      dplyr::select(eval_type:decile,plotvalue,legend,refline)
+      dplyr::select(scope:decile,plotvalue,legend,refline)
   }
   minrefline <- plot_input %>%
     dplyr::mutate(legend=paste0('minimal gains'),modelname='',dataset='',category='',plotvalue=gain_ref,refline=1) %>%
-    dplyr::select(eval_type:decile,plotvalue,legend,refline)%>%
+    dplyr::select(scope:decile,plotvalue,legend,refline)%>%
     dplyr::distinct()
-  plot_input <- rbind(minrefline,optreflines,vallines)
-  plot_input$legend <- factor(plot_input$legend,levels=pp$gainslevels)
+  plot_input_prepared <- rbind(minrefline,optreflines,vallines)
+  plot_input_prepared$legend <- factor(plot_input_prepared$legend,levels=pp$gainslevels)
 
   #make plot
-  plot <- plot_input %>%
+  plot <- plot_input_prepared %>%
     ggplot2::ggplot() +
     ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
     ggplot2::scale_linetype_manual(values=pp$gainslinetypes,guide=ggplot2::guide_legend(ncol=pp$gainslegendcolumns))+
@@ -294,7 +294,7 @@ cumgains <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile
       axis.line.y=ggplot2::element_line())
 
   #annotate plot at decile value
-  plot <- annotate_plot(plot=plot,plot_input = plot_input,highlight_decile=highlight_decile,pp=pp)
+  plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,highlight_decile=highlight_decile,pp=pp)
 
 
   return(plot)
@@ -305,7 +305,7 @@ cumgains <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile
 
 
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-#### cumlift()                       ####
+#### plot_cumlift()                       ####
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
 #' Cumulative Lift plot
@@ -313,9 +313,9 @@ cumgains <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile
 #' Generates the cumulative lift plot, often referred to as lift plot or index plot,
 #' helps you answer the question: When we apply the model and select the best X deciles,
 #' how many times better is that than using no model at all?
-#' @param plot_input Dataframe. Dataframe needs to be created with \code{\link{scope_modevalplots}}
+#' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
 #' or else meet required input format.
-#' @param customlinecolors Vector of Strings. Specifying colors for the lines in the plot.
+#' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
 #' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
 #' and performances are highlighted.
@@ -339,48 +339,49 @@ cumgains <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
-#' dataprep_modevalplots(datasets=list("train","test"),
-#'                       datasetlabels = list("train data","test data"),
+#' prepare_scores_and_deciles(datasets=list("train","test"),
+#'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
-#'                       modellabels = list("random forest","multinomial logit"),
-#'                       targetname="Species")
-#' head(eval_tot)
-#' input_modevalplots()
-#' scope_modevalplots(eval_type="CompareDatasets")
-#' cumlift()
-#' cumlift(customlinecolors=c("orange","purple"))
-#' cumlift(highlight_decile=2)
+#'                       model_labels = list("random forest","multinomial logit"),
+#'                       target_column="Species")
+#' head(scores_and_deciles)
+#' aggregate_over_deciles()
+#' plotting_scope(scope="CompareDatasets")
+#' plot_cumlift()
+#' plot_cumlift(custom_line_colors=c("orange","purple"))
+#' plot_cumlift(highlight_decile=2)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
-#' @seealso \code{\link{dataprep_modevalplots}} for details on the function \code{dataprep_modevalplots}
+#' @seealso \code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
 #' that generates the required input.
-#' @seealso \code{\link{input_modevalplots}} for details on the function \code{input_modevalplots} that
+#' @seealso \code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
 #' generates the required input.
-#' @seealso \code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
-#' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
+#' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
+#' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-cumlift <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=NA) {
+plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA) {
 
-  customlinecolors <- customlinecolors
+  plot_input <- data
+  custom_line_colors <- custom_line_colors
   highlight_decile <- highlight_decile
 
-  pp <- setplotparams(plot_input = plot_input,plottype = "Lift",customlinecolors=customlinecolors)
+  pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative lift",custom_line_colors=custom_line_colors)
 
   # rearrange plot_input
   vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(decile>0) %>%
-    dplyr::select(eval_type:decile,plotvalue=cumlift,legend,refline)
+    dplyr::select(scope:decile,plotvalue=cumlift,legend,refline)
   minrefline <- plot_input %>% dplyr::filter(decile>0) %>%
     dplyr::mutate(legend=pp$liftreflabel,modelname='',dataset='',category='',plotvalue=cumlift_ref,refline=1) %>%
-    dplyr::select(eval_type:decile,plotvalue,legend,refline)%>%
+    dplyr::select(scope:decile,plotvalue,legend,refline)%>%
     dplyr::distinct()
-  plot_input <- rbind(minrefline,vallines)
-  plot_input$legend <- factor(plot_input$legend,levels=pp$liftlevels)
+  plot_input_prepared <- rbind(minrefline,vallines)
+  plot_input_prepared$legend <- factor(plot_input_prepared$legend,levels=pp$liftlevels)
 
 
   #make plot
-  plot <- plot_input %>%
+  plot <- plot_input_prepared %>%
     ggplot2::ggplot() +
     ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
     ggplot2::scale_linetype_manual(values=pp$liftlinetypes,guide=ggplot2::guide_legend(ncol=pp$liftlegendcolumns))+
@@ -389,7 +390,7 @@ cumlift <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=
     ggplot2::scale_alpha_manual(values=pp$liftalphas)+
     ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10,expand = c(0, 0.02)) +
     ggplot2::scale_y_continuous(name="cumulative lift" ,labels = scales::percent,expand = c(0, 0.02)) +
-    ggplot2::expand_limits(y=c(0,max(2,max(plot_input$plotvalue,na.rm = T)))) +
+    ggplot2::expand_limits(y=c(0,max(2,max(plot_input_prepared$plotvalue,na.rm = T)))) +
     ggplot2::labs(title=pp$plottitle,subtitle=pp$plotsubtitle) +
     ggplot2::theme_minimal() +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 14,hjust = 0.5),
@@ -403,13 +404,13 @@ cumlift <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=
       axis.line.y=ggplot2::element_line())
 
   #annotate plot at decile value
-  plot <- annotate_plot(plot=plot,plot_input = plot_input,highlight_decile=highlight_decile,pp=pp)
+  plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,highlight_decile=highlight_decile,pp=pp)
   return(plot)
 }
 
 
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-#### response()                   ####
+#### plot_response()                   ####
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
 #' Response plot
@@ -418,9 +419,9 @@ cumlift <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=
 #' per decile. It can be used to answer the following business question: When we apply
 #' the model and select decile X, what is the expected percentage of target class observations
 #' in that decile?
-#' @param plot_input Dataframe. Dataframe needs to be created with \code{\link{scope_modevalplots}}
+#' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
 #' or else meet required input format.
-#' @param customlinecolors Vector of Strings. Specifying colors for the lines in the plot.
+#' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
 #' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
 #' and performances are highlighted.
@@ -444,58 +445,57 @@ cumlift <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
-#' dataprep_modevalplots(datasets=list("train","test"),
-#'                       datasetlabels = list("train data","test data"),
+#' prepare_scores_and_deciles(datasets=list("train","test"),
+#'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
-#'                       modellabels = list("random forest","multinomial logit"),
-#'                       targetname="Species")
-#' head(eval_tot)
-#' input_modevalplots()
-#' scope_modevalplots(eval_type="CompareTargetValues")
-#' response()
-#' response(customlinecolors=RColorBrewer::brewer.pal(3,"Dark2"))
-#' response(highlight_decile=2)
+#'                       model_labels = list("random forest","multinomial logit"),
+#'                       target_column="Species")
+#' head(scores_and_deciles)
+#' aggregate_over_deciles()
+#' plotting_scope(scope="compare_targetclasses")
+#' plot_response()
+#' plot_response(custom_line_colors=RColorBrewer::brewer.pal(3,"Dark2"))
+#' plot_response(highlight_decile=2)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
-#' @seealso \code{\link{dataprep_modevalplots}} for details on the function \code{dataprep_modevalplots}
+#' @seealso \code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
 #' that generates the required input.
-#' @seealso \code{\link{input_modevalplots}} for details on the function \code{input_modevalplots} that
+#' @seealso \code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
 #' generates the required input.
-#' @seealso \code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
-#' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
+#' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
+#' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-response <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=NA) {
+plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA) {
 
-  customlinecolors <- customlinecolors
+  plot_input <- data
+  custom_line_colors <- custom_line_colors
   highlight_decile <- highlight_decile
 
-  pp <- setplotparams(plot_input = plot_input,plottype = "Response",customlinecolors=customlinecolors)
+  pp <- setplotparams(plot_input = plot_input,plottype = "Response",custom_line_colors=custom_line_colors)
 
   # rearrange plot_input
   vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(decile>0) %>%
-    dplyr::select(eval_type:decile,plotvalue=pct,legend,refline)
-  if (pp$seltype=="CompareModels") {
+    dplyr::select(scope:decile,plotvalue=pct,legend,refline)
+  if (pp$seltype=="compare_models") {
     minreflines <- plot_input %>%
       dplyr::filter(decile>0) %>%
       dplyr::mutate(legend=paste0('overall response (',dataset,')'),modelname='',plotvalue=pcttot,refline=1) %>%
-      dplyr::select(eval_type:decile,plotvalue,legend,refline) %>%
+      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
       dplyr::distinct()
   } else {
     minreflines <- plot_input%>%
       dplyr::filter(decile>0) %>%
       dplyr::mutate(legend=paste0('overall response (',legend,')'),plotvalue=pcttot,refline=1) %>%
-      dplyr::select(eval_type:decile,plotvalue,legend,refline) %>%
+      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
       dplyr::distinct()
   }
-
-  #annotate plot at decile value
-  plot_input <- rbind(minreflines,vallines)
-  plot_input$legend <- factor(plot_input$legend,levels=pp$resplevels)
+  plot_input_prepared <- rbind(minreflines,vallines)
+  plot_input_prepared$legend <- factor(plot_input_prepared$legend,levels=pp$resplevels)
 
   #make plot
-  plot <- plot_input %>%
+  plot <- plot_input_prepared %>%
     ggplot2::ggplot() +
     ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
     ggplot2::scale_linetype_manual(values=pp$resplinetypes,guide=ggplot2::guide_legend(ncol=pp$resplegendcolumns))+
@@ -517,13 +517,15 @@ response <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile
       axis.line.x=ggplot2::element_line(),
       axis.line.y=ggplot2::element_line())
 
-  plot <- annotate_plot(plot=plot,plot_input = plot_input,highlight_decile=highlight_decile,pp=pp)
+
+  #annotate plot at decile value
+  plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,highlight_decile=highlight_decile,pp=pp)
   return(plot)
 }
 
 
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-#### cumresponse()                ####
+#### plot_cumresponse()                ####
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
 #' Cumulative Respose plot
@@ -532,9 +534,9 @@ response <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile
 #' target class observations up until that decile. It helps answering the question:
 #' When we apply the model and select up until decile X, what is the expected percentage of
 #' target class observations in the selection?
-#' @param plot_input Dataframe. Dataframe needs to be created with \code{\link{scope_modevalplots}}
+#' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
 #' or else meet required input format.
-#' @param customlinecolors Vector of Strings. Specifying colors for the lines in the plot.
+#' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
 #' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
 #' and performances are highlighted.
@@ -559,58 +561,57 @@ response <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
-#' dataprep_modevalplots(datasets=list("train","test"),
-#'                       datasetlabels = list("train data","test data"),
+#' prepare_scores_and_deciles(datasets=list("train","test"),
+#'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
-#'                       modellabels = list("random forest","multinomial logit"),
-#'                       targetname="Species")
-#' head(eval_tot)
-#' input_modevalplots()
-#' scope_modevalplots()
-#' cumresponse()
-#' cumresponse(customlinecolors="pink")
-#' cumresponse(highlight_decile=3)
+#'                       model_labels = list("random forest","multinomial logit"),
+#'                       target_column="Species")
+#' head(scores_and_deciles)
+#' aggregate_over_deciles()
+#' plotting_scope()
+#' plot_cumresponse()
+#' plot_cumresponse(custom_line_colors="pink")
+#' plot_cumresponse(highlight_decile=3)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
-#' @seealso \code{\link{dataprep_modevalplots}} for details on the function \code{dataprep_modevalplots}
+#' @seealso \code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
 #' that generates the required input.
-#' @seealso \code{\link{input_modevalplots}} for details on the function \code{input_modevalplots} that
+#' @seealso \code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
 #' generates the required input.
-#' @seealso \code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
-#' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
+#' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
+#' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-cumresponse <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_decile=NA) {
+plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA) {
 
-  customlinecolors <- customlinecolors
+  plot_input <- data
+  custom_line_colors <- custom_line_colors
   highlight_decile <- highlight_decile
 
-  pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative Response",customlinecolors=customlinecolors)
-  #plot_input = eval_t_type
+  pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative response",custom_line_colors=custom_line_colors)
+  #plot_input = plot_input
   # rearrange plot_input
   vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(decile>0) %>%
-    dplyr::select(eval_type:decile,plotvalue=cumpct,legend,refline)
-  if (pp$seltype=="CompareModels") {
+    dplyr::select(scope:decile,plotvalue=cumpct,legend,refline)
+  if (pp$seltype=="compare_models") {
     minreflines <- plot_input %>%
       dplyr::filter(decile>0) %>%
       dplyr::mutate(legend=paste0('overall response (',dataset,')'),modelname='',plotvalue=pcttot,refline=1) %>%
-      dplyr::select(eval_type:decile,plotvalue,legend,refline) %>%
+      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
       dplyr::distinct()
   } else {
     minreflines <- plot_input %>%
       dplyr::filter(decile>0) %>%
       dplyr::mutate(legend=paste0('overall response (',legend,')'),plotvalue=pcttot,refline=1) %>%
-      dplyr::select(eval_type:decile,plotvalue,legend,refline) %>%
+      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
       dplyr::distinct()
   }
-
-  #annotate plot at decile value
-  plot_input <- rbind(minreflines,vallines)
-  plot_input$legend <- factor(plot_input$legend,levels=pp$resplevels)
+  plot_input_prepared <- rbind(minreflines,vallines)
+  plot_input_prepared$legend <- factor(plot_input_prepared$legend,levels=pp$resplevels)
 
   #make plot
-  plot <- plot_input %>%
+  plot <- plot_input_prepared %>%
     ggplot2::ggplot() +
     ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
     ggplot2::scale_linetype_manual(values=pp$resplinetypes,guide=ggplot2::guide_legend(ncol=pp$resplegendcolumns))+
@@ -632,7 +633,9 @@ cumresponse <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_dec
       axis.line.x=ggplot2::element_line(),
       axis.line.y=ggplot2::element_line())
 
-  plot <- annotate_plot(plot=plot,plot_input = plot_input,highlight_decile=highlight_decile,pp=pp)
+
+  #annotate plot at decile value
+  plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,highlight_decile=highlight_decile,pp=pp)
   return(plot)
 }
 
@@ -646,9 +649,9 @@ cumresponse <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_dec
 #' target class observations up until that decile. It helps answering the question:
 #' When we apply the model and select up until decile X, what is the expected percentage of
 #' target class observations in the selection?
-#' @param plot_input Dataframe. Dataframe needs to be created with \code{\link{scope_modevalplots}}
+#' @param plot_input Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
 #' or else meet required input format.
-#' @param customlinecolors Vector of Strings. Specifying colors for the lines in the plot.
+#' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
 #' @return ggplot object. Cumulative Response plot.
 #' @examples
@@ -670,31 +673,31 @@ cumresponse <- function(plot_input=eval_t_type,customlinecolors=NA,highlight_dec
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
-#' dataprep_modevalplots(datasets=list("train","test"),
-#'                       datasetlabels = list("train data","test data"),
+#' prepare_scores_and_deciles(datasets=list("train","test"),
+#'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
-#'                       modellabels = list("random forest","multinomial logit"),
-#'                       targetname="Species")
-#' head(eval_tot)
-#' input_modevalplots()
-#' scope_modevalplots()
-#' cumgains()
-#' cumlift()
-#' response()
-#' cumresponse()
-#' fourevalplots()
+#'                       model_labels = list("random forest","multinomial logit"),
+#'                       target_column="Species")
+#' head(scores_and_deciles)
+#' aggregate_over_deciles()
+#' plotting_scope()
+#' plot_cumgains()
+#' plot_cumlift()
+#' plot_response()
+#' plot_cumresponse()
+#' plot_all()
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
-#' @seealso \code{\link{dataprep_modevalplots}} for details on the function \code{dataprep_modevalplots}
+#' @seealso \code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
 #' that generates the required input.
-#' @seealso \code{\link{input_modevalplots}} for details on the function \code{input_modevalplots} that
+#' @seealso \code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
 #' generates the required input.
-#' @seealso \code{\link{scope_modevalplots}} for details on the function \code{scope_modevalplots} that
-#' filters the output of \code{input_modevalplots} to prepare it for the required evaluation.
+#' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
+#' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-savemodelplots <- function(plots=c("cumgains","cumlift","response","cumresponse"), dir = getwd()) {
+savemodelplots <- function(plots=c("plot_cumgains","plot_cumlift","plot_response","plot_cumresponse"), dir = getwd()) {
   for (plot in plots) {
     png(paste0(dir, "/", plot, ".png"))
     print(get(plot))
@@ -705,7 +708,7 @@ savemodelplots <- function(plots=c("cumgains","cumlift","response","cumresponse"
 
 
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-#### fourevalplots()              ####
+#### plot_all()              ####
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
 
@@ -714,9 +717,9 @@ savemodelplots <- function(plots=c("cumgains","cumlift","response","cumresponse"
 #'
 #' Generates a layout containing a number graphical elements, including title, subtitle and the four
 #' model evaluation plots: cumulative gains plot, lift plot, response plot and cumulative response plot.
-#' @param plot_input Dataframe. Dataframe needs to be created with \code{\link{scope_modevalplots}}
+#' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
 #' or else meet required input format.
-#' @param customlinecolors Vector of Strings. Specifying colors for the lines in the plot.
+#' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
 #' @return gtable, containing 6 grobs.
 #' @examples
@@ -738,39 +741,40 @@ savemodelplots <- function(plots=c("cumgains","cumlift","response","cumresponse"
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
-#' dataprep_modevalplots(datasets=list("train","test"),
-#'                       datasetlabels = list("train data","test data"),
+#' prepare_scores_and_deciles(datasets=list("train","test"),
+#'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
-#'                       modellabels = list("random forest","multinomial logit"),
-#'                       targetname="Species")
-#' head(eval_tot)
-#' input_modevalplots()
-#' scope_modevalplots()
-#' cumgains()
-#' cumlift()
-#' response()
-#' cumresponse()
-#' fourevalplots()
+#'                       model_labels = list("random forest","multinomial logit"),
+#'                       target_column="Species")
+#' head(scores_and_deciles)
+#' aggregate_over_deciles()
+#' plotting_scope()
+#' plot_cumgains()
+#' plot_cumlift()
+#' plot_response()
+#' plot_cumresponse()
+#' plot_all()
 #' @export
-fourevalplots <- function(plot_input=eval_t_type,customlinecolors=NA) {
+plot_all <- function(data=plot_input,custom_line_colors=NA) {
 
-  customlinecolors <- customlinecolors
-  pp <- setplotparams(plot_input = plot_input,plottype = "ALL",customlinecolors=customlinecolors)
+  plot_input <- data
+  custom_line_colors <- custom_line_colors
+  pp <- setplotparams(plot_input = plot_input,plottype = "ALL",custom_line_colors=custom_line_colors)
 
-  # make cumgains without
-  cumgainsplot <- cumgains() + ggplot2::labs(title="Cumulative Gains chart",subtitle=NA) +
+  # make plot_cumgains without
+  cumgainsplot <- plot_cumgains() + ggplot2::labs(title="Cumulative gains",subtitle=NA) +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),plot.subtitle = ggplot2::element_blank())
   # make lift
-  cumliftplot <- cumlift() + ggplot2::labs(title="Cumulative Lift chart",subtitle=NA) +
+  cumliftplot <- plot_cumlift() + ggplot2::labs(title="Cumulative lift",subtitle=NA) +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),plot.subtitle = ggplot2::element_blank())
   # make response
-  responseplot <- response() + ggplot2::labs(title="Response chart",subtitle=NA) +
+  responseplot <- plot_response() + ggplot2::labs(title="Response",subtitle=NA) +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),plot.subtitle = ggplot2::element_blank())
   # make gains
-  cumresponseplot <- cumresponse()+ ggplot2::labs(title="Cumulative Response chart",subtitle=NA) +
+  cumresponseplot <- plot_cumresponse()+ ggplot2::labs(title="Cumulative response",subtitle=NA) +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),plot.subtitle = ggplot2::element_blank())
 
-  title <- grid::textGrob(pp$multiplottitle, gp=grid::gpar(fontsize=24))
+  title <- grid::textGrob(pp$plotsubtitle, gp=grid::gpar(fontsize=24))
   subtitle <- grid::textGrob(pp$plotsubtitle, gp=grid::gpar(fontsize=16,fontface="italic",col="darkgray"))
 
   lay <- rbind(c(1,1,1,1),
