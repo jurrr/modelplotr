@@ -5,7 +5,7 @@
 \title{Cumulative Lift plot}
 \usage{
 plot_cumlift(data = plot_input, custom_line_colors = NA,
-  highlight_decile = NA)
+  highlight_decile = NA, highlight_how = "plot_text")
 }
 \arguments{
 \item{data}{Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
@@ -15,7 +15,12 @@ or else meet required input format.}
 When not specified, colors from the RColorBrewer palet "Set1" are used.}
 
 \item{highlight_decile}{Integer. Specifying the decile at which the plot is annotated
-and performances are highlighted.}
+and/or performances are highlighted.}
+
+\item{highlight_how}{String. How to annotate the plot. Possible values: "plot_text","plot", "text".
+Default is "plot_text", both highlighting the decile and value on the plot as well as in text below the plot.
+"plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen decile.
+"text" adds text below the plot explaining the plot at chosen decile but does not highlight the plot.}
 }
 \value{
 ggplot object. Lift plot.
@@ -51,7 +56,7 @@ prepare_scores_and_deciles(datasets=list("train","test"),
                       target_column="Species")
 head(scores_and_deciles)
 aggregate_over_deciles()
-plotting_scope(scope="CompareDatasets")
+plotting_scope(scope="compare_datasets")
 plot_cumlift()
 plot_cumlift(custom_line_colors=c("orange","purple"))
 plot_cumlift(highlight_decile=2)

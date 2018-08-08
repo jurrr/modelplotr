@@ -46,17 +46,22 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
 
   pp$plottitle <- pp$plottype
   pp$plotsubtitle <-
-    ifelse(pp$seltype=="CompareDatasets",paste0('scope: comparing datasets & model: ',
+    ifelse(pp$seltype=="compare_datasets",paste0('scope: comparing datasets & model: ',
       pp$selmod,' & target value: ' ,pp$selval),
-      ifelse(pp$seltype=="compare_models",paste0('scope: comparing datasets & dataset: ',
+      ifelse(pp$seltype=="compare_models",paste0('scope: comparing models & dataset: ',
         pp$seldata,' & target value: ',pp$selval),
-        ifelse(pp$seltype=="compare_targetclasses",paste0('scope: comparing target classes & dataset: "',
-          pp$seldata,'"  &  model: "',pp$selmod,'"'),
-          paste0('model: "',pp$selmod,'"  &  dataset: "',pp$seldata,'"  &  target value: "',pp$selval,'"'))))
+        ifelse(pp$seltype=="compare_targetclasses",paste0('scope: comparing target classes & dataset: ',
+          pp$seldata,'"  &  model: ',pp$selmod),
+          paste0('model: ',pp$selmod,'  &  dataset: ',pp$seldata,'"  &  target value: ',pp$selval))))
 
-  pp$multiplottitle <- ifelse(pp$seltype=="CompareDatasets",' scope: comparing datasets',
-      ifelse(pp$seltype=="compare_models",' scope: comparing models',
-        ifelse(pp$seltype=="compare_targetclasses",' scope: comparing target classes','scope: no comparison')))
+  pp$multiplottitle <- ifelse(pp$seltype=="compare_datasets",
+                          paste0('scope: comparing datasets & model: ',pp$selmod,' & target value: ' ,pp$selval),
+                        ifelse(pp$seltype=="compare_models",
+                          paste0('scope: comparing models & dataset: ',pp$seldata,' & target value: ',pp$selval),
+                        ifelse(pp$seltype=="compare_targetclasses",
+                          paste0('scope: comparing target classes & dataset: ',pp$seldata,'  &  model: ',pp$selmod),
+                          paste0('scope: no comparison & model: ',
+                            pp$selmod,'  &  dataset: ',pp$seldata,'"  &  target value: ',pp$selval))))
 
   # GAINS
   if (pp$seltype=='compare_models') {
@@ -193,6 +198,7 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
           plot.subtitle = ggplot2::element_blank())
 
       # create title and subtitle elements for grob
+
       title <- grid::textGrob(pp$plottitle, gp=grid::gpar(fontsize=22))
       subtitle <- grid::textGrob(pp$plotsubtitle, gp=grid::gpar(fontsize=14,fontface="italic",col="darkgray"))
 
@@ -288,7 +294,11 @@ savemodelplots <- function(plots=c("plot_cumgains","plot_cumlift","plot_response
 #' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
 #' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
-#' and performances are highlighted.
+#' and/or performances are highlighted.
+#' @param highlight_how String. How to annotate the plot. Possible values: "plot_text","plot", "text".
+#' Default is "plot_text", both highlighting the decile and value on the plot as well as in text below the plot.
+#' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen decile.
+#' "text" adds text below the plot explaining the plot at chosen decile but does not highlight the plot.
 #' @return ggplot object. Cumulative gains plot.
 #' @examples
 #' data(iris)
@@ -406,7 +416,11 @@ plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_decile
 #' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
 #' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
-#' and performances are highlighted.
+#' and/or performances are highlighted.
+#' @param highlight_how String. How to annotate the plot. Possible values: "plot_text","plot", "text".
+#' Default is "plot_text", both highlighting the decile and value on the plot as well as in text below the plot.
+#' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen decile.
+#' "text" adds text below the plot explaining the plot at chosen decile but does not highlight the plot.
 #' @return ggplot object. Lift plot.
 #' @examples
 #' data(iris)
@@ -434,7 +448,7 @@ plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_decile
 #'                       target_column="Species")
 #' head(scores_and_deciles)
 #' aggregate_over_deciles()
-#' plotting_scope(scope="CompareDatasets")
+#' plotting_scope(scope="compare_datasets")
 #' plot_cumlift()
 #' plot_cumlift(custom_line_colors=c("orange","purple"))
 #' plot_cumlift(highlight_decile=2)
@@ -513,7 +527,11 @@ plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=
 #' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
 #' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
-#' and performances are highlighted.
+#' and/or performances are highlighted.
+#' @param highlight_how String. How to annotate the plot. Possible values: "plot_text","plot", "text".
+#' Default is "plot_text", both highlighting the decile and value on the plot as well as in text below the plot.
+#' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen decile.
+#' "text" adds text below the plot explaining the plot at chosen decile but does not highlight the plot.
 #' @return ggplot object. Response plot.
 #' @examples
 #' data(iris)
@@ -629,8 +647,11 @@ plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile
 #' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
 #' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
-#' and performances are highlighted.
-#' When not specified, colors from the RColorBrewer palet "Set1" are used.
+#' and/or performances are highlighted.
+#' @param highlight_how String. How to annotate the plot. Possible values: "plot_text","plot", "text".
+#' Default is "plot_text", both highlighting the decile and value on the plot as well as in text below the plot.
+#' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen decile.
+#' "text" adds text below the plot explaining the plot at chosen decile but does not highlight the plot.
 #' @return ggplot object. Cumulative Response plot.
 #' @examples
 #' data(iris)
@@ -787,27 +808,40 @@ plot_all <- function(data=plot_input,custom_line_colors=NA) {
 
   # make plot_cumgains without
   cumgainsplot <- plot_cumgains() + ggplot2::labs(title="Cumulative gains",subtitle=NA) +
-    ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),plot.subtitle = ggplot2::element_blank())
+    ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),
+      plot.subtitle = ggplot2::element_blank(),axis.title.x = ggplot2::element_blank())
   # make lift
   cumliftplot <- plot_cumlift() + ggplot2::labs(title="Cumulative lift",subtitle=NA) +
-    ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),plot.subtitle = ggplot2::element_blank())
+    ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),
+      plot.subtitle = ggplot2::element_blank(),axis.title.x = ggplot2::element_blank())
   # make response
   responseplot <- plot_response() + ggplot2::labs(title="Response",subtitle=NA) +
-    ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),plot.subtitle = ggplot2::element_blank())
+    ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),
+      plot.subtitle = ggplot2::element_blank())
   # make gains
   cumresponseplot <- plot_cumresponse()+ ggplot2::labs(title="Cumulative response",subtitle=NA) +
-    ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),plot.subtitle = ggplot2::element_blank())
+    ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),
+      plot.subtitle = ggplot2::element_blank())
 
-  title <- grid::textGrob(pp$plotsubtitle, gp=grid::gpar(fontsize=24))
-  subtitle <- grid::textGrob(pp$plotsubtitle, gp=grid::gpar(fontsize=16,fontface="italic",col="darkgray"))
+  # create title text element to add to grob
+  plottitle <- data.frame(text=pp$multiplottitle)
+  titletextplot <- ggplot2::ggplot(plottitle,
+    ggplot2::aes(label = text, xmin = 0, xmax = 1, ymin = 0,ymax = 1)) +
+    ggplot2::geom_rect(fill=NA,color=NA) +
+    ggfittext::geom_fit_text(place = "center",grow = TRUE,reflow = FALSE) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(legend.position="none",
+      line =ggplot2::element_blank(),
+      title=ggplot2::element_blank(),
+      axis.text=ggplot2::element_blank())
 
   lay <- rbind(c(1,1,1,1),
-    c(2,2,2,2),
-    c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),
-    c(5,5,6,6),c(5,5,6,6),c(5,5,6,6),c(5,5,6,6),c(5,5,6,6),c(5,5,6,6),c(5,5,6,6),c(5,5,6,6),c(5,5,6,6))
+    c(1,1,1,1),
+    c(2,2,3,3),c(2,2,3,3),c(2,2,3,3),c(2,2,3,3),c(2,2,3,3),c(2,2,3,3),c(2,2,3,3),c(2,2,3,3),c(2,2,3,3),
+    c(4,4,5,5),c(4,4,5,5),c(4,4,5,5),c(4,4,5,5),c(4,4,5,5),c(4,4,5,5),c(4,4,5,5),c(4,4,5,5),c(4,4,5,5),c(4,4,5,5))
 
 
-  gridExtra::grid.arrange(title,subtitle,cumgainsplot,
+  gridExtra::grid.arrange(titletextplot,cumgainsplot,
     cumliftplot,
     responseplot,
     cumresponseplot, layout_matrix = lay)
