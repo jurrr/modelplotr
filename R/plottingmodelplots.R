@@ -107,14 +107,23 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
 #### annotate_plot()              ####
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
-annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,highlight_decile=highlight_decile,pp=pp){
+annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
+                          highlight_decile=highlight_decile,highlight_how=highlight_how,pp=pp){
   if(!is.na(highlight_decile)) {
 
     # check if scores_and_deciles exists, otherwise create
     if (highlight_decile<1 | highlight_decile>10) {
       stop("Value for highlight_decile not valid! Choose decile value to highlight in range [1:10]")
     }
+    if(!highlight_how %in% c('plot','text','plot_text')){
+      cat("no valid value for highlight_how specified; default value (plot_text) is chosen
+-> choose 'plot_text' to highlight both the plot and add explanatory text below the plot
+-> choose 'plot' to only highlight both the plot - no explanatory text is added below the plot
+-> choose 'text' to only add explanatory text below the plot - the chosen decile is not highlighted in the plot \n")
+      highlight_how <- 'plot_text'
+    }
 
+    if(highlight_how %in% c('plot','plot_text')){
     plot <- plot +
       # add highlighting cicle(s) to plot at decile value
       ggplot2::geom_point(data = plot_input %>% dplyr::filter(decile==highlight_decile & refline==0),
@@ -134,12 +143,10 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,highlight_dec
         hjust = 0, fontface = "bold",show.legend = FALSE) +
       # emphasize decile for which annotation is added
       ggplot2::theme(
-        plot.title = ggplot2::element_blank(),
-        plot.subtitle = ggplot2::element_blank(),
         axis.text.x = ggplot2::element_text(
           face=c(rep("plain",pp$decile0+highlight_decile-1),"bold",rep("plain",10+pp$decile0-highlight_decile-1)),
           size=c(rep(10,pp$decile0+highlight_decile-1),12,rep(10,10+pp$decile0-highlight_decile-1))))
-
+    }
     annovalues <- plot_input %>% dplyr::filter(decile==highlight_decile & refline==0) %>%
       dplyr::mutate(xmin=rep(0,pp$nlevels),
       xmax=rep(100,pp$nlevels),
@@ -164,7 +171,11 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,highlight_dec
     if(pp$plottype=="Response") annovalues$text <- annovalues$responsetext
     if(pp$plottype=="Cumulative response") annovalues$text <- annovalues$cumresponsetext
 
-    annotextplot <- ggplot2::ggplot(annovalues,
+    cat(paste(' ','Plot annotation:',paste(paste0('- ',annovalues$text), collapse = '\n'),' ',' ', sep = '\n'))
+
+    if(highlight_how %in% c('text','plot_text')){
+      # create annotation text element to add to grob
+      annotextplot <- ggplot2::ggplot(annovalues,
       ggplot2::aes(label = text, xmin = xmin, xmax = xmax, ymin = ymin,ymax = ymax,color=legend)) +
       ggplot2::geom_rect(fill=NA,color=NA) +
       ggplot2::scale_color_manual(values=pp$levelcols)+
@@ -176,466 +187,22 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,highlight_dec
         axis.text=ggplot2::element_blank())+
       ggplot2::scale_y_reverse()
 
-    title <- grid::textGrob(pp$plottitle, gp=grid::gpar(fontsize=22))
-    subtitle <- grid::textGrob(pp$plotsubtitle, gp=grid::gpar(fontsize=14,fontface="italic",col="darkgray"))
+      #remove title from plot
+      plot <- plot + ggplot2::theme(
+          plot.title = ggplot2::element_blank(),
+          plot.subtitle = ggplot2::element_blank())
 
-    lay <- as.matrix(c(1,2,rep(3,20),rep(4,1+pp$nlevels)))
-    plot <- gridExtra::grid.arrange(title,subtitle,plot,annotextplot, layout_matrix = lay,newpage = TRUE)
+      # create title and subtitle elements for grob
+      title <- grid::textGrob(pp$plottitle, gp=grid::gpar(fontsize=22))
+      subtitle <- grid::textGrob(pp$plotsubtitle, gp=grid::gpar(fontsize=14,fontface="italic",col="darkgray"))
 
-    }
-
-    return(plot)
-}
-
-##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-#### plot_cumgains()                   ####
-##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-
-#' Cumulative gains plot
-#'
-#' Generates the cumulative gains plot. This plot, often referred to as the gains chart,
-#' helps answering the question: \bold{\emph{When we apply the model and select the best X deciles,
-#' what percentage of the actual target class observations can we expect to target?}}
-#' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
-#' or else meet required input format.
-#' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
-#' When not specified, colors from the RColorBrewer palet "Set1" are used.
-#' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
-#' and performances are highlighted.
-#' @return ggplot object. Cumulative gains plot.
-#' @examples
-#' data(iris)
-#' # add some noise to iris to prevent perfect models
-#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
-#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
-#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
-#' iris <- rbind(iris,iris_addnoise)
-#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-#' train = iris[train_index,]
-#' test = iris[-train_index,]
-#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
-#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' #estimate models
-#' task = mlr::makeClassifTask(data = train, target = "Species")
-#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
-#' rf = mlr::train(lrn, task)
-#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
-#' mnl = mlr::train(lrn, task)
-#' prepare_scores_and_deciles(datasets=list("train","test"),
-#'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl"),
-#'                       model_labels = list("random forest","multinomial logit"),
-#'                       target_column="Species")
-#' head(scores_and_deciles)
-#' aggregate_over_deciles()
-#' plotting_scope(scope="compare_models")
-#' plot_cumgains()
-#' plot_cumgains(custom_line_colors=c("orange","purple"))
-#' plot_cumgains(highlight_decile=2)
-#' @export
-#' @importFrom magrittr %>%
-#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
-#' @seealso \code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
-#' that generates the required input.
-#' @seealso \code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
-#' generates the required input.
-#' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
-#' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
-#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
-#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA) {
-
-  plot_input <- data
-  custom_line_colors <- custom_line_colors
-  highlight_decile <- highlight_decile
-
-  pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative gains",custom_line_colors=custom_line_colors)
-
-  # rearrange plot_input
-  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::select(scope:decile,plotvalue=cumgain,legend,refline)
-  if (pp$seltype=="compare_models") {
-    optreflines <- plot_input %>%
-      dplyr::mutate(legend=paste0('optimal gains (',dataset,')'),modelname='',plotvalue=gain_opt,refline=1) %>%
-      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
-      dplyr::distinct()
-  } else {
-    optreflines <- plot_input%>%
-      dplyr::mutate(legend=paste0('optimal gains (',legend,')'),plotvalue=gain_opt,refline=1) %>%
-      dplyr::select(scope:decile,plotvalue,legend,refline)
-  }
-  minrefline <- plot_input %>%
-    dplyr::mutate(legend=paste0('minimal gains'),modelname='',dataset='',category='',plotvalue=gain_ref,refline=1) %>%
-    dplyr::select(scope:decile,plotvalue,legend,refline)%>%
-    dplyr::distinct()
-  plot_input_prepared <- rbind(minrefline,optreflines,vallines)
-  plot_input_prepared$legend <- factor(plot_input_prepared$legend,levels=pp$gainslevels)
-
-  #make plot
-  plot <- plot_input_prepared %>%
-    ggplot2::ggplot() +
-    ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
-    ggplot2::scale_linetype_manual(values=pp$gainslinetypes,guide=ggplot2::guide_legend(ncol=pp$gainslegendcolumns))+
-    ggplot2::scale_color_manual(values=pp$gainslinecols)+
-    ggplot2::scale_size_manual(values=pp$gainslinesizes)+
-    ggplot2::scale_alpha_manual(values=pp$gainsalphas)+
-    ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10,expand = c(0, 0.02)) +
-    ggplot2::scale_y_continuous(name="cumulative gains",breaks=seq(0,1,0.2),labels = scales::percent ,expand = c(0, 0.02)) +
-    ggplot2::labs(title=pp$plottitle,subtitle=pp$plotsubtitle) +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(plot.title = ggplot2::element_text(size = 14,hjust = 0.5),
-                   plot.subtitle = ggplot2::element_text(size = 10,hjust = 0.5,face="italic")) +
-    ggplot2::theme(legend.title = ggplot2::element_blank() ,
-      legend.position=c(0.975,0.025),legend.justification=c(1, 0),
-      legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("white",0.2), size = 0),
-      panel.grid.minor.x = ggplot2::element_blank(),
-      panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
-      axis.line.x=ggplot2::element_line(),
-      axis.line.y=ggplot2::element_line())
-
-  #annotate plot at decile value
-  plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,highlight_decile=highlight_decile,pp=pp)
-
-
-  return(plot)
+      # create grob layout and add elements to it
+      lay <- as.matrix(c(1,2,rep(3,20),rep(4,1+pp$nlevels)))
+      cat('Plotted output is a TableGrob object with these characteristics: \n')
+      plot <- gridExtra::grid.arrange(title,subtitle,plot,annotextplot, layout_matrix = lay,newpage = TRUE)
+      }
   }
 
-
-
-
-
-##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-#### plot_cumlift()                       ####
-##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-
-#' Cumulative Lift plot
-#'
-#' Generates the cumulative lift plot, often referred to as lift plot or index plot,
-#' helps you answer the question: When we apply the model and select the best X deciles,
-#' how many times better is that than using no model at all?
-#' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
-#' or else meet required input format.
-#' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
-#' When not specified, colors from the RColorBrewer palet "Set1" are used.
-#' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
-#' and performances are highlighted.
-#' @return ggplot object. Lift plot.
-#' @examples
-#' data(iris)
-#' # add some noise to iris to prevent perfect models
-#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
-#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
-#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
-#' iris <- rbind(iris,iris_addnoise)
-#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-#' train = iris[train_index,]
-#' test = iris[-train_index,]
-#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
-#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' #estimate models
-#' task = mlr::makeClassifTask(data = train, target = "Species")
-#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
-#' rf = mlr::train(lrn, task)
-#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
-#' mnl = mlr::train(lrn, task)
-#' prepare_scores_and_deciles(datasets=list("train","test"),
-#'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl"),
-#'                       model_labels = list("random forest","multinomial logit"),
-#'                       target_column="Species")
-#' head(scores_and_deciles)
-#' aggregate_over_deciles()
-#' plotting_scope(scope="CompareDatasets")
-#' plot_cumlift()
-#' plot_cumlift(custom_line_colors=c("orange","purple"))
-#' plot_cumlift(highlight_decile=2)
-#' @export
-#' @importFrom magrittr %>%
-#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
-#' @seealso \code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
-#' that generates the required input.
-#' @seealso \code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
-#' generates the required input.
-#' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
-#' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
-#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
-#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA) {
-
-  plot_input <- data
-  custom_line_colors <- custom_line_colors
-  highlight_decile <- highlight_decile
-
-  pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative lift",custom_line_colors=custom_line_colors)
-
-  # rearrange plot_input
-  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(decile>0) %>%
-    dplyr::select(scope:decile,plotvalue=cumlift,legend,refline)
-  minrefline <- plot_input %>% dplyr::filter(decile>0) %>%
-    dplyr::mutate(legend=pp$liftreflabel,modelname='',dataset='',category='',plotvalue=cumlift_ref,refline=1) %>%
-    dplyr::select(scope:decile,plotvalue,legend,refline)%>%
-    dplyr::distinct()
-  plot_input_prepared <- rbind(minrefline,vallines)
-  plot_input_prepared$legend <- factor(plot_input_prepared$legend,levels=pp$liftlevels)
-
-
-  #make plot
-  plot <- plot_input_prepared %>%
-    ggplot2::ggplot() +
-    ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
-    ggplot2::scale_linetype_manual(values=pp$liftlinetypes,guide=ggplot2::guide_legend(ncol=pp$liftlegendcolumns))+
-    ggplot2::scale_color_manual(values=pp$liftlinecols)+
-    ggplot2::scale_size_manual(values=pp$liftlinesizes)+
-    ggplot2::scale_alpha_manual(values=pp$liftalphas)+
-    ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10,expand = c(0, 0.02)) +
-    ggplot2::scale_y_continuous(name="cumulative lift" ,labels = scales::percent,expand = c(0, 0.02)) +
-    ggplot2::expand_limits(y=c(0,max(2,max(plot_input_prepared$plotvalue,na.rm = T)))) +
-    ggplot2::labs(title=pp$plottitle,subtitle=pp$plotsubtitle) +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(plot.title = ggplot2::element_text(size = 14,hjust = 0.5),
-      plot.subtitle = ggplot2::element_text(size = 10,hjust = 0.5,face="italic")) +
-    ggplot2::theme(legend.title = ggplot2::element_blank() ,
-      legend.position=c(0.975,0.975),legend.justification=c(1, 1),
-      legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("white",0.2), size = 0),
-      panel.grid.minor.x = ggplot2::element_blank(),
-      panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
-      axis.line.x=ggplot2::element_line(),
-      axis.line.y=ggplot2::element_line())
-
-  #annotate plot at decile value
-  plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,highlight_decile=highlight_decile,pp=pp)
-  return(plot)
-}
-
-
-##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-#### plot_response()                   ####
-##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-
-#' Response plot
-#'
-#' Generates the response plot. It plots the percentage of target class observations
-#' per decile. It can be used to answer the following business question: When we apply
-#' the model and select decile X, what is the expected percentage of target class observations
-#' in that decile?
-#' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
-#' or else meet required input format.
-#' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
-#' When not specified, colors from the RColorBrewer palet "Set1" are used.
-#' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
-#' and performances are highlighted.
-#' @return ggplot object. Response plot.
-#' @examples
-#' data(iris)
-#' # add some noise to iris to prevent perfect models
-#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
-#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
-#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
-#' iris <- rbind(iris,iris_addnoise)
-#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-#' train = iris[train_index,]
-#' test = iris[-train_index,]
-#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
-#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' #estimate models
-#' task = mlr::makeClassifTask(data = train, target = "Species")
-#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
-#' rf = mlr::train(lrn, task)
-#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
-#' mnl = mlr::train(lrn, task)
-#' prepare_scores_and_deciles(datasets=list("train","test"),
-#'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl"),
-#'                       model_labels = list("random forest","multinomial logit"),
-#'                       target_column="Species")
-#' head(scores_and_deciles)
-#' aggregate_over_deciles()
-#' plotting_scope(scope="compare_targetclasses")
-#' plot_response()
-#' plot_response(custom_line_colors=RColorBrewer::brewer.pal(3,"Dark2"))
-#' plot_response(highlight_decile=2)
-#' @export
-#' @importFrom magrittr %>%
-#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
-#' @seealso \code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
-#' that generates the required input.
-#' @seealso \code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
-#' generates the required input.
-#' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
-#' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
-#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
-#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA) {
-
-  plot_input <- data
-  custom_line_colors <- custom_line_colors
-  highlight_decile <- highlight_decile
-
-  pp <- setplotparams(plot_input = plot_input,plottype = "Response",custom_line_colors=custom_line_colors)
-
-  # rearrange plot_input
-  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(decile>0) %>%
-    dplyr::select(scope:decile,plotvalue=pct,legend,refline)
-  if (pp$seltype=="compare_models") {
-    minreflines <- plot_input %>%
-      dplyr::filter(decile>0) %>%
-      dplyr::mutate(legend=paste0('overall response (',dataset,')'),modelname='',plotvalue=pcttot,refline=1) %>%
-      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
-      dplyr::distinct()
-  } else {
-    minreflines <- plot_input%>%
-      dplyr::filter(decile>0) %>%
-      dplyr::mutate(legend=paste0('overall response (',legend,')'),plotvalue=pcttot,refline=1) %>%
-      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
-      dplyr::distinct()
-  }
-  plot_input_prepared <- rbind(minreflines,vallines)
-  plot_input_prepared$legend <- factor(plot_input_prepared$legend,levels=pp$resplevels)
-
-  #make plot
-  plot <- plot_input_prepared %>%
-    ggplot2::ggplot() +
-    ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
-    ggplot2::scale_linetype_manual(values=pp$resplinetypes,guide=ggplot2::guide_legend(ncol=pp$resplegendcolumns))+
-    ggplot2::scale_color_manual(values=pp$resplinecols)+
-    ggplot2::scale_size_manual(values=pp$resplinesizes)+
-    ggplot2::scale_alpha_manual(values=pp$respalphas)+
-    ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10,expand = c(0, 0.02)) +
-    ggplot2::scale_y_continuous(name="response" ,expand = c(0, 0.02),labels = scales::percent) +
-    ggplot2::expand_limits(y=0) +
-    ggplot2::labs(title=pp$plottitle,subtitle=pp$plotsubtitle) +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(plot.title = ggplot2::element_text(size = 14,hjust = 0.5),
-      plot.subtitle = ggplot2::element_text(size = 10,hjust = 0.5,face="italic")) +
-    ggplot2::theme(legend.title = ggplot2::element_blank() ,
-      legend.position=c(0.975,0.975),legend.justification=c(1, 1),
-      legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("white",0.2), size = 0),
-      panel.grid.minor.x = ggplot2::element_blank(),
-      panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
-      axis.line.x=ggplot2::element_line(),
-      axis.line.y=ggplot2::element_line())
-
-
-  #annotate plot at decile value
-  plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,highlight_decile=highlight_decile,pp=pp)
-  return(plot)
-}
-
-
-##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-#### plot_cumresponse()                ####
-##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-
-#' Cumulative Respose plot
-#'
-#' Generates the cumulative response plot. It plots the cumulative percentage of
-#' target class observations up until that decile. It helps answering the question:
-#' When we apply the model and select up until decile X, what is the expected percentage of
-#' target class observations in the selection?
-#' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
-#' or else meet required input format.
-#' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
-#' When not specified, colors from the RColorBrewer palet "Set1" are used.
-#' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
-#' and performances are highlighted.
-#' When not specified, colors from the RColorBrewer palet "Set1" are used.
-#' @return ggplot object. Cumulative Response plot.
-#' @examples
-#' data(iris)
-#' # add some noise to iris to prevent perfect models
-#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
-#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
-#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
-#' iris <- rbind(iris,iris_addnoise)
-#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-#' train = iris[train_index,]
-#' test = iris[-train_index,]
-#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
-#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' #estimate models
-#' task = mlr::makeClassifTask(data = train, target = "Species")
-#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
-#' rf = mlr::train(lrn, task)
-#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
-#' mnl = mlr::train(lrn, task)
-#' prepare_scores_and_deciles(datasets=list("train","test"),
-#'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl"),
-#'                       model_labels = list("random forest","multinomial logit"),
-#'                       target_column="Species")
-#' head(scores_and_deciles)
-#' aggregate_over_deciles()
-#' plotting_scope()
-#' plot_cumresponse()
-#' plot_cumresponse(custom_line_colors="pink")
-#' plot_cumresponse(highlight_decile=3)
-#' @export
-#' @importFrom magrittr %>%
-#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
-#' @seealso \code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
-#' that generates the required input.
-#' @seealso \code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
-#' generates the required input.
-#' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
-#' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
-#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
-#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA) {
-
-  plot_input <- data
-  custom_line_colors <- custom_line_colors
-  highlight_decile <- highlight_decile
-
-  pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative response",custom_line_colors=custom_line_colors)
-  #plot_input = plot_input
-  # rearrange plot_input
-  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(decile>0) %>%
-    dplyr::select(scope:decile,plotvalue=cumpct,legend,refline)
-  if (pp$seltype=="compare_models") {
-    minreflines <- plot_input %>%
-      dplyr::filter(decile>0) %>%
-      dplyr::mutate(legend=paste0('overall response (',dataset,')'),modelname='',plotvalue=pcttot,refline=1) %>%
-      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
-      dplyr::distinct()
-  } else {
-    minreflines <- plot_input %>%
-      dplyr::filter(decile>0) %>%
-      dplyr::mutate(legend=paste0('overall response (',legend,')'),plotvalue=pcttot,refline=1) %>%
-      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
-      dplyr::distinct()
-  }
-  plot_input_prepared <- rbind(minreflines,vallines)
-  plot_input_prepared$legend <- factor(plot_input_prepared$legend,levels=pp$resplevels)
-
-  #make plot
-  plot <- plot_input_prepared %>%
-    ggplot2::ggplot() +
-    ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
-    ggplot2::scale_linetype_manual(values=pp$resplinetypes,guide=ggplot2::guide_legend(ncol=pp$resplegendcolumns))+
-    ggplot2::scale_color_manual(values=pp$resplinecols)+
-    ggplot2::scale_size_manual(values=pp$resplinesizes)+
-    ggplot2::scale_alpha_manual(values=pp$respalphas)+
-    ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10,expand = c(0, 0.02)) +
-    ggplot2::scale_y_continuous(name="cumulative response" ,expand = c(0, 0.02),labels = scales::percent) +
-    ggplot2::expand_limits(y=0) +
-    ggplot2::labs(title=pp$plottitle,subtitle=pp$plotsubtitle) +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(plot.title = ggplot2::element_text(size = 14,hjust = 0.5),
-      plot.subtitle = ggplot2::element_text(size = 10,hjust = 0.5,face="italic")) +
-    ggplot2::theme(legend.title = ggplot2::element_blank() ,
-      legend.position=c(0.975,0.975),legend.justification=c(1, 1),
-      legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("white",0.2), size = 0),
-      panel.grid.minor.x = ggplot2::element_blank(),
-      panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
-      axis.line.x=ggplot2::element_line(),
-      axis.line.y=ggplot2::element_line())
-
-
-  #annotate plot at decile value
-  plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,highlight_decile=highlight_decile,pp=pp)
   return(plot)
 }
 
@@ -704,6 +271,463 @@ savemodelplots <- function(plots=c("plot_cumgains","plot_cumlift","plot_response
     dev.off()
     print(paste0('saved ',plot,' to ',dir, "/", plot, ".png", sep = ''))
   }
+}
+
+
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### plot_cumgains()                   ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+
+#' Cumulative gains plot
+#'
+#' Generates the cumulative gains plot. This plot, often referred to as the gains chart,
+#' helps answering the question: \bold{\emph{When we apply the model and select the best X deciles,
+#' what percentage of the actual target class observations can we expect to target?}}
+#' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
+#' or else meet required input format.
+#' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
+#' When not specified, colors from the RColorBrewer palet "Set1" are used.
+#' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
+#' and performances are highlighted.
+#' @return ggplot object. Cumulative gains plot.
+#' @examples
+#' data(iris)
+#' # add some noise to iris to prevent perfect models
+#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
+#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
+#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
+#' iris <- rbind(iris,iris_addnoise)
+#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
+#' train = iris[train_index,]
+#' test = iris[-train_index,]
+#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
+#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
+#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+#' #estimate models
+#' task = mlr::makeClassifTask(data = train, target = "Species")
+#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+#' rf = mlr::train(lrn, task)
+#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+#' mnl = mlr::train(lrn, task)
+#' prepare_scores_and_deciles(datasets=list("train","test"),
+#'                       dataset_labels = list("train data","test data"),
+#'                       models = list("rf","mnl"),
+#'                       model_labels = list("random forest","multinomial logit"),
+#'                       target_column="Species")
+#' head(scores_and_deciles)
+#' aggregate_over_deciles()
+#' plotting_scope(scope="compare_models")
+#' plot_cumgains()
+#' plot_cumgains(custom_line_colors=c("orange","purple"))
+#' plot_cumgains(highlight_decile=2)
+#' @export
+#' @importFrom magrittr %>%
+#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
+#' that generates the required input.
+#' @seealso \code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
+#' generates the required input.
+#' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
+#' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
+#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
+#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
+plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA,highlight_how='plot_text') {
+
+  plot_input <- data
+  custom_line_colors <- custom_line_colors
+  highlight_decile <- highlight_decile
+  highlight_how <- highlight_how
+
+  pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative gains",custom_line_colors=custom_line_colors)
+
+  # rearrange plot_input
+  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::select(scope:decile,plotvalue=cumgain,legend,refline)
+  if (pp$seltype=="compare_models") {
+    optreflines <- plot_input %>%
+      dplyr::mutate(legend=paste0('optimal gains (',dataset,')'),modelname='',plotvalue=gain_opt,refline=1) %>%
+      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
+      dplyr::distinct()
+  } else {
+    optreflines <- plot_input%>%
+      dplyr::mutate(legend=paste0('optimal gains (',legend,')'),plotvalue=gain_opt,refline=1) %>%
+      dplyr::select(scope:decile,plotvalue,legend,refline)
+  }
+  minrefline <- plot_input %>%
+    dplyr::mutate(legend=paste0('minimal gains'),modelname='',dataset='',category='',plotvalue=gain_ref,refline=1) %>%
+    dplyr::select(scope:decile,plotvalue,legend,refline)%>%
+    dplyr::distinct()
+  plot_input_prepared <- rbind(minrefline,optreflines,vallines)
+  plot_input_prepared$legend <- factor(plot_input_prepared$legend,levels=pp$gainslevels)
+
+  #make plot
+  plot <- plot_input_prepared %>%
+    ggplot2::ggplot() +
+    ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
+    ggplot2::scale_linetype_manual(values=pp$gainslinetypes,guide=ggplot2::guide_legend(ncol=pp$gainslegendcolumns))+
+    ggplot2::scale_color_manual(values=pp$gainslinecols)+
+    ggplot2::scale_size_manual(values=pp$gainslinesizes)+
+    ggplot2::scale_alpha_manual(values=pp$gainsalphas)+
+    ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10,expand = c(0, 0.02)) +
+    ggplot2::scale_y_continuous(name="cumulative gains",breaks=seq(0,1,0.2),labels = scales::percent ,expand = c(0, 0.02)) +
+    ggplot2::labs(title=pp$plottitle,subtitle=pp$plotsubtitle) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(plot.title = ggplot2::element_text(size = 14,hjust = 0.5),
+                   plot.subtitle = ggplot2::element_text(size = 10,hjust = 0.5,face="italic")) +
+    ggplot2::theme(legend.title = ggplot2::element_blank() ,
+      legend.position=c(0.975,0.025),legend.justification=c(1, 0),
+      legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("white",0.2), size = 0),
+      panel.grid.minor.x = ggplot2::element_blank(),
+      panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
+      axis.line.x=ggplot2::element_line(),
+      axis.line.y=ggplot2::element_line())
+
+  #annotate plot at decile value
+  plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,
+                        highlight_decile=highlight_decile,highlight_how=highlight_how,pp=pp)
+
+  return(plot)
+  }
+
+
+
+
+
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### plot_cumlift()                       ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+
+#' Cumulative Lift plot
+#'
+#' Generates the cumulative lift plot, often referred to as lift plot or index plot,
+#' helps you answer the question: When we apply the model and select the best X deciles,
+#' how many times better is that than using no model at all?
+#' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
+#' or else meet required input format.
+#' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
+#' When not specified, colors from the RColorBrewer palet "Set1" are used.
+#' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
+#' and performances are highlighted.
+#' @return ggplot object. Lift plot.
+#' @examples
+#' data(iris)
+#' # add some noise to iris to prevent perfect models
+#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
+#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
+#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
+#' iris <- rbind(iris,iris_addnoise)
+#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
+#' train = iris[train_index,]
+#' test = iris[-train_index,]
+#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
+#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
+#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+#' #estimate models
+#' task = mlr::makeClassifTask(data = train, target = "Species")
+#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+#' rf = mlr::train(lrn, task)
+#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+#' mnl = mlr::train(lrn, task)
+#' prepare_scores_and_deciles(datasets=list("train","test"),
+#'                       dataset_labels = list("train data","test data"),
+#'                       models = list("rf","mnl"),
+#'                       model_labels = list("random forest","multinomial logit"),
+#'                       target_column="Species")
+#' head(scores_and_deciles)
+#' aggregate_over_deciles()
+#' plotting_scope(scope="CompareDatasets")
+#' plot_cumlift()
+#' plot_cumlift(custom_line_colors=c("orange","purple"))
+#' plot_cumlift(highlight_decile=2)
+#' @export
+#' @importFrom magrittr %>%
+#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
+#' that generates the required input.
+#' @seealso \code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
+#' generates the required input.
+#' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
+#' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
+#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
+#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
+plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA,highlight_how='plot_text') {
+
+  plot_input <- data
+  custom_line_colors <- custom_line_colors
+  highlight_decile <- highlight_decile
+
+  pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative lift",custom_line_colors=custom_line_colors)
+
+  # rearrange plot_input
+  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(decile>0) %>%
+    dplyr::select(scope:decile,plotvalue=cumlift,legend,refline)
+  minrefline <- plot_input %>% dplyr::filter(decile>0) %>%
+    dplyr::mutate(legend=pp$liftreflabel,modelname='',dataset='',category='',plotvalue=cumlift_ref,refline=1) %>%
+    dplyr::select(scope:decile,plotvalue,legend,refline)%>%
+    dplyr::distinct()
+  plot_input_prepared <- rbind(minrefline,vallines)
+  plot_input_prepared$legend <- factor(plot_input_prepared$legend,levels=pp$liftlevels)
+
+
+  #make plot
+  plot <- plot_input_prepared %>%
+    ggplot2::ggplot() +
+    ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
+    ggplot2::scale_linetype_manual(values=pp$liftlinetypes,guide=ggplot2::guide_legend(ncol=pp$liftlegendcolumns))+
+    ggplot2::scale_color_manual(values=pp$liftlinecols)+
+    ggplot2::scale_size_manual(values=pp$liftlinesizes)+
+    ggplot2::scale_alpha_manual(values=pp$liftalphas)+
+    ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10,expand = c(0, 0.02)) +
+    ggplot2::scale_y_continuous(name="cumulative lift" ,labels = scales::percent,expand = c(0, 0.02)) +
+    ggplot2::expand_limits(y=c(0,max(2,max(plot_input_prepared$plotvalue,na.rm = T)))) +
+    ggplot2::labs(title=pp$plottitle,subtitle=pp$plotsubtitle) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(plot.title = ggplot2::element_text(size = 14,hjust = 0.5),
+      plot.subtitle = ggplot2::element_text(size = 10,hjust = 0.5,face="italic")) +
+    ggplot2::theme(legend.title = ggplot2::element_blank() ,
+      legend.position=c(0.975,0.975),legend.justification=c(1, 1),
+      legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("white",0.2), size = 0),
+      panel.grid.minor.x = ggplot2::element_blank(),
+      panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
+      axis.line.x=ggplot2::element_line(),
+      axis.line.y=ggplot2::element_line())
+
+  #annotate plot at decile value
+  plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,
+                        highlight_decile=highlight_decile,highlight_how=highlight_how,pp=pp)
+  return(plot)
+}
+
+
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### plot_response()                   ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+
+#' Response plot
+#'
+#' Generates the response plot. It plots the percentage of target class observations
+#' per decile. It can be used to answer the following business question: When we apply
+#' the model and select decile X, what is the expected percentage of target class observations
+#' in that decile?
+#' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
+#' or else meet required input format.
+#' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
+#' When not specified, colors from the RColorBrewer palet "Set1" are used.
+#' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
+#' and performances are highlighted.
+#' @return ggplot object. Response plot.
+#' @examples
+#' data(iris)
+#' # add some noise to iris to prevent perfect models
+#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
+#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
+#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
+#' iris <- rbind(iris,iris_addnoise)
+#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
+#' train = iris[train_index,]
+#' test = iris[-train_index,]
+#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
+#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
+#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+#' #estimate models
+#' task = mlr::makeClassifTask(data = train, target = "Species")
+#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+#' rf = mlr::train(lrn, task)
+#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+#' mnl = mlr::train(lrn, task)
+#' prepare_scores_and_deciles(datasets=list("train","test"),
+#'                       dataset_labels = list("train data","test data"),
+#'                       models = list("rf","mnl"),
+#'                       model_labels = list("random forest","multinomial logit"),
+#'                       target_column="Species")
+#' head(scores_and_deciles)
+#' aggregate_over_deciles()
+#' plotting_scope(scope="compare_targetclasses")
+#' plot_response()
+#' plot_response(custom_line_colors=RColorBrewer::brewer.pal(3,"Dark2"))
+#' plot_response(highlight_decile=2)
+#' @export
+#' @importFrom magrittr %>%
+#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
+#' that generates the required input.
+#' @seealso \code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
+#' generates the required input.
+#' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
+#' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
+#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
+#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
+plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA,highlight_how='plot_text') {
+
+  plot_input <- data
+  custom_line_colors <- custom_line_colors
+  highlight_decile <- highlight_decile
+
+  pp <- setplotparams(plot_input = plot_input,plottype = "Response",custom_line_colors=custom_line_colors)
+
+  # rearrange plot_input
+  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(decile>0) %>%
+    dplyr::select(scope:decile,plotvalue=pct,legend,refline)
+  if (pp$seltype=="compare_models") {
+    minreflines <- plot_input %>%
+      dplyr::filter(decile>0) %>%
+      dplyr::mutate(legend=paste0('overall response (',dataset,')'),modelname='',plotvalue=pcttot,refline=1) %>%
+      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
+      dplyr::distinct()
+  } else {
+    minreflines <- plot_input%>%
+      dplyr::filter(decile>0) %>%
+      dplyr::mutate(legend=paste0('overall response (',legend,')'),plotvalue=pcttot,refline=1) %>%
+      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
+      dplyr::distinct()
+  }
+  plot_input_prepared <- rbind(minreflines,vallines)
+  plot_input_prepared$legend <- factor(plot_input_prepared$legend,levels=pp$resplevels)
+
+  #make plot
+  plot <- plot_input_prepared %>%
+    ggplot2::ggplot() +
+    ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
+    ggplot2::scale_linetype_manual(values=pp$resplinetypes,guide=ggplot2::guide_legend(ncol=pp$resplegendcolumns))+
+    ggplot2::scale_color_manual(values=pp$resplinecols)+
+    ggplot2::scale_size_manual(values=pp$resplinesizes)+
+    ggplot2::scale_alpha_manual(values=pp$respalphas)+
+    ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10,expand = c(0, 0.02)) +
+    ggplot2::scale_y_continuous(name="response" ,expand = c(0, 0.02),labels = scales::percent) +
+    ggplot2::expand_limits(y=0) +
+    ggplot2::labs(title=pp$plottitle,subtitle=pp$plotsubtitle) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(plot.title = ggplot2::element_text(size = 14,hjust = 0.5),
+      plot.subtitle = ggplot2::element_text(size = 10,hjust = 0.5,face="italic")) +
+    ggplot2::theme(legend.title = ggplot2::element_blank() ,
+      legend.position=c(0.975,0.975),legend.justification=c(1, 1),
+      legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("white",0.2), size = 0),
+      panel.grid.minor.x = ggplot2::element_blank(),
+      panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
+      axis.line.x=ggplot2::element_line(),
+      axis.line.y=ggplot2::element_line())
+
+
+  #annotate plot at decile value
+  plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,
+                        highlight_decile=highlight_decile,highlight_how=highlight_how,pp=pp)
+  return(plot)
+}
+
+
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### plot_cumresponse()                ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+
+#' Cumulative Respose plot
+#'
+#' Generates the cumulative response plot. It plots the cumulative percentage of
+#' target class observations up until that decile. It helps answering the question:
+#' When we apply the model and select up until decile X, what is the expected percentage of
+#' target class observations in the selection?
+#' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
+#' or else meet required input format.
+#' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
+#' When not specified, colors from the RColorBrewer palet "Set1" are used.
+#' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
+#' and performances are highlighted.
+#' When not specified, colors from the RColorBrewer palet "Set1" are used.
+#' @return ggplot object. Cumulative Response plot.
+#' @examples
+#' data(iris)
+#' # add some noise to iris to prevent perfect models
+#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
+#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
+#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
+#' iris <- rbind(iris,iris_addnoise)
+#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
+#' train = iris[train_index,]
+#' test = iris[-train_index,]
+#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
+#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
+#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+#' #estimate models
+#' task = mlr::makeClassifTask(data = train, target = "Species")
+#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+#' rf = mlr::train(lrn, task)
+#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+#' mnl = mlr::train(lrn, task)
+#' prepare_scores_and_deciles(datasets=list("train","test"),
+#'                       dataset_labels = list("train data","test data"),
+#'                       models = list("rf","mnl"),
+#'                       model_labels = list("random forest","multinomial logit"),
+#'                       target_column="Species")
+#' head(scores_and_deciles)
+#' aggregate_over_deciles()
+#' plotting_scope()
+#' plot_cumresponse()
+#' plot_cumresponse(custom_line_colors="pink")
+#' plot_cumresponse(highlight_decile=3)
+#' @export
+#' @importFrom magrittr %>%
+#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
+#' that generates the required input.
+#' @seealso \code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
+#' generates the required input.
+#' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
+#' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
+#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
+#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
+plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA,highlight_how='plot_text') {
+
+  plot_input <- data
+  custom_line_colors <- custom_line_colors
+  highlight_decile <- highlight_decile
+
+  pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative response",custom_line_colors=custom_line_colors)
+  #plot_input = plot_input
+  # rearrange plot_input
+  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(decile>0) %>%
+    dplyr::select(scope:decile,plotvalue=cumpct,legend,refline)
+  if (pp$seltype=="compare_models") {
+    minreflines <- plot_input %>%
+      dplyr::filter(decile>0) %>%
+      dplyr::mutate(legend=paste0('overall response (',dataset,')'),modelname='',plotvalue=pcttot,refline=1) %>%
+      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
+      dplyr::distinct()
+  } else {
+    minreflines <- plot_input %>%
+      dplyr::filter(decile>0) %>%
+      dplyr::mutate(legend=paste0('overall response (',legend,')'),plotvalue=pcttot,refline=1) %>%
+      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
+      dplyr::distinct()
+  }
+  plot_input_prepared <- rbind(minreflines,vallines)
+  plot_input_prepared$legend <- factor(plot_input_prepared$legend,levels=pp$resplevels)
+
+  #make plot
+  plot <- plot_input_prepared %>%
+    ggplot2::ggplot() +
+    ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
+    ggplot2::scale_linetype_manual(values=pp$resplinetypes,guide=ggplot2::guide_legend(ncol=pp$resplegendcolumns))+
+    ggplot2::scale_color_manual(values=pp$resplinecols)+
+    ggplot2::scale_size_manual(values=pp$resplinesizes)+
+    ggplot2::scale_alpha_manual(values=pp$respalphas)+
+    ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10,expand = c(0, 0.02)) +
+    ggplot2::scale_y_continuous(name="cumulative response" ,expand = c(0, 0.02),labels = scales::percent) +
+    ggplot2::expand_limits(y=0) +
+    ggplot2::labs(title=pp$plottitle,subtitle=pp$plotsubtitle) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(plot.title = ggplot2::element_text(size = 14,hjust = 0.5),
+      plot.subtitle = ggplot2::element_text(size = 10,hjust = 0.5,face="italic")) +
+    ggplot2::theme(legend.title = ggplot2::element_blank() ,
+      legend.position=c(0.975,0.975),legend.justification=c(1, 1),
+      legend.background = ggplot2::element_rect(color = NA, fill = ggplot2::alpha("white",0.2), size = 0),
+      panel.grid.minor.x = ggplot2::element_blank(),
+      panel.grid.major.x = ggplot2::element_line( linetype=3,size=.1, color="lightgray"),
+      axis.line.x=ggplot2::element_line(),
+      axis.line.y=ggplot2::element_line())
+
+
+  #annotate plot at decile value
+  plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,
+                        highlight_decile=highlight_decile,highlight_how=highlight_how,pp=pp)
+  return(plot)
 }
 
 
