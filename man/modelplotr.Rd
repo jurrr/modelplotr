@@ -13,35 +13,35 @@ datapreparation and plotting.
 
  The datapreparation functions are:
 \describe{
-  \item{\code{\link{dataprep_modevalplots}}}{a
-  function that builds a dataframe object \code{'eval_tot'} that contains
+  \item{\code{\link{prepare_scores_and_deciles}}}{a
+  function that builds a dataframe object \code{'scores_and_deciles'} that contains
   actuals and predictions on dependent variable for each dataset in datasets.}
-  \item{\code{\link{input_modevalplots}}}{a function that creates a dataframe \code{'eval_t_tot'} with aggregated
-    actuals and predictions. A record in 'eval_t_tot' is unique on the combination
+  \item{\code{\link{aggregate_over_deciles}}}{a function that creates a dataframe \code{'deciles_aggregate'} with aggregated
+    actuals and predictions. A record in 'deciles_aggregate' is unique on the combination
     of datasets-decile.}
-  \item{\code{\link{scope_modevalplots}}}{a function that creates a dataframe \code{'eval_t_type'}  with a subset
-    of 'eval_t_tot', relevant to the selected scope of evaluation. }}
+  \item{\code{\link{plotting_scope}}}{a function that creates a dataframe \code{'plot_input'}  with a subset
+    of 'deciles_aggregate', relevant to the selected scope of evaluation. }}
 }
 
 \section{Plotting functions}{
 
   The plotting functions are:
 \describe{
-  \item{\code{\link{cumgains}}}{Generates the cumulative gains plot. This plot, often referred to as the gains chart,
+  \item{\code{\link{plot_cumgains}}}{Generates the cumulative gains plot. This plot, often referred to as the gains chart,
     helps answering the question: When we apply the model and select the best X deciles,
     what percentage of the actual target class observations can we expect to target? }
-    \item{\code{\link{cumlift}}}{Generates the cumulative lift plot, often referred to as lift plot or index plot,
+    \item{\code{\link{plot_cumlift}}}{Generates the cumulative lift plot, often referred to as lift plot or index plot,
     helps you answer the question: When we apply the model and select the best X deciles,
     how many times better is that than using no model at all?}
-    \item{\code{\link{response}}}{Generates the response plot. It plots the percentage of target class observations
+    \item{\code{\link{plot_response}}}{Generates the response plot. It plots the percentage of target class observations
     per decile. It can be used to answer the following business question: When we apply
     the model and select decile X, what is the expected percentage of target class observations
     in that decile?}
-    \item{\code{\link{cumresponse}}}{Generates the cumulative response plot. It plots the cumulative percentage of
+    \item{\code{\link{plot_cumresponse}}}{Generates the cumulative response plot. It plots the cumulative percentage of
      target class observations up until that decile. It helps answering the question:
      When we apply the model and select up until decile X, what is the expected percentage of
      target class observations in the selection? }
-    \item{\code{\link{fourevalplots}}}{Generates a canvas with all four evaluation plots combined}}
+    \item{\code{\link{plot_all}}}{Generates a canvas with all four evaluation plots combined}}
 }
 
 \examples{
@@ -63,19 +63,26 @@ lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 rf = mlr::train(lrn, task)
 lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 mnl = mlr::train(lrn, task)
-dataprep_modevalplots(datasets=list("train","test"),
-                      datasetlabels = list("train data","test data"),
+prepare_scores_and_deciles(datasets=list("train","test"),
+                      dataset_labels = list("train data","test data"),
                       models = list("rf","mnl"),
-                      modellabels = list("random forest","multinomial logit"),
-                      targetname="Species")
-head(eval_tot)
-input_modevalplots()
-scope_modevalplots()
-cumgains()
-cumlift()
-response()
-cumresponse()
-fourevalplots()
+                      model_labels = list("random forest","multinomial logit"),
+                      target_column="Species")
+head(scores_and_deciles)
+aggregate_over_deciles()
+plotting_scope()
+plot_cumgains()
+plot_cumgains(highlight_decile=2)
+plotting_scope(scope="compare_models")
+plot_cumlift()
+plot_cumlift(highlight_decile=2,highlight_how="plot")
+plotting_scope(scope="compare_targetclasses")
+plot_response()
+plot_response(custom_line_colors = c('green','orange','darkblue'))
+plotting_scope(scope="compare_datasets")
+plot_cumresponse()
+plot_cumresponse(highlight_decile=2,highlight_how="text")
+plot_all()
 
 }
 \seealso{
