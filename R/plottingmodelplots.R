@@ -199,84 +199,17 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
 
       # create title and subtitle elements for grob
 
-      title <- grid::textGrob(pp$plottitle, gp=grid::gpar(fontsize=22))
-      subtitle <- grid::textGrob(pp$plotsubtitle, gp=grid::gpar(fontsize=14,fontface="italic",col="darkgray"))
+      title <- grid::textGrob(pp$plottitle, gp=grid::gpar(fontsize=18))
+      subtitle <- grid::textGrob(pp$plotsubtitle, gp=grid::gpar(fontsize=10,fontface="italic",col="black"))
 
       # create grob layout and add elements to it
       lay <- as.matrix(c(1,2,rep(3,20),rep(4,1+pp$nlevels)))
       cat('Plotted output is a TableGrob object with these characteristics: \n')
-      plot <- gridExtra::grid.arrange(title,subtitle,plot,annotextplot, layout_matrix = lay,newpage = TRUE)
+      plot <- gridExtra::arrangeGrob(title,subtitle,plot,annotextplot, layout_matrix = lay,
+        widths = grid::unit(18, "cm"),heights = grid::unit(rep(12/(23+pp$nlevels),23+pp$nlevels), "cm"))
       }
   }
-
   return(plot)
-}
-
-##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-#### savemodelplots()             ####
-##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-
-#' Cumulative Respose plot
-#'
-#' Generates the cumulative response plot. It plots the cumulative percentage of
-#' target class observations up until that decile. It helps answering the question:
-#' When we apply the model and select up until decile X, what is the expected percentage of
-#' target class observations in the selection?
-#' @param plot_input Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
-#' or else meet required input format.
-#' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
-#' When not specified, colors from the RColorBrewer palet "Set1" are used.
-#' @return ggplot object. Cumulative Response plot.
-#' @examples
-#' data(iris)
-#' # add some noise to iris to prevent perfect models
-#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
-#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
-#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
-#' iris <- rbind(iris,iris_addnoise)
-#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-#' train = iris[train_index,]
-#' test = iris[-train_index,]
-#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
-#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' #estimate models
-#' task = mlr::makeClassifTask(data = train, target = "Species")
-#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
-#' rf = mlr::train(lrn, task)
-#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
-#' mnl = mlr::train(lrn, task)
-#' prepare_scores_and_deciles(datasets=list("train","test"),
-#'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl"),
-#'                       model_labels = list("random forest","multinomial logit"),
-#'                       target_column="Species")
-#' head(scores_and_deciles)
-#' aggregate_over_deciles()
-#' plotting_scope()
-#' plot_cumgains()
-#' plot_cumlift()
-#' plot_response()
-#' plot_cumresponse()
-#' plot_all()
-#' @export
-#' @importFrom magrittr %>%
-#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
-#' @seealso \code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
-#' that generates the required input.
-#' @seealso \code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
-#' generates the required input.
-#' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
-#' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
-#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
-#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-savemodelplots <- function(plots=c("plot_cumgains","plot_cumlift","plot_response","plot_cumresponse"), dir = getwd()) {
-  for (plot in plots) {
-    png(paste0(dir, "/", plot, ".png"))
-    print(get(plot))
-    dev.off()
-    print(paste0('saved ',plot,' to ',dir, "/", plot, ".png", sep = ''))
-  }
 }
 
 
@@ -299,6 +232,8 @@ savemodelplots <- function(plots=c("plot_cumgains","plot_cumlift","plot_response
 #' Default is "plot_text", both highlighting the decile and value on the plot as well as in text below the plot.
 #' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen decile.
 #' "text" adds text below the plot explaining the plot at chosen decile but does not highlight the plot.
+#' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plots are optimized for 18x12cm.
+#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
 #' @return ggplot object. Cumulative gains plot.
 #' @examples
 #' data(iris)
@@ -341,7 +276,8 @@ savemodelplots <- function(plots=c("plot_cumgains","plot_cumlift","plot_response
 #' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA,highlight_how='plot_text') {
+plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA,highlight_how='plot_text',
+                          save_fig=FALSE,save_fig_filename=NA) {
 
   plot_input <- data
   custom_line_colors <- custom_line_colors
@@ -395,6 +331,27 @@ plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_decile
   plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,
                         highlight_decile=highlight_decile,highlight_how=highlight_how,pp=pp)
 
+  #save plot when requested
+  if(save_fig) {
+    if(!is.na(save_fig_filename)){
+      if(!grepl("\\.[a-zA-Z]{3,4}",save_fig_filename)) save_fig_filename <- paste0(save_fig_filename,'.png')
+      if(grepl("\\|\\/",save_fig_filename)) {
+        filename <- save_fig_filename
+      } else {
+        filename <- paste0(getwd(),'/',save_fig_filename)
+      }
+    } else {
+      filename <-   paste0(getwd(),'/',pp$plottype,'.png')
+      print("No filename specified! Specify 'save_fig_filename' to customize location and name.")
+    }
+    print(paste0("Plot is saved as: ",filename))
+    ggplot2::ggsave(file=filename,plot=plot,width = 18, height = 12, units = "cm",dpi=320)
+    #ggplot2::ggsave(file=filename,plot=plot)
+  }
+  if(length(plot$layout)>0) {
+    grid::grid.newpage()
+    grid::grid.draw(plot)
+  }
   return(plot)
   }
 
@@ -421,6 +378,8 @@ plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_decile
 #' Default is "plot_text", both highlighting the decile and value on the plot as well as in text below the plot.
 #' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen decile.
 #' "text" adds text below the plot explaining the plot at chosen decile but does not highlight the plot.
+#' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plots are optimized for 18x12cm.
+#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
 #' @return ggplot object. Lift plot.
 #' @examples
 #' data(iris)
@@ -463,7 +422,8 @@ plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_decile
 #' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA,highlight_how='plot_text') {
+plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA,highlight_how='plot_text',
+                         save_fig=FALSE,save_fig_filename=NA) {
 
   plot_input <- data
   custom_line_colors <- custom_line_colors
@@ -508,6 +468,28 @@ plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=
   #annotate plot at decile value
   plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,
                         highlight_decile=highlight_decile,highlight_how=highlight_how,pp=pp)
+
+  #save plot when requested
+  if(save_fig) {
+    if(!is.na(save_fig_filename)){
+      if(!grepl("\\.[a-zA-Z]{3,4}",save_fig_filename)) save_fig_filename <- paste0(save_fig_filename,'.png')
+      if(grepl("\\|\\/",save_fig_filename)) {
+        filename <- save_fig_filename
+      } else {
+        filename <- paste0(getwd(),'/',save_fig_filename)
+      }
+    } else {
+      filename <-   paste0(getwd(),'/',pp$plottype,'.png')
+      print("No filename specified! Specify 'save_fig_filename' to customize location and name.")
+    }
+    print(paste0("Plot is saved as: ",filename))
+    ggplot2::ggsave(file=filename,plot=plot,width = 18, height = 12, units = "cm",dpi=320)
+    #ggplot2::ggsave(file=filename,plot=plot)
+  }
+  if(length(plot$layout)>0) {
+    grid::grid.newpage()
+    grid::grid.draw(plot)
+  }
   return(plot)
 }
 
@@ -532,6 +514,8 @@ plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=
 #' Default is "plot_text", both highlighting the decile and value on the plot as well as in text below the plot.
 #' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen decile.
 #' "text" adds text below the plot explaining the plot at chosen decile but does not highlight the plot.
+#' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plots are optimized for 18x12cm.
+#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
 #' @return ggplot object. Response plot.
 #' @examples
 #' data(iris)
@@ -574,7 +558,8 @@ plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=
 #' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA,highlight_how='plot_text') {
+plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA,highlight_how='plot_text',
+                          save_fig=FALSE,save_fig_filename=NA) {
 
   plot_input <- data
   custom_line_colors <- custom_line_colors
@@ -628,6 +613,29 @@ plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile
   #annotate plot at decile value
   plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,
                         highlight_decile=highlight_decile,highlight_how=highlight_how,pp=pp)
+
+  #save plot when requested
+  if(save_fig) {
+    if(!is.na(save_fig_filename)){
+      if(!grepl("\\.[a-zA-Z]{3,4}",save_fig_filename)) save_fig_filename <- paste0(save_fig_filename,'.png')
+      if(grepl("\\|\\/",save_fig_filename)) {
+        filename <- save_fig_filename
+      } else {
+        filename <- paste0(getwd(),'/',save_fig_filename)
+      }
+    } else {
+      filename <-   paste0(getwd(),'/',pp$plottype,'.png')
+      print("No filename specified! Specify 'save_fig_filename' to customize location and name.")
+    }
+    print(paste0("Plot is saved as: ",filename))
+    ggplot2::ggsave(file=filename,plot=plot,width = 18, height = 12, units = "cm",dpi=320)
+    #ggplot2::ggsave(file=filename,plot=plot)
+  }
+  if(length(plot$layout)>0) {
+    grid::grid.newpage()
+    grid::grid.draw(plot)
+  }
+
   return(plot)
 }
 
@@ -652,6 +660,8 @@ plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile
 #' Default is "plot_text", both highlighting the decile and value on the plot as well as in text below the plot.
 #' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen decile.
 #' "text" adds text below the plot explaining the plot at chosen decile but does not highlight the plot.
+#' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plots are optimized for 18x12cm.
+#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
 #' @return ggplot object. Cumulative Response plot.
 #' @examples
 #' data(iris)
@@ -694,7 +704,8 @@ plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile
 #' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA,highlight_how='plot_text') {
+plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA,highlight_how='plot_text',
+                             save_fig=FALSE,save_fig_filename=NA) {
 
   plot_input <- data
   custom_line_colors <- custom_line_colors
@@ -748,6 +759,29 @@ plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_dec
   #annotate plot at decile value
   plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,
                         highlight_decile=highlight_decile,highlight_how=highlight_how,pp=pp)
+
+  #save plot when requested
+  if(save_fig) {
+    if(!is.na(save_fig_filename)){
+      if(!grepl("\\.[a-zA-Z]{3,4}",save_fig_filename)) save_fig_filename <- paste0(save_fig_filename,'.png')
+      if(grepl("\\|\\/",save_fig_filename)) {
+        filename <- save_fig_filename
+      } else {
+        filename <- paste0(getwd(),'/',save_fig_filename)
+      }
+    } else {
+      filename <-   paste0(getwd(),'/',pp$plottype,'.png')
+      print("No filename specified! Specify 'save_fig_filename' to customize location and name.")
+    }
+    print(paste0("Plot is saved as: ",filename))
+    ggplot2::ggsave(file=filename,plot=plot,width = 18, height = 12, units = "cm",dpi=320)
+    #ggplot2::ggsave(file=filename,plot=plot)
+  }
+  if(length(plot$layout)>0) {
+    grid::grid.newpage()
+    grid::grid.draw(plot)
+  }
+
   return(plot)
 }
 
@@ -766,6 +800,8 @@ plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_dec
 #' or else meet required input format.
 #' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
+#' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plot_all is optimized for 36x24cm.
+#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
 #' @return gtable, containing 6 grobs.
 #' @examples
 #' data(iris)
@@ -800,7 +836,7 @@ plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_dec
 #' plot_cumresponse()
 #' plot_all()
 #' @export
-plot_all <- function(data=plot_input,custom_line_colors=NA) {
+plot_all <- function(data=plot_input,custom_line_colors=NA,save_fig=FALSE,save_fig_filename=NA) {
 
   plot_input <- data
   custom_line_colors <- custom_line_colors
@@ -840,10 +876,31 @@ plot_all <- function(data=plot_input,custom_line_colors=NA) {
     c(2,2,3,3),c(2,2,3,3),c(2,2,3,3),c(2,2,3,3),c(2,2,3,3),c(2,2,3,3),c(2,2,3,3),c(2,2,3,3),c(2,2,3,3),
     c(4,4,5,5),c(4,4,5,5),c(4,4,5,5),c(4,4,5,5),c(4,4,5,5),c(4,4,5,5),c(4,4,5,5),c(4,4,5,5),c(4,4,5,5),c(4,4,5,5))
 
-
-  gridExtra::grid.arrange(titletextplot,cumgainsplot,
+  plot <- gridExtra::arrangeGrob(titletextplot,cumgainsplot,
     cumliftplot,
     responseplot,
     cumresponseplot, layout_matrix = lay)
+
+  #save plot when requested
+  if(save_fig) {
+    if(!is.na(save_fig_filename)){
+      if(!grepl("\\.[a-zA-Z]{3,4}",save_fig_filename)) save_fig_filename <- paste0(save_fig_filename,'.png')
+      if(grepl("\\|\\/",save_fig_filename)) {
+        filename <- save_fig_filename
+      } else {
+        filename <- paste0(getwd(),'/',save_fig_filename)
+      }
+    } else {
+      filename <-   paste0(getwd(),'/',pp$plottype,'.png')
+      print("No filename specified! Specify 'save_fig_filename' to customize location and name.")
+    }
+    print(paste0("Plot is saved as: ",filename))
+    ggplot2::ggsave(file=filename,plot=plot,width = 36, height = 24, units = "cm",dpi=320)
+    #ggplot2::ggsave(file=filename,plot=plot)
+  }
+
+  grid::grid.newpage()
+  grid::grid.draw(plot)
+
 }
 

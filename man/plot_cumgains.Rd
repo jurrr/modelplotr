@@ -5,7 +5,8 @@
 \title{Cumulative gains plot}
 \usage{
 plot_cumgains(data = plot_input, custom_line_colors = NA,
-  highlight_decile = NA, highlight_how = "plot_text")
+  highlight_decile = NA, highlight_how = "plot_text", save_fig = FALSE,
+  save_fig_filename = NA)
 }
 \arguments{
 \item{data}{Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
@@ -21,6 +22,10 @@ and/or performances are highlighted.}
 Default is "plot_text", both highlighting the decile and value on the plot as well as in text below the plot.
 "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen decile.
 "text" adds text below the plot explaining the plot at chosen decile but does not highlight the plot.}
+
+\item{save_fig}{Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plots are optimized for 18x12cm.}
+
+\item{save_fig_filename}{String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.}
 }
 \value{
 ggplot object. Cumulative gains plot.
