@@ -28,19 +28,19 @@ datapreparation and plotting.
   The plotting functions are:
 \describe{
   \item{\code{\link{plot_cumgains}}}{Generates the cumulative gains plot. This plot, often referred to as the gains chart,
-    helps answering the question: When we apply the model and select the best X deciles,
-    what percentage of the actual target class observations can we expect to target? }
+    helps answering the question: \strong{\emph{When we apply the model and select the best X deciles,
+    what percentage of the actual target class observations can we expect to target?}} }
     \item{\code{\link{plot_cumlift}}}{Generates the cumulative lift plot, often referred to as lift plot or index plot,
-    helps you answer the question: When we apply the model and select the best X deciles,
-    how many times better is that than using no model at all?}
+    helps you answer the question: \strong{\emph{When we apply the model and select the best X deciles,
+    how many times better is that than using no model at all?}}}
     \item{\code{\link{plot_response}}}{Generates the response plot. It plots the percentage of target class observations
-    per decile. It can be used to answer the following business question: When we apply
+    per decile. It can be used to answer the following business question: \strong{\emph{When we apply
     the model and select decile X, what is the expected percentage of target class observations
-    in that decile?}
+    in that decile?}}}
     \item{\code{\link{plot_cumresponse}}}{Generates the cumulative response plot. It plots the cumulative percentage of
      target class observations up until that decile. It helps answering the question:
-     When we apply the model and select up until decile X, what is the expected percentage of
-     target class observations in the selection? }
+     \strong{\emph{When we apply the model and select up until decile X, what is the expected percentage of
+     target class observations in the selection? }}}
     \item{\code{\link{plot_all}}}{Generates a canvas with all four evaluation plots combined}}
 }
 
@@ -57,7 +57,7 @@ test = iris[-train_index,]
 trainTask <- mlr::makeClassifTask(data = train, target = "Species")
 testTask <- mlr::makeClassifTask(data = test, target = "Species")
 mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#estimate models
+# estimate models
 task = mlr::makeClassifTask(data = train, target = "Species")
 lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 rf = mlr::train(lrn, task)
@@ -68,9 +68,11 @@ prepare_scores_and_deciles(datasets=list("train","test"),
                       models = list("rf","mnl"),
                       model_labels = list("random forest","multinomial logit"),
                       target_column="Species")
+# preparation steps
 head(scores_and_deciles)
 aggregate_over_deciles()
 plotting_scope()
+# various plotting examples with different plotting scopes
 plot_cumgains()
 plot_cumgains(highlight_decile=2)
 plotting_scope(scope="compare_models")
