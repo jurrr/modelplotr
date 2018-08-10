@@ -27,7 +27,7 @@ specified). When scope is "compare_datasets", select_dataset_label can be used t
 
 \item{select_targetclass}{String. Selected target value when scope is compare_models or compare_datasets or no_comparison.
 Default is smallest value when select_smallest_targetclass=TRUE, otherwise first alphabetical value.
-When scope is "compare_targetclasses", select_targetclass can be used to take a subset of available target values.}
+When scope is "compare_targetclasses", select_targetclass can be used to take a subset of available target classes.}
 
 \item{select_smallest_targetclass}{Boolean. Select the target value with the smallest number of cases in dataset as group of
 interest. Default is True, hence the target value with the least observations is selected.}
@@ -46,14 +46,14 @@ There are four perspectives:
     the smallest (when \code{select_smallest_targetclass=TRUE}) or first alphabetic target value are selected }
   \item{"compare_models"}{In this perspective, you're interested in how well different models perform in comparison to
     each other on the same dataset and for the same target value. This results in a comparison between models available
-    in deciles_aggregate$modelname for a selected dataset (default: first alphabetic dataset) and for a selected target value
+    in deciles_aggregate$model_label for a selected dataset (default: first alphabetic dataset) and for a selected target value
     (default: smallest (when \code{select_smallest_targetclass=TRUE}) or first alphabetic target value).}
   \item{"compare_datasets"}{In this perspective, you're interested in how well a model performs in different datasets
   for a specific model on the same target value. This results in a comparison between datasets available in
-  deciles_aggregate$dataset for a selected model (default: first alphabetic model) and for a selected target value (default:
+  deciles_aggregate$dataset_label for a selected model (default: first alphabetic model) and for a selected target value (default:
   smallest (when \code{select_smallest_targetclass=TRUE}) or first alphabetic target value).}
   \item{"compare_targetclasses"}{In this perspective, you're interested in how well a model performs for different target
-   values on a specific dataset.This resuls in a comparison between target values available in deciles_aggregate$category for
+   values on a specific dataset.This resuls in a comparison between target classes available in deciles_aggregate$target_class for
    a selected model (default: first alphabetic model) and for a selected dataset (default: first alphabetic dataset).}}
 }
 \examples{

@@ -15,25 +15,25 @@ Dataframe \code{deciles_aggregate} is built based on \code{scores_and_deciles}.\
 \code{deciles_aggregate} contains:
 \tabular{lll}{
   \bold{column} \tab \bold{type} \tab \bold{definition} \cr
-  modelname \tab String \tab Name of the model object \cr
-  dataset \tab Factor \tab Datasets to include in the plot as factor levels\cr
-  category\tab String or Integer\tab Target values to include in the plot\cr
-  decile\tab Integer\tab Decile groups based on model probability for category\cr
-  neg\tab Integer\tab Number of cases not belonging to category in dataset in decile\cr
-  pos\tab Integer\tab Number of cases belonging to category in dataset in decile\cr
+  model_label \tab String \tab Name of the model object \cr
+  dataset_label \tab Factor \tab Datasets to include in the plot as factor levels\cr
+  target_class\tab String or Integer\tab Target classes to include in the plot\cr
+  decile\tab Integer\tab Decile groups based on model probability for target class\cr
+  neg\tab Integer\tab Number of cases not belonging to target class in dataset in decile\cr
+  pos\tab Integer\tab Number of cases belonging to target class in dataset in decile\cr
   tot\tab Integer\tab Total number of cases in dataset in decile\cr
   pct\tab Decimal \tab Percentage of cases in dataset in decile that belongs to
-    category (pos/tot)\cr
-  negtot\tab Integer\tab Total number of cases not belonging to category in dataset\cr
-  postot\tab Integer\tab Total number of cases belonging to category in dataset\cr
+    target class (pos/tot)\cr
+  negtot\tab Integer\tab Total number of cases not belonging to target class in dataset\cr
+  postot\tab Integer\tab Total number of cases belonging to target class in dataset\cr
   tottot\tab Integer\tab Total number of cases in dataset\cr
   pcttot\tab Decimal\tab Percentage of cases in dataset that belongs to
-    category (postot / tottot)\cr
-  cumneg\tab Integer\tab Cumulative number of cases not belonging to category in
+    target class (postot / tottot)\cr
+  cumneg\tab Integer\tab Cumulative number of cases not belonging to target class in
     dataset from decile 1 up until decile\cr
-  cumpos\tab Integer\tab Cumulative number of cases belonging to category in
+  cumpos\tab Integer\tab Cumulative number of cases belonging to target class in
     dataset from decile 1 up until decile\cr
-  cumpos\tab Integer\tab Cumulative number of cases belonging to category in
+  cumpos\tab Integer\tab Cumulative number of cases belonging to target class in
     dataset from decile 1 up until decile\cr
   cumtot\tab Integer\tab Cumulative number of cases in dataset from decile 1
     up until decile\cr
@@ -62,8 +62,8 @@ with highest model probability, 10= 10 percent with lowest probability according
 In that case, make sure the input dataframe contains the folowing columns & formats:
 \tabular{lll}{
   \bold{column} \tab \bold{type} \tab \bold{definition} \cr
-  modelname \tab Factor \tab Name of the model object \cr
-  dataset \tab Factor \tab Datasets to include in the plot as factor levels\cr
+  model_label \tab Factor \tab Name of the model object \cr
+  dataset_label \tab Factor \tab Datasets to include in the plot as factor levels\cr
   y_true \tab Factor \tab Target with actual values \cr
   prob_[tv1] \tab Decimal \tab Probability according to model for target value 1 \cr
   prob_[tv2] \tab Decimal \tab Probability according to model for target value 2 \cr
