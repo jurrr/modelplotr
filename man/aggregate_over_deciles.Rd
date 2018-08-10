@@ -89,7 +89,7 @@ test = iris[-train_index,]
 trainTask <- mlr::makeClassifTask(data = train, target = "Species")
 testTask <- mlr::makeClassifTask(data = test, target = "Species")
 mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#estimate models
+# estimate models
 task = mlr::makeClassifTask(data = train, target = "Species")
 lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 rf = mlr::train(lrn, task)
@@ -100,13 +100,22 @@ prepare_scores_and_deciles(datasets=list("train","test"),
                       models = list("rf","mnl"),
                       model_labels = list("random forest","multinomial logit"),
                       target_column="Species")
+# preparation steps
 head(scores_and_deciles)
 aggregate_over_deciles()
 plotting_scope()
+# various plotting examples with different plotting scopes
 plot_cumgains()
+plot_cumgains(highlight_decile=2)
+plotting_scope(scope="compare_models")
 plot_cumlift()
+plot_cumlift(highlight_decile=2,highlight_how="plot")
+plotting_scope(scope="compare_targetclasses")
 plot_response()
+plot_response(custom_line_colors = c('green','orange','darkblue'))
+plotting_scope(scope="compare_datasets")
 plot_cumresponse()
+plot_cumresponse(highlight_decile=2,highlight_how="text")
 plot_all()
 }
 \seealso{

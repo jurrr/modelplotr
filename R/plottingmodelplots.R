@@ -61,7 +61,7 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
                         ifelse(pp$seltype=="compare_targetclasses",
                           paste0('scope: comparing target classes & dataset: ',pp$seldata,'  &  model: ',pp$selmod),
                           paste0('scope: no comparison & model: ',
-                            pp$selmod,'  &  dataset: ',pp$seldata,'"  &  target value: ',pp$selval))))
+                            pp$selmod,'  &  dataset: ',pp$seldata,'  &  target value: ',pp$selval))))
 
   # GAINS
   if (pp$seltype=='compare_models') {
@@ -148,6 +148,7 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
         hjust = 0, fontface = "bold",show.legend = FALSE) +
       # emphasize decile for which annotation is added
       ggplot2::theme(
+        axis.line = ggplot2::element_line(color="black"),
         axis.text.x = ggplot2::element_text(
           face=c(rep("plain",pp$decile0+highlight_decile-1),"bold",rep("plain",10+pp$decile0-highlight_decile-1)),
           size=c(rep(10,pp$decile0+highlight_decile-1),12,rep(10,10+pp$decile0-highlight_decile-1))))
@@ -204,7 +205,6 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
 
       # create grob layout and add elements to it
       lay <- as.matrix(c(1,2,rep(3,20),rep(4,1+pp$nlevels)))
-      cat('Plotted output is a TableGrob object with these characteristics: \n')
       plot <- gridExtra::arrangeGrob(title,subtitle,plot,annotextplot, layout_matrix = lay,
         widths = grid::unit(18, "cm"),heights = grid::unit(rep(12/(23+pp$nlevels),23+pp$nlevels), "cm"))
       }
@@ -335,16 +335,16 @@ plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_decile
   if(save_fig) {
     if(!is.na(save_fig_filename)){
       if(!grepl("\\.[a-zA-Z]{3,4}",save_fig_filename)) save_fig_filename <- paste0(save_fig_filename,'.png')
-      if(grepl("\\|\\/",save_fig_filename)) {
+      if(grepl("\\\\|/",save_fig_filename)) {
         filename <- save_fig_filename
       } else {
         filename <- paste0(getwd(),'/',save_fig_filename)
       }
     } else {
       filename <-   paste0(getwd(),'/',pp$plottype,'.png')
-      print("No filename specified! Specify 'save_fig_filename' to customize location and name.")
+cat("No filename for saved plot specified! Specify 'save_fig_filename' to customize location and name.\n")
     }
-    print(paste0("Plot is saved as: ",filename))
+cat(paste0("Plot is saved as: ",filename,"\n\n"))
     ggplot2::ggsave(file=filename,plot=plot,width = 18, height = 12, units = "cm",dpi=320)
     #ggplot2::ggsave(file=filename,plot=plot)
   }
@@ -473,16 +473,16 @@ plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=
   if(save_fig) {
     if(!is.na(save_fig_filename)){
       if(!grepl("\\.[a-zA-Z]{3,4}",save_fig_filename)) save_fig_filename <- paste0(save_fig_filename,'.png')
-      if(grepl("\\|\\/",save_fig_filename)) {
+      if(grepl("\\\\|/",save_fig_filename)) {
         filename <- save_fig_filename
       } else {
         filename <- paste0(getwd(),'/',save_fig_filename)
       }
     } else {
       filename <-   paste0(getwd(),'/',pp$plottype,'.png')
-      print("No filename specified! Specify 'save_fig_filename' to customize location and name.")
+      cat("No filename for saved plot specified! Specify 'save_fig_filename' to customize location and name.\n")
     }
-    print(paste0("Plot is saved as: ",filename))
+    cat(paste0("Plot is saved as: ",filename,"\n\n"))
     ggplot2::ggsave(file=filename,plot=plot,width = 18, height = 12, units = "cm",dpi=320)
     #ggplot2::ggsave(file=filename,plot=plot)
   }
@@ -618,16 +618,16 @@ plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile
   if(save_fig) {
     if(!is.na(save_fig_filename)){
       if(!grepl("\\.[a-zA-Z]{3,4}",save_fig_filename)) save_fig_filename <- paste0(save_fig_filename,'.png')
-      if(grepl("\\|\\/",save_fig_filename)) {
+      if(grepl("\\\\|/",save_fig_filename)) {
         filename <- save_fig_filename
       } else {
         filename <- paste0(getwd(),'/',save_fig_filename)
       }
     } else {
       filename <-   paste0(getwd(),'/',pp$plottype,'.png')
-      print("No filename specified! Specify 'save_fig_filename' to customize location and name.")
+      cat("No filename for saved plot specified! Specify 'save_fig_filename' to customize location and name.\n")
     }
-    print(paste0("Plot is saved as: ",filename))
+    cat(paste0("Plot is saved as: ",filename,"\n\n"))
     ggplot2::ggsave(file=filename,plot=plot,width = 18, height = 12, units = "cm",dpi=320)
     #ggplot2::ggsave(file=filename,plot=plot)
   }
@@ -764,16 +764,16 @@ plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_dec
   if(save_fig) {
     if(!is.na(save_fig_filename)){
       if(!grepl("\\.[a-zA-Z]{3,4}",save_fig_filename)) save_fig_filename <- paste0(save_fig_filename,'.png')
-      if(grepl("\\|\\/",save_fig_filename)) {
+      if(grepl("\\\\|/",save_fig_filename)) {
         filename <- save_fig_filename
       } else {
         filename <- paste0(getwd(),'/',save_fig_filename)
       }
     } else {
       filename <-   paste0(getwd(),'/',pp$plottype,'.png')
-      print("No filename specified! Specify 'save_fig_filename' to customize location and name.")
+      cat("No filename for saved plot specified! Specify 'save_fig_filename' to customize location and name.\n")
     }
-    print(paste0("Plot is saved as: ",filename))
+    cat(paste0("Plot is saved as: ",filename,"\n\n"))
     ggplot2::ggsave(file=filename,plot=plot,width = 18, height = 12, units = "cm",dpi=320)
     #ggplot2::ggsave(file=filename,plot=plot)
   }
@@ -885,16 +885,16 @@ plot_all <- function(data=plot_input,custom_line_colors=NA,save_fig=FALSE,save_f
   if(save_fig) {
     if(!is.na(save_fig_filename)){
       if(!grepl("\\.[a-zA-Z]{3,4}",save_fig_filename)) save_fig_filename <- paste0(save_fig_filename,'.png')
-      if(grepl("\\|\\/",save_fig_filename)) {
+      if(grepl("\\\\|/",save_fig_filename)) {
         filename <- save_fig_filename
       } else {
         filename <- paste0(getwd(),'/',save_fig_filename)
       }
     } else {
       filename <-   paste0(getwd(),'/',pp$plottype,'.png')
-      print("No filename specified! Specify 'save_fig_filename' to customize location and name.")
+      cat("No filename for saved plot specified! Specify 'save_fig_filename' to customize location and name.\n")
     }
-    print(paste0("Plot is saved as: ",filename))
+    cat(paste0("Plot is saved as: ",filename,"\n\n"))
     ggplot2::ggsave(file=filename,plot=plot,width = 36, height = 24, units = "cm",dpi=320)
     #ggplot2::ggsave(file=filename,plot=plot)
   }
