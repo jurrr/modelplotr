@@ -443,20 +443,19 @@ plotting_scope <- function(prepared_input=deciles_aggregate,
                                select_targetclass=NA,
                                select_smallest_targetclass=TRUE){
 
-  # check if scores_and_deciles exists, otherwise create
-  if (missing(prepared_input)&!exists("scores_and_deciles")) {
-    stop("Input dataframe (similar to) scores_and_deciles not available!
-      First run prepare_scores_and_deciles() to generate scores_and_deciles.")
-  }
-  if(!is.data.frame(deciles_aggregate)) {
-    stop('"deciles_aggregate" should a be a dataframe!')}
-
-
-  # check if scores_and_deciles exists, otherwise create
-  if (!(exists("deciles_aggregate"))) {
+  # check if deciles_aggregate exists, otherwise create
+  # check if parameter is empty or default - hence deciles_aggregate is needed - and check if )
+  if (missing(prepared_input)) {
+    if(!exists("deciles_aggregate")) {
+      if(!exists("scores_and_deciles")){
+    stop("prepared_input unavailable and input dataframe scores_and_deciles to create prepared_input
+          not available! First run prepare_scores_and_deciles() to generate scores_and_deciles.")
+      } else if (!is.data.frame(scores_and_deciles)) {
+            stop('"deciles_aggregate" should a be a dataframe!')
+      } else {
     print('deciles_aggregate not available; input_modelevalplots() is run...')
     aggregate_over_deciles()
-  }
+  }}}
 
   # check if scope has a valid value
   if (!scope %in% c(NA,"compare_models","compare_datasets", "compare_targetclasses","no_comparison")) {
