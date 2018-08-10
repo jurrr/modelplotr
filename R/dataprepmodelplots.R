@@ -449,7 +449,7 @@ plotting_scope <- function(prepared_input=deciles_aggregate,
       First run prepare_scores_and_deciles() to generate scores_and_deciles.")
   }
   if(!is.data.frame(deciles_aggregate)) {
-    stop('"prepared_input" should a be a dataframe!')}
+    stop('"deciles_aggregate" should a be a dataframe!')}
 
 
   # check if scores_and_deciles exists, otherwise create
