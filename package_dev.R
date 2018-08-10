@@ -26,6 +26,7 @@ file.edit(file.path("~", ".Rprofile")) # edit .Rprofile in HOME
 
 
 
+RColorBrewer::display.brewer.all(n=4)
 devtools::install_github('jurrr/modelplotr')
 packageVersion("randomForest")
 devtools::load_all('C:/TEMP/modelplotr')
@@ -33,9 +34,9 @@ library(roxygen2)
 #library(modelplotr)
 
 ??modelplotr
-?dataprep_modevalplots
-?input_modevalplots
-?scope_modevalplots
+?prepare_scores_and_deciles
+?aggregate_over_deciles
+?plotting_scope
 
 ?modelplotr
 
@@ -50,12 +51,14 @@ library(modelplotr)
 chooseCRANmirror()
 
 chooseCRANmirror(graphics=FALSE, ind=1)
+?modelplotr
 
-
-
+?savemodelplots
+savemodelplots("plot_cumgains")
 ###################################################################################
 # PACHAGE EXAMPLE
 ###################################################################################
+
 
 
 
@@ -67,6 +70,14 @@ library(modelplotr)
 
 # prepare iris dataset
 data(iris)
+
+# add some noise to iris to prevent perfect models
+addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
+iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
+iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
+iris <- rbind(iris,iris_addnoise)
+
+
 # add some noise to iris to prevent perfect models
 
 iris_addnoise = data.frame(
@@ -97,71 +108,71 @@ lda = mlr::train(lrn, task)
 
 
 # apply modelplotr functions
-dataprep_modevalplots(datasets=list("train","test"),
-                      datasetlabels = list("train data","test data"),
+prepare_scores_and_deciles(datasets=list("train","test"),
+                      dataset_labels = list("train data","test data"),
                       models = list("rf","mnl","xgb","lda"),
-                      modellabels = list("random forest","multinomial logit","XGBoost","Discriminant"),
-                      targetname="Species")
-#head(eval_tot)
-input_modevalplots()
-scope_modevalplots(eval_type = "CompareTargetValues")
-cumgains()
-cumgains(highlight_decile = 3)
-lift()
-lift(highlight_decile = 2)
-response()
-response(highlight_decile = 2)
+                      model_labels = list("random forest","multinomial logit","XGBoost","Discriminant"),
+                      target_column="Species")
+#head(scores_and_deciles)
+aggregate_over_deciles()
+plotting_scope(scope = "compare_targetclasses")
+plot_cumgains()
+plot_cumgains(highlight_decile = 3)
+plot_cumlift()
+plot_cumlift(highlight_decile = 2)
+plot_response()
+plot_response(highlight_decile = 2)
 
-input_modevalplots(prepared_input = eval_tot)
-#head(eval_t_tot)
+aggregate_over_deciles(prepared_input = scores_and_deciles)
+#head(deciles_aggregate)
 
-scope_modevalplots(eval_type="CompareDatasets",select_model = "random forest")
-scope_modevalplots(eval_type="CompareModels")
-scope_modevalplots(eval_type="CompareTargetValues")
-scope_modevalplots(eval_type="CompareDatasets",select_model = "multinomial logit")
-scope_modevalplots(eval_type = "CompareDatasets",select_targetvalue = NA)
-scope_modevalplots(eval_type = "NoComparison",select_smallesttargetvalue = FALSE)
-scope_modevalplots(eval_type = "CompareModels",select_smallesttargetvalue = FALSE)
-scope_modevalplots(eval_type = "CompareDatasets",select_dataset = "train data")
-scope_modevalplots(eval_type = "CompareTargetValues",select_dataset = list("train data","test data"))
-scope_modevalplots(eval_type = "CompareTargetValues",select_targetvalue = "setosa")
-scope_modevalplots(eval_type = "CompareTargetValues", select_targetvalue = list("setosa", "virginica"))
-scope_modevalplots(eval_type = "CompareModels",select_model = list("multinomial logit", "XGBoost"))
-scope_modevalplots(eval_type = "CompareModels",select_dataset = "train data" )
-scope_modevalplots(eval_type = "CompareModels", select_targetvalue = list("setosa", "virginica"))
-scope_modevalplots()
+plotting_scope(scope="compare_datasets",select_model_label = "random forest")
+plotting_scope(scope="compare_models")
+plotting_scope(scope="compare_targetclasses")
+plotting_scope(scope="compare_datasets",select_model_label = "multinomial logit")
+plotting_scope(scope = "compare_datasets",select_targetclass = NA)
+plotting_scope(scope = "no_comparison",select_smallest_targetclass = FALSE)
+plotting_scope(scope = "compare_models",select_smallest_targetclass = FALSE)
+plotting_scope(scope = "compare_datasets",select_dataset_label = "train data")
+plotting_scope(scope = "compare_targetclasses",select_dataset_label = list("train data","test data"))
+plotting_scope(scope = "compare_targetclasses",select_targetclass = "setosa")
+plotting_scope(scope = "compare_targetclasses", select_targetclass = list("setosa", "virginica"))
+plotting_scope(scope = "compare_models",select_model_label = list("multinomial logit", "XGBoost"))
+plotting_scope(scope = "compare_models",select_dataset_label = "train data" )
+plotting_scope(scope = "compare_models", select_targetclass = list("setosa", "virginica"))
+plotting_scope()
 fourevalplots()
 
-cumgains()
+plot_cumgains()
 
-cumgains(highlight_decile = 2)
+plot_cumgains(highlight_decile = 2)
 
 ?modelplotr
-?dataprep_modevalplots
-?input_modevalplots
-?scope_modevalplots
-#head(eval_t_type)
+?prepare_scores_and_deciles
+?aggregate_over_deciles
+?plotting_scope
+#head(plot_input)
 
-cumgains(explainAtDecile = 3)
+plot_cumgains(explainAtDecile = 3)
 
 #`%>%` <- magrittr::`%>%`
 
-#eval_t_type %>% dplyr::group_by(legend) %>% dplyr::summarize(n=n())
+#plot_input %>% dplyr::group_by(legend) %>% dplyr::summarize(n=n())
 #test %>% dplyr::group_by(Species) %>% dplyr::summarize(n=n())
 
-cumgains1 <- cumgains()
-cumgains1
-lift1 <- lift()
-lift1
-response1 <- response()
-response1
-cumresponse1 <- cumresponse()
-cumresponse1
-multiplot(cumgains(),lift(),response(),cumresponse(),cols=2)
+plot_cumgains1 <- plot_cumgains()
+plot_cumgains1
+plot_cumlift1 <- plot_cumlift()
+plot_cumlift1
+plot_response1 <- plot_response()
+plot_response1
+plot_cumresponse1 <- plot_cumresponse()
+plot_cumresponse1
+multiplot(plot_cumgains(),plot_cumlift(),plot_response(),plot_cumresponse(),cols=2)
 str(fourevalplots())
 
 # save plots
-savemodelplots(c("cumgains1","lift1","response1","cumresponse1"))
+savemodelplots(c("plot_cumgains1","plot_cumlift1","plot_response1","plot_cumresponse1"))
 
 
 
@@ -235,12 +246,12 @@ lda = train(lrn, task)
 
 # apply modelplotr
 library(modelplotr)
-dataprep_modevalplots(datasets=list("train","test"),
-  datasetlabels = list("train data","test data"),
+prepare_scores_and_deciles(datasets=list("train","test"),
+  dataset_labels = list("train data","test data"),
   models = list("rf","mnl","xgb","lda"),
-  modellabels = list("random forest","multinomial logit","XGBoost","Discriminant"),
-  targetname="y")
-head(eval_tot)
+  model_labels = list("random forest","multinomial logit","XGBoost","Discriminant"),
+  target_column="y")
+head(scores_and_deciles)
 
 # estimate models with mlr
 # this line is needed when usin mlr without loading it (mlr::)
@@ -257,63 +268,63 @@ lrn = mlr::makeLearner("classif.lda", predict.type = "prob")
 lda = mlr::train(lrn, task)
 
 # apply modelplotr
-dataprep_modevalplots(datasets=list("train","test"),
-  datasetlabels = list("train data","test data"),
+prepare_scores_and_deciles(datasets=list("train","test"),
+  dataset_labels = list("train data","test data"),
   models = list("rf","mnl","xgb","lda"),
-  modellabels = list("random forest","multinomial logit","XGBoost","Discriminant"),
-  targetname="y")
-head(eval_tot)
-tail(eval_tot)
-dim(eval_tot)
+  model_labels = list("random forest","multinomial logit","XGBoost","Discriminant"),
+  target_column="y")
+head(scores_and_deciles)
+tail(scores_and_deciles)
+dim(scores_and_deciles)
 
 # apply modelplotr
 library(modelplotr)
-dataprep_modevalplots(datasets=list("train","test"),
-  datasetlabels = list("train data","test data"),
+prepare_scores_and_deciles(datasets=list("train","test"),
+  dataset_labels = list("train data","test data"),
   models = list("rf","mnl","xgb","lda"),
-  modellabels = list("random forest","multinomial logit","XGBoost","Discriminant"),
-  targetname="y")
-head(eval_tot)
-input_modevalplots()
-scope_modevalplots()
+  model_labels = list("random forest","multinomial logit","XGBoost","Discriminant"),
+  target_column="y")
+head(scores_and_deciles)
+aggregate_over_deciles()
+plotting_scope()
 
-input_modevalplots()
-tail(eval_t_tot)
+aggregate_over_deciles()
+tail(deciles_aggregate)
 
-scope_modevalplots(eval_type="CompareDatasets")
-#scope_modevalplots(eval_type="CompareModels")
-#scope_modevalplots(eval_type="TargetValues",select_model="Discriminant")
-head(eval_t_type)
-tail(eval_t_type)
+plotting_scope(scope="compare_datasets")
+#plotting_scope(scope="compare_models")
+#plotting_scope(scope="TargetValues",select_model_label="Discriminant")
+head(plot_input)
+tail(plot_input)
 
-scope_modevalplots(eval_type="CompareDatasets")
-scope_modevalplots(eval_type="CompareModels")
-scope_modevalplots(eval_type="CompareTargetValues")
-scope_modevalplots()
+plotting_scope(scope="compare_datasets")
+plotting_scope(scope="compare_models")
+plotting_scope(scope="compare_targetclasses")
+plotting_scope()
 
-scope_modevalplots(select_model = "random forest",select_targetvalue = "no",select_dataset = "train data")
+plotting_scope(select_model_label = "random forest",select_targetclass = "no",select_dataset_label = "train data")
 
-cumgains <- cumgains(customlinecolors=c("green"))
-cumgains + ggplot2::ggtitle("Gains plot") + ggplot2::theme(legend.position=c(0.975,0.025),legend.justification=c(1, 0))
-lift <- lift()
-lift
-response <- response()
-response
-cumresponse <- cumresponse()
-cumresponse
-multiplot(cumgains,lift,response,cumresponse,cols=2)
+plot_cumgains <- plot_cumgains(custom_line_colors=c("green"))
+plot_cumgains + ggplot2::ggtitle("Gains plot") + ggplot2::theme(legend.position=c(0.975,0.025),legend.justification=c(1, 0))
+plot_cumlift <- plot_cumlift()
+plot_cumlift
+plot_response <- plot_response()
+plot_response
+plot_cumresponse <- plot_cumresponse()
+plot_cumresponse
+multiplot(plot_cumgains,plot_cumlift,plot_response,plot_cumresponse,cols=2)
 
-cumresponse <- cumresponse()
-cumresponse
+plot_cumresponse <- plot_cumresponse()
+plot_cumresponse
 
 # save plots
 savemodelplots()
 
-codetools::findGlobals(response)
+codetools::findGlobals(plot_response)
 
-codetools::findGlobals(dataprep_modevalplots)
-codetools::findGlobals(input_modevalplots)
-codetools::findGlobals(scope_modevalplots)
+codetools::findGlobals(prepare_scores_and_deciles)
+codetools::findGlobals(aggregate_over_deciles)
+codetools::findGlobals(plotting_scope)
 
 ###################################################################################
 # tutorial mdl
@@ -382,3 +393,8 @@ pred = predict(rf, newdata = cd_test)
 # Get probabilities for all classes
 head(getPredictionProbabilities(pred))
 
+
+
+??modelplotr
+
+?plot_cumgains()
