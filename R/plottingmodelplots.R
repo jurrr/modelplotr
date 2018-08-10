@@ -13,9 +13,9 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
   # ALL PLOTS
   pp$plottype <- plottype
   pp$seltype <- max(as.character(plot_input$scope))
-  pp$selmod <- max(as.character(plot_input$modelname))
-  pp$seldata <- max(as.character(plot_input$dataset))
-  pp$selval <- max(as.character(plot_input$category))
+  pp$selmod <- max(as.character(plot_input$model_label))
+  pp$seldata <- max(as.character(plot_input$dataset_label))
+  pp$selval <- max(as.character(plot_input$target_class))
   pp$levels <- unique(as.character(plot_input$legend))
   pp$nlevels <- length(pp$levels)
   pp$randcols <- RColorBrewer::brewer.pal(n = 8, name = "Set1")
@@ -47,25 +47,24 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
   pp$plottitle <- pp$plottype
   pp$plotsubtitle <-
     ifelse(pp$seltype=="compare_datasets",paste0('scope: comparing datasets & model: ',
-      pp$selmod,' & target value: ' ,pp$selval),
+      pp$selmod,' & target class: ' ,pp$selval),
       ifelse(pp$seltype=="compare_models",paste0('scope: comparing models & dataset: ',
-        pp$seldata,' & target value: ',pp$selval),
+        pp$seldata,' & target class: ',pp$selval),
         ifelse(pp$seltype=="compare_targetclasses",paste0('scope: comparing target classes & dataset: ',
           pp$seldata,'"  &  model: ',pp$selmod),
-          paste0('model: ',pp$selmod,'  &  dataset: ',pp$seldata,'"  &  target value: ',pp$selval))))
+          paste0('model: ',pp$selmod,'  &  dataset: ',pp$seldata,'"  &  target class: ',pp$selval))))
 
   pp$multiplottitle <- ifelse(pp$seltype=="compare_datasets",
-                          paste0('scope: comparing datasets & model: ',pp$selmod,' & target value: ' ,pp$selval),
+                          paste0('scope: comparing datasets & model: ',pp$selmod,' & target class: ' ,pp$selval),
                         ifelse(pp$seltype=="compare_models",
-                          paste0('scope: comparing models & dataset: ',pp$seldata,' & target value: ',pp$selval),
+                          paste0('scope: comparing models & dataset: ',pp$seldata,' & target class: ',pp$selval),
                         ifelse(pp$seltype=="compare_targetclasses",
                           paste0('scope: comparing target classes & dataset: ',pp$seldata,'  &  model: ',pp$selmod),
-                          paste0('scope: no comparison & model: ',
-                            pp$selmod,'  &  dataset: ',pp$seldata,'  &  target value: ',pp$selval))))
+                          paste0(pp$selmod,'  &  dataset: ',pp$seldata,'  &  target class: ',pp$selval))))
 
   # GAINS
   if (pp$seltype=='compare_models') {
-    pp$optgainsreflevels <- paste0('optimal gains (',unique(plot_input$dataset),')')
+    pp$optgainsreflevels <- paste0('optimal gains (',unique(plot_input$dataset_label),')')
   } else {
     pp$optgainsreflevels <- paste0('optimal gains (',pp$levels,')')
   }
@@ -91,7 +90,7 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
 
   # RESPONSE
   if (pp$seltype=='compare_models') {
-    pp$respreflevels <- paste0('overall response (',unique(plot_input$dataset),')')
+    pp$respreflevels <- paste0('overall response (',unique(plot_input$dataset_label),')')
   } else {
     pp$respreflevels <- paste0('overall response (',pp$levels,')')
   }
@@ -159,16 +158,16 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
       ymin=seq(1,pp$nlevels,1),
       ymax=seq(2,pp$nlevels+1,1),
       gainstext = paste0("When we select ",highlight_decile*10,"% with the highest probability according to ",
-        modelname,", this selection holds ",sprintf("%1.0f%%", 100*plotvalue),
-        " of all ",category," cases in ",dataset,"."),
+        model_label,", this selection holds ",sprintf("%1.0f%%", 100*plotvalue),
+        " of all ",target_class," cases in ",dataset_label,"."),
       lifttext = paste0("When we select ",highlight_decile*10,"% with the highest probability according to model ",
-          modelname," in ",dataset,", this selection for ",category," cases is ",sprintf("%1.1f", plotvalue),
+          model_label," in ",dataset_label,", this selection for ",target_class," cases is ",sprintf("%1.1f", plotvalue),
           ' times better than selecting without a model.'),
       responsetext = paste0("When we select decile ",highlight_decile," according to model ",
-          modelname," in dataset ",dataset," the % of ",category," cases in the selection is ",
+          model_label," in dataset ",dataset_label," the % of ",target_class," cases in the selection is ",
           sprintf("%1.0f%%", 100*plotvalue),"."),
       cumresponsetext = paste0("When we select deciles 1 until ",highlight_decile," according to model ",
-        modelname," in dataset ",dataset," the % of ",category," cases in the selection is ",
+        model_label," in dataset ",dataset_label," the % of ",target_class," cases in the selection is ",
         sprintf("%1.0f%%", 100*plotvalue),".")
       )
 
@@ -290,7 +289,7 @@ plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_decile
   vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::select(scope:decile,plotvalue=cumgain,legend,refline)
   if (pp$seltype=="compare_models") {
     optreflines <- plot_input %>%
-      dplyr::mutate(legend=paste0('optimal gains (',dataset,')'),modelname='',plotvalue=gain_opt,refline=1) %>%
+      dplyr::mutate(legend=paste0('optimal gains (',dataset_label,')'),model_label='',plotvalue=gain_opt,refline=1) %>%
       dplyr::select(scope:decile,plotvalue,legend,refline) %>%
       dplyr::distinct()
   } else {
@@ -299,7 +298,7 @@ plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_decile
       dplyr::select(scope:decile,plotvalue,legend,refline)
   }
   minrefline <- plot_input %>%
-    dplyr::mutate(legend=paste0('minimal gains'),modelname='',dataset='',category='',plotvalue=gain_ref,refline=1) %>%
+    dplyr::mutate(legend=paste0('minimal gains'),model_label='',dataset_label='',target_class='',plotvalue=gain_ref,refline=1) %>%
     dplyr::select(scope:decile,plotvalue,legend,refline)%>%
     dplyr::distinct()
   plot_input_prepared <- rbind(minrefline,optreflines,vallines)
@@ -435,7 +434,7 @@ plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=
   vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(decile>0) %>%
     dplyr::select(scope:decile,plotvalue=cumlift,legend,refline)
   minrefline <- plot_input %>% dplyr::filter(decile>0) %>%
-    dplyr::mutate(legend=pp$liftreflabel,modelname='',dataset='',category='',plotvalue=cumlift_ref,refline=1) %>%
+    dplyr::mutate(legend=pp$liftreflabel,model_label='',dataset_label='',target_class='',plotvalue=cumlift_ref,refline=1) %>%
     dplyr::select(scope:decile,plotvalue,legend,refline)%>%
     dplyr::distinct()
   plot_input_prepared <- rbind(minrefline,vallines)
@@ -573,7 +572,7 @@ plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile
   if (pp$seltype=="compare_models") {
     minreflines <- plot_input %>%
       dplyr::filter(decile>0) %>%
-      dplyr::mutate(legend=paste0('overall response (',dataset,')'),modelname='',plotvalue=pcttot,refline=1) %>%
+      dplyr::mutate(legend=paste0('overall response (',dataset_label,')'),model_label='',plotvalue=pcttot,refline=1) %>%
       dplyr::select(scope:decile,plotvalue,legend,refline) %>%
       dplyr::distinct()
   } else {
@@ -719,7 +718,7 @@ plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_dec
   if (pp$seltype=="compare_models") {
     minreflines <- plot_input %>%
       dplyr::filter(decile>0) %>%
-      dplyr::mutate(legend=paste0('overall response (',dataset,')'),modelname='',plotvalue=pcttot,refline=1) %>%
+      dplyr::mutate(legend=paste0('overall response (',dataset_label,')'),model_label='',plotvalue=pcttot,refline=1) %>%
       dplyr::select(scope:decile,plotvalue,legend,refline) %>%
       dplyr::distinct()
   } else {
