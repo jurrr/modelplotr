@@ -444,7 +444,7 @@ plotting_scope <- function(prepared_input=deciles_aggregate,
                                select_smallest_targetclass=TRUE){
 
   # check if scores_and_deciles exists, otherwise create
-  if (missing(deciles_aggregate)&!exists("scores_and_deciles")) {
+  if (missing(prepared_input)&!exists("scores_and_deciles")) {
     stop("Input dataframe (similar to) scores_and_deciles not available!
       First run prepare_scores_and_deciles() to generate scores_and_deciles.")
   }
