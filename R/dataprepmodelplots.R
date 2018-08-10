@@ -97,12 +97,12 @@ prepare_scores_and_deciles <- function(datasets,
       if(max(class(try((mlr::getTaskDesc(get(mdl))),TRUE)))== "try-error") {
         stop('model objects need to be generated with mlr package')}
 
-      # 1.1. get category prediction from model (NOT YET DYNAMIC!) and prepare
+      # 1.1. get target class prediction from model (NOT YET DYNAMIC!) and prepare
       actuals = get(dataset) %>% dplyr::select_(y_true=target_column)
       # check if target is factor, otherwise make it a factor
       if(typeof(actuals$y_true)!='factor') actuals$y_true <- as.factor(actuals$y_true)
       #print(typeof(actuals$y_true))
-      # 1.2. get probabilities per target category from model and prepare
+      # 1.2. get probabilities per target class from model and prepare
       mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
       # for binary targets
       if (!is.na(mlr::getTaskDesc(get(mdl))$positive)) {
@@ -116,16 +116,16 @@ prepare_scores_and_deciles <- function(datasets,
         y_values <- colnames(probabilities)
       }
 
-      #name probability per target category
+      #name probability per target class
       colnames(probabilities) = paste0('prob_',y_values)
       y_probvars = colnames(probabilities)
 
-      probabilities = cbind(modelname=unlist(model_labels[match(mdl,models)]),
-                            dataset=unlist(dataset_labels[match(dataset,datasets)]),
+      probabilities = cbind(model_label=unlist(model_labels[match(mdl,models)]),
+                            dataset_label=unlist(dataset_labels[match(dataset,datasets)]),
                             actuals,
                             probabilities)
 
-      # 1.3. calculate deciles per target category
+      # 1.3. calculate deciles per target class
       for (i in 1:length(y_values)) {
         #! Added small proportion to prevent equal decile bounds
         # and reset to 0-1 range (to prevent probs > 1.0)
@@ -162,25 +162,25 @@ prepare_scores_and_deciles <- function(datasets,
 #' \code{deciles_aggregate} contains:
 #' \tabular{lll}{
 #'   \bold{column} \tab \bold{type} \tab \bold{definition} \cr
-#'   modelname \tab String \tab Name of the model object \cr
-#'   dataset \tab Factor \tab Datasets to include in the plot as factor levels\cr
-#'   category\tab String or Integer\tab Target values to include in the plot\cr
-#'   decile\tab Integer\tab Decile groups based on model probability for category\cr
-#'   neg\tab Integer\tab Number of cases not belonging to category in dataset in decile\cr
-#'   pos\tab Integer\tab Number of cases belonging to category in dataset in decile\cr
+#'   model_label \tab String \tab Name of the model object \cr
+#'   dataset_label \tab Factor \tab Datasets to include in the plot as factor levels\cr
+#'   target_class\tab String or Integer\tab Target classes to include in the plot\cr
+#'   decile\tab Integer\tab Decile groups based on model probability for target class\cr
+#'   neg\tab Integer\tab Number of cases not belonging to target class in dataset in decile\cr
+#'   pos\tab Integer\tab Number of cases belonging to target class in dataset in decile\cr
 #'   tot\tab Integer\tab Total number of cases in dataset in decile\cr
 #'   pct\tab Decimal \tab Percentage of cases in dataset in decile that belongs to
-#'     category (pos/tot)\cr
-#'   negtot\tab Integer\tab Total number of cases not belonging to category in dataset\cr
-#'   postot\tab Integer\tab Total number of cases belonging to category in dataset\cr
+#'     target class (pos/tot)\cr
+#'   negtot\tab Integer\tab Total number of cases not belonging to target class in dataset\cr
+#'   postot\tab Integer\tab Total number of cases belonging to target class in dataset\cr
 #'   tottot\tab Integer\tab Total number of cases in dataset\cr
 #'   pcttot\tab Decimal\tab Percentage of cases in dataset that belongs to
-#'     category (postot / tottot)\cr
-#'   cumneg\tab Integer\tab Cumulative number of cases not belonging to category in
+#'     target class (postot / tottot)\cr
+#'   cumneg\tab Integer\tab Cumulative number of cases not belonging to target class in
 #'     dataset from decile 1 up until decile\cr
-#'   cumpos\tab Integer\tab Cumulative number of cases belonging to category in
+#'   cumpos\tab Integer\tab Cumulative number of cases belonging to target class in
 #'     dataset from decile 1 up until decile\cr
-#'   cumpos\tab Integer\tab Cumulative number of cases belonging to category in
+#'   cumpos\tab Integer\tab Cumulative number of cases belonging to target class in
 #'     dataset from decile 1 up until decile\cr
 #'   cumtot\tab Integer\tab Cumulative number of cases in dataset from decile 1
 #'     up until decile\cr
@@ -202,8 +202,8 @@ prepare_scores_and_deciles <- function(datasets,
 #' In that case, make sure the input dataframe contains the folowing columns & formats:
 #' \tabular{lll}{
 #'   \bold{column} \tab \bold{type} \tab \bold{definition} \cr
-#'   modelname \tab Factor \tab Name of the model object \cr
-#'   dataset \tab Factor \tab Datasets to include in the plot as factor levels\cr
+#'   model_label \tab Factor \tab Name of the model object \cr
+#'   dataset_label \tab Factor \tab Datasets to include in the plot as factor levels\cr
 #'   y_true \tab Factor \tab Target with actual values \cr
 #'   prob_[tv1] \tab Decimal \tab Probability according to model for target value 1 \cr
 #'   prob_[tv2] \tab Decimal \tab Probability according to model for target value 2 \cr
@@ -274,7 +274,7 @@ aggregate_over_deciles <- function(prepared_input=scores_and_deciles){
   if(!is.data.frame(prepared_input)) {
     stop('"prepared_input" should a be a dataframe!')}
 
-  modelgroups = levels(prepared_input$dataset)
+  modelgroups = levels(prepared_input$dataset_label)
   yvals = levels(prepared_input$y_true)
 
   deciles_aggregate <- data.frame()
@@ -283,8 +283,8 @@ aggregate_over_deciles <- function(prepared_input=scores_and_deciles){
   for (val in yvals) {
 
     eval_t_zero = scores_and_deciles %>%
-      dplyr::mutate("category"=val,"decile"=0) %>%
-      dplyr::group_by_("modelname","dataset","category","decile") %>%
+      dplyr::mutate("target_class"=val,"decile"=0) %>%
+      dplyr::group_by_("model_label","dataset_label","target_class","decile") %>%
       dplyr::summarize(neg=0,
                 pos=0,
                 tot=0,
@@ -307,18 +307,18 @@ aggregate_over_deciles <- function(prepared_input=scores_and_deciles){
       as.data.frame()
     ifelse(deciles_aggregate$cumtot/deciles_aggregate$postot>1,1,deciles_aggregate$cumtot/deciles_aggregate$postot)
     eval_t_add = scores_and_deciles %>%
-      dplyr::mutate("category"=val,"decile"=get(paste0("dcl_",val))) %>%
-      dplyr::group_by_("modelname","dataset","category","decile") %>%
-      dplyr::summarize(neg=sum(y_true!=category),
-                pos=sum(y_true==category),
+      dplyr::mutate("target_class"=val,"decile"=get(paste0("dcl_",val))) %>%
+      dplyr::group_by_("model_label","dataset_label","target_class","decile") %>%
+      dplyr::summarize(neg=sum(y_true!=target_class),
+                pos=sum(y_true==target_class),
                 tot=n(),
-                pct=1.0*sum(y_true==category)/n()) %>%
-      dplyr::group_by_("modelname","dataset","category") %>%
+                pct=1.0*sum(y_true==target_class)/n()) %>%
+      dplyr::group_by_("model_label","dataset_label","target_class") %>%
       dplyr::mutate(negtot=sum(neg),
              postot=sum(pos),
              tottot=sum(tot),
              pcttot=1.0*sum(pos)/sum(tot)) %>%
-      dplyr::group_by_("modelname","dataset","category","negtot","postot","tottot","pcttot") %>%
+      dplyr::group_by_("model_label","dataset_label","target_class","negtot","postot","tottot","pcttot") %>%
       dplyr::mutate(cumneg=cumsum(neg),
              cumpos=cumsum(pos),
              cumtot=cumsum(tot),
@@ -334,7 +334,7 @@ aggregate_over_deciles <- function(prepared_input=scores_and_deciles){
 
 
     deciles_aggregate = rbind(deciles_aggregate,eval_t_zero,eval_t_add)
-    deciles_aggregate = deciles_aggregate[with(deciles_aggregate,order(category,dataset,decile)),]
+    deciles_aggregate = deciles_aggregate[with(deciles_aggregate,order(target_class,dataset_label,decile)),]
   }
   deciles_aggregate <<- deciles_aggregate
   return('Data preparation step 2 succeeded! Dataframe \'deciles_aggregate\' created.')
@@ -358,14 +358,14 @@ aggregate_over_deciles <- function(prepared_input=scores_and_deciles){
 #'     the smallest (when \code{select_smallest_targetclass=TRUE}) or first alphabetic target value are selected }
 #'   \item{"compare_models"}{In this perspective, you're interested in how well different models perform in comparison to
 #'     each other on the same dataset and for the same target value. This results in a comparison between models available
-#'     in deciles_aggregate$modelname for a selected dataset (default: first alphabetic dataset) and for a selected target value
+#'     in deciles_aggregate$model_label for a selected dataset (default: first alphabetic dataset) and for a selected target value
 #'     (default: smallest (when \code{select_smallest_targetclass=TRUE}) or first alphabetic target value).}
 #'   \item{"compare_datasets"}{In this perspective, you're interested in how well a model performs in different datasets
 #'   for a specific model on the same target value. This results in a comparison between datasets available in
-#'   deciles_aggregate$dataset for a selected model (default: first alphabetic model) and for a selected target value (default:
+#'   deciles_aggregate$dataset_label for a selected model (default: first alphabetic model) and for a selected target value (default:
 #'   smallest (when \code{select_smallest_targetclass=TRUE}) or first alphabetic target value).}
 #'   \item{"compare_targetclasses"}{In this perspective, you're interested in how well a model performs for different target
-#'    values on a specific dataset.This resuls in a comparison between target values available in deciles_aggregate$category for
+#'    values on a specific dataset.This resuls in a comparison between target classes available in deciles_aggregate$target_class for
 #'    a selected model (default: first alphabetic model) and for a selected dataset (default: first alphabetic dataset).}}
 #' @param prepared_input Dataframe. Dataframe resulting from function \code{\link{aggregate_over_deciles}()} or with similar
 #' format. Default value is deciles_aggregate, the output of \code{aggregate_over_deciles()}. When deciles_aggregate is not found, function
@@ -381,7 +381,7 @@ aggregate_over_deciles <- function(prepared_input=scores_and_deciles){
 #' specified). When scope is "compare_datasets", select_dataset_label can be used to take a subset of available datasets.
 #' @param select_targetclass String. Selected target value when scope is compare_models or compare_datasets or no_comparison.
 #' Default is smallest value when select_smallest_targetclass=TRUE, otherwise first alphabetical value.
-#' When scope is "compare_targetclasses", select_targetclass can be used to take a subset of available target values.
+#' When scope is "compare_targetclasses", select_targetclass can be used to take a subset of available target classes.
 #' @param select_smallest_targetclass Boolean. Select the target value with the smallest number of cases in dataset as group of
 #' interest. Default is True, hence the target value with the least observations is selected.
 #' @return Dataframe \code{plot_input} is a subset of \code{deciles_aggregate}.
@@ -444,12 +444,12 @@ plotting_scope <- function(prepared_input=deciles_aggregate,
                                select_smallest_targetclass=TRUE){
 
   # check if scores_and_deciles exists, otherwise create
-  if (missing(prepared_input)&!exists("scores_and_deciles")) {
+  if (missing(deciles_aggregate)&!exists("scores_and_deciles")) {
     stop("Input dataframe (similar to) scores_and_deciles not available!
       First run prepare_scores_and_deciles() to generate scores_and_deciles.")
   }
-  if(!is.data.frame(prepared_input)) {
-    stop('"prepared_input" should a be a dataframe!')}
+  if(!is.data.frame(deciles_aggregate)) {
+    stop('"deciles_aggregate" should a be a dataframe!')}
 
 
   # check if scores_and_deciles exists, otherwise create
@@ -466,29 +466,29 @@ plotting_scope <- function(prepared_input=deciles_aggregate,
 
   # check if select_model_label has a valid value
   for (selmod in select_model_label) {
-    if (!selmod %in% c(NA,as.character(unique(prepared_input$modelname)))) {
+    if (!selmod %in% c(NA,as.character(unique(prepared_input$model_label)))) {
     stop(paste0('invalid value for select_model_label
-      Select ',paste(as.character(unique(prepared_input$modelname)), collapse = ', '),' or NA'))
+      Select ',paste(as.character(unique(prepared_input$model_label)), collapse = ', '),' or NA'))
   }}
 
   # check if select_dataset_label has a valid value
   for (selds in select_dataset_label) {
-    if (!selds %in% c(NA,as.character(unique(prepared_input$dataset)))) {
+    if (!selds %in% c(NA,as.character(unique(prepared_input$dataset_label)))) {
     stop(paste0('invalid value for select_dataset_label
-      Select ',paste(as.character(unique(prepared_input$dataset)), collapse = ', '),' or NA'))
+      Select ',paste(as.character(unique(prepared_input$dataset_label)), collapse = ', '),' or NA'))
   }}
 
   # check if select_targetclass has a valid value
   for (seltv in select_targetclass) {
-    if (!seltv %in% c(NA,as.character(unique(prepared_input$category)))) {
+    if (!seltv %in% c(NA,as.character(unique(prepared_input$target_class)))) {
     stop(paste0('invalid value for select_targetclass
-      Select ',paste(as.character(unique(prepared_input$category)), collapse = ', '),' or NA'))
+      Select ',paste(as.character(unique(prepared_input$target_class)), collapse = ', '),' or NA'))
   }}
 
   #check scope to decide: max 1 value of select_... required?
   #then check if needed selections of model / dataset / targetvalues are set, else set to defaults
   # no model specified? take first model based on alphabetic name.
-  models <- as.character(unique(prepared_input$modelname))
+  models <- as.character(unique(prepared_input$model_label))
   no_model_selected <- is.na(as.list(select_model_label)[1])
   if (scope=="compare_models") {
     if (no_model_selected) select_model_label <- as.list(models) else select_model_label = select_model_label
@@ -497,7 +497,7 @@ plotting_scope <- function(prepared_input=deciles_aggregate,
   }
 
   # no dataset specified? take first model based on alphabetic name.
-  datasets <- as.character(unique(prepared_input$dataset))
+  datasets <- as.character(unique(prepared_input$dataset_label))
   no_dataset_selected <- is.na(as.list(select_dataset_label)[1])
   if (scope=="compare_datasets") {
     if (no_dataset_selected) select_dataset_label <- as.list(datasets) else select_dataset_label = select_dataset_label
@@ -506,12 +506,12 @@ plotting_scope <- function(prepared_input=deciles_aggregate,
   }
 
   # no target value specified? take smallest targetvalue
-  targetvalues <- as.character(unique(prepared_input$category))
+  targetvalues <- as.character(unique(prepared_input$target_class))
   no_targetvalue_selected <- is.na(as.list(select_targetclass)[1])
   #`%>%` <- magrittr::`%>%`
-  smallest <- prepared_input%>%dplyr::select(category,postot)%>%
-      dplyr::group_by(category)%>%dplyr::summarize(n=min(postot,na.rm = T))%>%
-      dplyr::arrange(n)%>%dplyr::top_n(n=1, -n)%>%dplyr::slice(1)%>%dplyr::select(category)%>%as.character()
+  smallest <- prepared_input%>%dplyr::select(target_class,postot)%>%
+      dplyr::group_by(target_class)%>%dplyr::summarize(n=min(postot,na.rm = T))%>%
+      dplyr::arrange(n)%>%dplyr::top_n(n=1, -n)%>%dplyr::slice(1)%>%dplyr::select(target_class)%>%as.character()
   if (scope=="compare_targetclasses") {
     if (no_targetvalue_selected) select_targetclass <- as.list(targetvalues) else select_targetclass = select_targetclass
   } else {
@@ -523,35 +523,35 @@ plotting_scope <- function(prepared_input=deciles_aggregate,
   #check evaluation type and print relevant processing output
     if (scope=="compare_datasets") {
       plot_input <- prepared_input %>%
-        dplyr::filter(., modelname %in% select_model_label & dataset %in% select_dataset_label & category %in% select_targetclass) %>%
-        dplyr::mutate(.,legend=as.factor(dataset))
+        dplyr::filter(., model_label %in% select_model_label & dataset_label %in% select_dataset_label & target_class %in% select_targetclass) %>%
+        dplyr::mutate(.,legend=as.factor(dataset_label))
         datasets_print <- paste('"', select_dataset_label, '"', sep = "", collapse = ", ")
         type_print <- (paste0('Datasets ',datasets_print,' compared for model "',
           select_model_label,'" and target value "',select_targetclass,'".'))
     } else if (scope=="compare_models") {
       plot_input <- prepared_input %>%
-        dplyr::filter(., modelname %in% select_model_label & dataset %in% select_dataset_label & category %in% select_targetclass) %>%
-        dplyr::mutate(.,legend=as.factor(modelname))
+        dplyr::filter(., model_label %in% select_model_label & dataset_label %in% select_dataset_label & target_class %in% select_targetclass) %>%
+        dplyr::mutate(.,legend=as.factor(model_label))
         models_print <- paste('"', select_model_label, '"', sep = "", collapse = ", ")
         type_print <- (paste0('Models ',models_print,' compared for dataset "',
           select_dataset_label,'" and target value "',select_targetclass,'".'))
     } else if (scope=="compare_targetclasses") {
       plot_input <- prepared_input %>%
-        dplyr::filter(., modelname %in% select_model_label & dataset %in% select_dataset_label & category %in% select_targetclass)%>%
-        dplyr::mutate(.,legend=as.factor(category))
+        dplyr::filter(., model_label %in% select_model_label & dataset_label %in% select_dataset_label & target_class %in% select_targetclass)%>%
+        dplyr::mutate(.,legend=as.factor(target_class))
         targetvalues_print <- paste('"', select_targetclass, '"', sep = "", collapse = ", ")
-        type_print <- (paste0('Target values ',targetvalues_print,' compared for dataset "',
+        type_print <- (paste0('Target classes ',targetvalues_print,' compared for dataset "',
           select_dataset_label,'" and model "',select_model_label,'".'))
     } else {
       plot_input <- prepared_input %>%
-        dplyr::filter(., modelname == select_model_label & dataset == select_dataset_label & category == select_targetclass)%>%
-        dplyr::mutate(.,legend=as.factor(category))
+        dplyr::filter(., model_label == select_model_label & dataset_label == select_dataset_label & target_class == select_targetclass)%>%
+        dplyr::mutate(.,legend=as.factor(target_class))
       type_print <- (paste0('No comparison specified! Single evaluation line will be plotted: \n Target value "',
         select_targetclass,'" plotted for dataset "',
         select_dataset_label,'" and model "',select_model_label,'."
   To compare models, specify: scope = "compare_models"
   To compare datasets, specify: scope = "compare_datasets"
-  To compare target values, specify: scope = "compare_targetclasses"
+  To compare target classes, specify: scope = "compare_targetclasses"
   To plot one line, do not specify scope or specify scope = "no_comparison".'))
     }
   plot_input <<- cbind(scope=scope,
