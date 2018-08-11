@@ -350,9 +350,10 @@ cat(paste0("Plot is saved as: ",filename,"\n\n"))
   if(length(plot$layout)>0) {
     grid::grid.newpage()
     grid::grid.draw(plot)
+  } else {
+    return(plot)
   }
-  return(plot)
-  }
+}
 
 
 
@@ -488,8 +489,9 @@ plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=
   if(length(plot$layout)>0) {
     grid::grid.newpage()
     grid::grid.draw(plot)
-  }
+  } else {
   return(plot)
+  }
 }
 
 
@@ -633,9 +635,9 @@ plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile
   if(length(plot$layout)>0) {
     grid::grid.newpage()
     grid::grid.draw(plot)
+  } else {
+    return(plot)
   }
-
-  return(plot)
 }
 
 
@@ -779,9 +781,9 @@ plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_dec
   if(length(plot$layout)>0) {
     grid::grid.newpage()
     grid::grid.draw(plot)
+  } else {
+    return(plot)
   }
-
-  return(plot)
 }
 
 
