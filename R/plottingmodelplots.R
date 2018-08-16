@@ -60,7 +60,7 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
                           paste0('scope: comparing models & dataset: ',pp$seldata,' & target class: ',pp$selval),
                         ifelse(pp$seltype=="compare_targetclasses",
                           paste0('scope: comparing target classes & dataset: ',pp$seldata,'  &  model: ',pp$selmod),
-                          paste0(pp$selmod,'  &  dataset: ',pp$seldata,'  &  target class: ',pp$selval))))
+                          paste0('model: ',pp$selmod,'  &  dataset: ',pp$seldata,'  &  target class: ',pp$selval))))
 
   # GAINS
   if (pp$seltype=='compare_models') {
