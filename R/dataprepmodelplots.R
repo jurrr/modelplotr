@@ -545,7 +545,8 @@ plotting_scope <- function(prepared_input=deciles_aggregate,
       plot_input <- prepared_input %>%
         dplyr::filter(., model_label == select_model_label & dataset_label == select_dataset_label & target_class == select_targetclass)%>%
         dplyr::mutate(.,legend=as.factor(target_class))
-      type_print <- (paste0('No comparison specified! Single evaluation line will be plotted: \n Target value "',
+      type_print <- (paste0('No comparison specified, default values are used. \n
+  Single evaluation line will be plotted: \n Target value "',
         select_targetclass,'" plotted for dataset "',
         select_dataset_label,'" and model "',select_model_label,'."
   To compare models, specify: scope = "compare_models"
