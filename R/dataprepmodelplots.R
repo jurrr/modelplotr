@@ -546,13 +546,13 @@ plotting_scope <- function(prepared_input=deciles_aggregate,
         dplyr::filter(., model_label == select_model_label & dataset_label == select_dataset_label & target_class == select_targetclass)%>%
         dplyr::mutate(.,legend=as.factor(target_class))
       type_print <- (paste0('No comparison specified, default values are used. \n
-  Single evaluation line will be plotted: \n Target value "',
+Single evaluation line will be plotted: Target value "',
         select_targetclass,'" plotted for dataset "',
-        select_dataset_label,'" and model "',select_model_label,'."
-  To compare models, specify: scope = "compare_models"
-  To compare datasets, specify: scope = "compare_datasets"
-  To compare target classes, specify: scope = "compare_targetclasses"
-  To plot one line, do not specify scope or specify scope = "no_comparison".'))
+        select_dataset_label,'" and model "',select_model_label,'.\n"
+-> To compare models, specify: scope = "compare_models"
+-> To compare datasets, specify: scope = "compare_datasets"
+-> To compare target classes, specify: scope = "compare_targetclasses"
+-> To plot one line, do not specify scope or specify scope = "no_comparison".'))
     }
   plot_input <<- cbind(scope=scope,
                         plot_input)
