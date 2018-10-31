@@ -19,8 +19,6 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Imports:
-    mlr (>= 2.12.1),
-    caret (>= 6.0),
     ggplot2 (>= 3.0.0),
     grid (>= 3.5.0),
     gridExtra (>= 2.3.0),
@@ -32,6 +30,8 @@ Imports:
     ggfittext (>= 0.6.0)
 RoxygenNote: 6.0.1
 Suggests: 
+    mlr (>= 2.12.1),
+    caret (>= 6.0),
     knitr,
     rmarkdown,
     testthat,
