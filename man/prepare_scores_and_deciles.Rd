@@ -17,7 +17,8 @@ When dataset_labels is not specified, the names from \code{datasets} are used.}
 
 \item{models}{List of Strings. Names of the model objects containing parameters to
 apply models to data. To use this function, model objects need to be generated
-by the mlr package.}
+by the mlr package or by the caret package.
+Modelplotr automatically detects whether the model is built using mlr or caret.}
 
 \item{model_labels}{List of Strings. Labels for the models to use in plots.
 When model_labels is not specified, the names from \code{moddels} are used.}
@@ -53,15 +54,19 @@ iris <- rbind(iris,iris_addnoise)
 train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 train = iris[train_index,]
 test = iris[-train_index,]
+#train models using mlr...
 trainTask <- mlr::makeClassifTask(data = train, target = "Species")
 testTask <- mlr::makeClassifTask(data = test, target = "Species")
 mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#estimate models
 task = mlr::makeClassifTask(data = train, target = "Species")
 lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 rf = mlr::train(lrn, task)
 lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 mnl = mlr::train(lrn, task)
+#... or train models using caret
+rf = caret::train(Species ~.,data = train, method = "rf")
+mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
+# preparation steps
 prepare_scores_and_deciles(datasets=list("train","test"),
                       dataset_labels = list("train data","test data"),
                       models = list("rf","mnl"),

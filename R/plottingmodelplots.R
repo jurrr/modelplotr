@@ -51,8 +51,8 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
       ifelse(pp$seltype=="compare_models",paste0('scope: comparing models & dataset: ',
         pp$seldata,' & target class: ',pp$selval),
         ifelse(pp$seltype=="compare_targetclasses",paste0('scope: comparing target classes & dataset: ',
-          pp$seldata,'"  &  model: ',pp$selmod),
-          paste0('model: ',pp$selmod,'  &  dataset: ',pp$seldata,'"  &  target class: ',pp$selval))))
+          pp$seldata,'  &  model: ',pp$selmod),
+          paste0('model: ',pp$selmod,'  &  dataset: ',pp$seldata,'  &  target class: ',pp$selval))))
 
   pp$multiplottitle <- ifelse(pp$seltype=="compare_datasets",
                           paste0('scope: comparing datasets & model: ',pp$selmod,' & target class: ' ,pp$selval),
@@ -244,15 +244,19 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
 #' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 #' train = iris[train_index,]
 #' test = iris[-train_index,]
+#' #train models using mlr...
 #' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
 #' testTask <- mlr::makeClassifTask(data = test, target = "Species")
 #' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' #estimate models
 #' task = mlr::makeClassifTask(data = train, target = "Species")
 #' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
+#' #... or train models using caret
+#' rf = caret::train(Species ~.,data = train, method = "rf")
+#' mnl = caret::train(Species ~.,data = train, method = "multinom", trace = FALSE)
+#' # preparation steps
 #' prepare_scores_and_deciles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
@@ -391,15 +395,19 @@ cat(paste0("Plot is saved as: ",filename,"\n\n"))
 #' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 #' train = iris[train_index,]
 #' test = iris[-train_index,]
+#' #train models using mlr...
 #' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
 #' testTask <- mlr::makeClassifTask(data = test, target = "Species")
 #' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' #estimate models
 #' task = mlr::makeClassifTask(data = train, target = "Species")
 #' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
+#' #... or train models using caret
+#' rf = caret::train(Species ~.,data = train, method = "rf")
+#' mnl = caret::train(Species ~.,data = train, method = "multinom", trace = FALSE)
+#' # preparation steps
 #' prepare_scores_and_deciles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
@@ -528,15 +536,19 @@ plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=
 #' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 #' train = iris[train_index,]
 #' test = iris[-train_index,]
+#' #train models using mlr...
 #' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
 #' testTask <- mlr::makeClassifTask(data = test, target = "Species")
 #' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' #estimate models
 #' task = mlr::makeClassifTask(data = train, target = "Species")
 #' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
+#' #... or train models using caret
+#' rf = caret::train(Species ~.,data = train, method = "rf")
+#' mnl = caret::train(Species ~.,data = train, method = "multinom", trace = FALSE)
+#' # preparation steps
 #' prepare_scores_and_deciles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
@@ -674,15 +686,19 @@ plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile
 #' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 #' train = iris[train_index,]
 #' test = iris[-train_index,]
+#' #train models using mlr...
 #' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
 #' testTask <- mlr::makeClassifTask(data = test, target = "Species")
 #' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' #estimate models
 #' task = mlr::makeClassifTask(data = train, target = "Species")
 #' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
+#' #... or train models using caret
+#' rf = caret::train(Species ~.,data = train, method = "rf")
+#' mnl = caret::train(Species ~.,data = train, method = "multinom", trace = FALSE)
+#' # preparation steps
 #' prepare_scores_and_deciles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
@@ -814,15 +830,19 @@ plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_dec
 #' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 #' train = iris[train_index,]
 #' test = iris[-train_index,]
+#' #train models using mlr...
 #' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
 #' testTask <- mlr::makeClassifTask(data = test, target = "Species")
 #' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' #estimate models
 #' task = mlr::makeClassifTask(data = train, target = "Species")
 #' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
+#' #... or train models using caret
+#' rf = caret::train(Species ~.,data = train, method = "rf")
+#' mnl = caret::train(Species ~.,data = train, method = "multinom", trace = FALSE)
+#' # preparation steps
 #' prepare_scores_and_deciles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
