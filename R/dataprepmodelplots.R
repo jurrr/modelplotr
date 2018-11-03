@@ -20,7 +20,8 @@
 #'   When dataset_labels is not specified, the names from \code{datasets} are used.
 #' @param models List of Strings. Names of the model objects containing parameters to
 #'   apply models to data. To use this function, model objects need to be generated
-#'   by the mlr package.
+#'   by the mlr package or by the caret package.
+#'   Modelplotr automatically detects whether the model is built using mlr or caret.
 #' @param model_labels List of Strings. Labels for the models to use in plots.
 #'   When model_labels is not specified, the names from \code{moddels} are used.
 #' @param target_column String. Name of the target variable in datasets. Target
@@ -47,15 +48,19 @@
 #' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 #' train = iris[train_index,]
 #' test = iris[-train_index,]
+#' #train models using mlr...
 #' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
 #' testTask <- mlr::makeClassifTask(data = test, target = "Species")
 #' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' #estimate models
 #' task = mlr::makeClassifTask(data = train, target = "Species")
 #' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
+#' #... or train models using caret
+#' rf = caret::train(Species ~.,data = train, method = "rf")
+#' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
+#' # preparation steps
 #' prepare_scores_and_deciles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
@@ -94,25 +99,45 @@ prepare_scores_and_deciles <- function(datasets,
   for (dataset in datasets) {
     for (mdl in models) {
 
-      if(max(class(try((mlr::getTaskDesc(get(mdl))),TRUE)))== "try-error") {
-        stop('model objects need to be generated with mlr package')}
-
+      # if(max(class(try((mlr::getTaskDesc(get(mdl))),TRUE)))== "try-error") {
+      #   stop('model objects need to be generated with mlr package')}
+      #
       # 1.1. get target class prediction from model (NOT YET DYNAMIC!) and prepare
       actuals = get(dataset) %>% dplyr::select_(y_true=target_column)
       # check if target is factor, otherwise make it a factor
       if(typeof(actuals$y_true)!='factor') actuals$y_true <- as.factor(actuals$y_true)
       #print(typeof(actuals$y_true))
+
       # 1.2. get probabilities per target class from model and prepare
-      mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-      # for binary targets
-      if (!is.na(mlr::getTaskDesc(get(mdl))$positive)) {
-          y_values <- c(mlr::getTaskDesc(get(mdl))$positive,mlr::getTaskDesc(get(mdl))$negative)
-          prob_pos <- mlr::getPredictionProbabilities(predict(get(mdl),newdata=get(dataset)))
-          probabilities <- data.frame(pos=prob_pos,neg=1-prob_pos)
-      }
-      # for multiclass targets
-      else {
-        probabilities <- as.data.frame(mlr::getPredictionProbabilities(predict(get(mdl),newdata=get(dataset))))
+
+      # 1.2.1. mlr models
+      if(!is.null(get(mdl)$learner)) {
+        cat(paste0('... scoring mlr model "',mdl,'" on dataset "',dataset,'".\n'))
+        if (!requireNamespace("mlr", quietly = TRUE)) {
+          stop("Package \"mlr\" needed for this function to work, but it's not installed. Please install it.",
+            call. = FALSE)
+        }
+        mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+        # for binary targets
+        if (!is.na(mlr::getTaskDesc(get(mdl))$positive)) {
+            y_values <- c(mlr::getTaskDesc(get(mdl))$positive,mlr::getTaskDesc(get(mdl))$negative)
+            prob_pos <- mlr::getPredictionProbabilities(predict(get(mdl),newdata=get(dataset)))
+            probabilities <- data.frame(pos=prob_pos,neg=1-prob_pos)
+        }
+        # for multiclass targets
+        else {
+          probabilities <- as.data.frame(mlr::getPredictionProbabilities(predict(get(mdl),newdata=get(dataset))))
+          y_values <- colnames(probabilities)
+        }
+
+      # 1.2.2. caret models
+      } else {
+        cat(paste0('... scoring caret model "',mdl,'" on dataset "',dataset,'".\n'))
+        if (!requireNamespace("caret", quietly = TRUE)) {
+          stop("Package \"caret\" needed for this function to work, but it's not installed. Please install it.",
+            call. = FALSE)
+        }
+        probabilities <- predict(get(mdl),newdata=get(dataset),type='prob')
         y_values <- colnames(probabilities)
       }
 
@@ -231,21 +256,24 @@ prepare_scores_and_deciles <- function(datasets,
 #' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 #' train = iris[train_index,]
 #' test = iris[-train_index,]
+#' #train models using mlr...
 #' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
 #' testTask <- mlr::makeClassifTask(data = test, target = "Species")
 #' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' # estimate models
 #' task = mlr::makeClassifTask(data = train, target = "Species")
 #' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
+#' #... or train models using caret
+#' rf = caret::train(Species ~.,data = train, method = "rf")
+#' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
+#' # preparation steps
 #' prepare_scores_and_deciles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
 #'                       model_labels = list("random forest","multinomial logit"),
 #'                       target_column="Species")
-#' # preparation steps
 #' head(scores_and_deciles)
 #' aggregate_over_deciles()
 #' plotting_scope()
@@ -403,21 +431,24 @@ aggregate_over_deciles <- function(prepared_input=scores_and_deciles){
 #' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
 #' train = iris[train_index,]
 #' test = iris[-train_index,]
+#' #train models using mlr...
 #' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
 #' testTask <- mlr::makeClassifTask(data = test, target = "Species")
 #' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' # estimate models
 #' task = mlr::makeClassifTask(data = train, target = "Species")
 #' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
+#' #... or train models using caret
+#' rf = caret::train(Species ~.,data = train, method = "rf")
+#' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
+#' # preparation steps
 #' prepare_scores_and_deciles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
 #'                       model_labels = list("random forest","multinomial logit"),
 #'                       target_column="Species")
-#' # preparation steps
 #' head(scores_and_deciles)
 #' aggregate_over_deciles()
 #' plotting_scope()
