@@ -152,8 +152,8 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
       ggplot2::theme(
         axis.line = ggplot2::element_line(color="black"),
         axis.text.x = ggplot2::element_text(
-          face=c(rep("plain",pp$decile0+highlight_decile-1),"bold",rep("plain",10+pp$decile0-highlight_decile-1)),
-          size=c(rep(10,pp$decile0+highlight_decile-1),12,rep(10,10+pp$decile0-highlight_decile-1))))
+          face=c(rep("plain",pp$decile0+highlight_decile-1),"bold",rep("plain",10+pp$decile0-highlight_decile)),
+          size=c(rep(10,pp$decile0+highlight_decile-1),12,rep(10,10+pp$decile0-highlight_decile))))
     # make sure value labels for annotated points to X axis aren't clipped
     if(packageVersion("ggplot2") >= 3.0) plot <- plot + ggplot2::coord_cartesian(clip = 'off' )
     }

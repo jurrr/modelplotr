@@ -3,3 +3,10 @@ inst/doc
 package_dev.R
 .Rhistory
 .RData
+ALL.png
+Cumulative lift.png
+comparing_datasets_all_plots.png
+mnl.RDS
+v2.png
+xgb.RDS
+xgb3.RDS
