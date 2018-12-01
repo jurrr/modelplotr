@@ -128,6 +128,10 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
     }
 
     if(highlight_how %in% c('plot','plot_text')){
+    # check ggplot version (clip=off is available in version 3.0 and later)
+    if(packageVersion("ggplot2") < 3.0) {
+      warning(paste0('You are using ggplot2 version ',packageVersion("ggplot2"),'. ggplot2 >= 3.0.0 is required for nicer annotated plots!'))
+    }
     plot <- plot +
       # add highlighting cicle(s) to plot at decile value
       ggplot2::geom_point(data = plot_input %>% dplyr::filter(decile==highlight_decile & refline==0),
@@ -141,7 +145,6 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
         ggplot2::aes(x=decile,y=0,xend=decile,yend=plotvalue+0.05),colour="gray",
         linetype="dotted",size=1,show.legend = FALSE) +
       # add value labels for annotated points to X axis
-      ggplot2::coord_cartesian(clip = 'off' )+
       ggplot2::geom_label(data=plot_input %>% dplyr::filter(decile==highlight_decile & refline==0),
         ggplot2::aes(x=-Inf,y=plotvalue,label = sprintf("%1.0f%%", 100*plotvalue),color=legend),fill="white",
         hjust = 0, fontface = "bold",show.legend = FALSE) +
@@ -149,8 +152,10 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
       ggplot2::theme(
         axis.line = ggplot2::element_line(color="black"),
         axis.text.x = ggplot2::element_text(
-          face=c(rep("plain",pp$decile0+highlight_decile-1),"bold",rep("plain",10+pp$decile0-highlight_decile-1)),
-          size=c(rep(10,pp$decile0+highlight_decile-1),12,rep(10,10+pp$decile0-highlight_decile-1))))
+          face=c(rep("plain",pp$decile0+highlight_decile-1),"bold",rep("plain",10+pp$decile0-highlight_decile)),
+          size=c(rep(10,pp$decile0+highlight_decile-1),12,rep(10,10+pp$decile0-highlight_decile))))
+    # make sure value labels for annotated points to X axis aren't clipped
+    if(packageVersion("ggplot2") >= 3.0) plot <- plot + ggplot2::coord_cartesian(clip = 'off' )
     }
     annovalues <- plot_input %>% dplyr::filter(decile==highlight_decile & refline==0) %>%
       dplyr::mutate(xmin=rep(0,pp$nlevels),
