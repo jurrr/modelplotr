@@ -21,7 +21,7 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
   pp$randcols <- RColorBrewer::brewer.pal(n = 8, name = "Set1")
   pp$levelcols <- pp$randcols[1:pp$nlevels]
   pp$ntiles <- max(plot_input$decile)
-  pp$xlabper <- ifelse(max(plot_input$decile)<=20,1,2)
+  pp$xlabper <- ifelse(max(plot_input$decile)<=20,1,ifelse(max(plot_input$decile)<=40,2,5))
   pp$decile0 <- ifelse(pp$plottype=="Cumulative gains",1,0)
   if (length(custom_line_colors)==1 & is.na(custom_line_colors[1])){
     pp$levelcols <- pp$randcols[1:pp$nlevels]
@@ -152,28 +152,32 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
         ggplot2::aes(x=-Inf,y=plotvalue,label = sprintf("%1.0f%%", 100*plotvalue),color=legend),fill="white",alpha=0.6,
         hjust = 0, fontface = "bold",show.legend = FALSE)
       # emphasize decile for which annotation is added on X axis
-      if(pp$xlabper %% highlight_decile == 0){
-        xbreaks <- seq(1-pp$decile0,pp$ntiles,pp$xlabper)
+      if(highlight_decile %%  pp$xlabper == 0){
+        xbreaks <- seq((1-pp$decile0)*pp$xlabper,pp$ntiles+pp$decile0,pp$xlabper)
         xfaces <- c(rep("plain",(pp$decile0+highlight_decile-1)/pp$xlabper),
                     "bold",
                     rep("plain",(pp$ntiles+pp$decile0-highlight_decile)/pp$xlabper))
         xsizes <- c(rep(10,(pp$decile0+highlight_decile-1)/pp$xlabper),
                     12,
                     rep(10,(pp$ntiles+pp$decile0-highlight_decile)/pp$xlabper))
+        plot <- plot  +
+          ggplot2::theme(
+            axis.line = ggplot2::element_line(color="black"),
+            axis.text.x = ggplot2::element_text(face=xfaces,size=xsizes))+
+          ggplot2::scale_x_continuous(name="decile", breaks=xbreaks,labels=xbreaks,expand = c(0, 0.02))
       }else{
-        xaxlabs <- data.frame(xbreaks = c(seq(1-pp$decile0,pp$ntiles,pp$xlabper),highlight_decile))
-        xaxlabs$xfaces <- c(rep("plain",NROW(xaxlabs)-1),'bold')
-        xaxlabs$xsizes <- c(rep(10,NROW(xaxlabs)-1),9)
-        xaxlabs <- xaxlabs[order(xaxlabs$xbreaks),]
-        xbreaks <- xaxlabs$xbreaks
-        xfaces <- xaxlabs$xfaces
-        xsizes <- xaxlabs$xsizes
+        xbreaks <- seq((1-pp$decile0)*pp$xlabper,pp$ntiles+pp$decile0,pp$xlabper)
+        xfaces <- rep("plain",(pp$ntiles/pp$xlabper)+pp$decile0)
+        xsizes <- rep(10,(pp$ntiles/pp$xlabper)+pp$decile0)
+        plot <- plot  +
+          ggplot2::theme(
+            axis.line = ggplot2::element_line(color="black"),
+            axis.text.x = ggplot2::element_text(face=xfaces,size=xsizes))+
+          ggplot2::scale_x_continuous(name="decile", breaks=xbreaks,labels=xbreaks,expand = c(0, 0.02))+
+          # add value labels for annotated points to X axis
+          ggplot2::geom_label(data=plot_input %>% dplyr::filter(decile==highlight_decile & refline==0),
+            ggplot2::aes(x=highlight_decile,y=-Inf,label = highlight_decile),fill="white",vjust=0.2,fontface = "bold",show.legend = FALSE)
       }
-    plot <- plot +
-      ggplot2::scale_x_continuous(name="decile", breaks=xbreaks,labels=xbreaks,expand = c(0, 0.02)) +
-      ggplot2::theme(
-        axis.line = ggplot2::element_line(color="black"),
-        axis.text.x = ggplot2::element_text(face=xfaces,size=xsizes))
     # make sure value labels for annotated points to X axis aren't clipped
     if(packageVersion("ggplot2") >= 3.0) plot <- plot + ggplot2::coord_cartesian(clip = 'off' )
       }
