@@ -5,7 +5,7 @@
 \title{Build 'scores_and_deciles' containing Actuals, Probabilities and Deciles}
 \usage{
 prepare_scores_and_deciles(datasets, dataset_labels, models, model_labels,
-  target_column)
+  target_column, ntiles = 10)
 }
 \arguments{
 \item{datasets}{List of Strings. A list of the names of the dataframe

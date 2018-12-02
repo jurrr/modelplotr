@@ -1,7 +1,7 @@
 Package: modelplotr
 Type: Package
 Title: Plots to Evaluate the Business Performance of Predictive Models
-Version: 0.1
+Version: 0.3
 Authors@R: as.person(c(
     "Jurriaan Nagelkerke <jurriaan.nagelkerke@gmail.com> [aut, cre]", 
     "Pieter Marcus <pieter.marcus@persgroep.net> [aut]"))
@@ -19,7 +19,7 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Imports:
-    ggplot2 (>= 3.0.0),
+    ggplot2 (>= 2.2.1),
     grid (>= 3.5.0),
     gridExtra (>= 2.3.0),
     magrittr (>= 1.5.0),

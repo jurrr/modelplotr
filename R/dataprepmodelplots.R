@@ -80,7 +80,8 @@ prepare_scores_and_deciles <- function(datasets,
                                   dataset_labels,
                                   models,
                                   model_labels ,
-                                  target_column){
+                                  target_column,
+                                  ntiles=10){
   if((typeof(datasets)!='character'&typeof(datasets)!="list")|typeof(datasets[[1]])!='character') {
     stop('"datasets" should a be list with dataset names as strings! (e.g. "list("train","test")")')}
   if(missing(dataset_labels)) {
@@ -158,10 +159,10 @@ prepare_scores_and_deciles <- function(datasets,
         prob_plus_smallrandom = range01(probabilities[,y_probvars[i]]+
             runif(NROW(probabilities))/1000000)
         # determine cutoffs based on prob_plus_smallrandom
-        cutoffs = c(quantile(prob_plus_smallrandom,probs = seq(0,1,0.1),
+        cutoffs = c(quantile(prob_plus_smallrandom,probs = seq(0,1,1/ntiles),
                              na.rm = TRUE))
         # add decile variable per y-class
-        probabilities[,paste0('dcl_',y_values[i])] <- 11-as.numeric(
+        probabilities[,paste0('dcl_',y_values[i])] <- (ntiles+1)-as.numeric(
           cut(prob_plus_smallrandom,breaks=cutoffs,include.lowest = T))
       }
       scores_and_deciles = rbind(scores_and_deciles,probabilities)
@@ -304,6 +305,7 @@ aggregate_over_deciles <- function(prepared_input=scores_and_deciles){
 
   modelgroups = levels(prepared_input$dataset_label)
   yvals = levels(prepared_input$y_true)
+  ntiles = max(prepared_input[,ncol(prepared_input)])
 
   deciles_aggregate <- data.frame()
 
@@ -353,7 +355,7 @@ aggregate_over_deciles <- function(prepared_input=scores_and_deciles){
              cumpct=1.0*cumsum(pos)/cumsum(tot),
              gain=pos/postot,
              cumgain=cumsum(pos)/postot,
-             gain_ref=decile/10,
+             gain_ref=decile/ntiles,
              gain_opt=ifelse(cumtot/postot>1,1,cumtot/postot),
              lift=pct/pcttot,
              cumlift=1.0*cumsum(pos)/cumsum(tot)/pcttot,

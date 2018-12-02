@@ -20,6 +20,8 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
   pp$nlevels <- length(pp$levels)
   pp$randcols <- RColorBrewer::brewer.pal(n = 8, name = "Set1")
   pp$levelcols <- pp$randcols[1:pp$nlevels]
+  pp$ntiles <- max(plot_input$decile)
+  pp$xlabper <- ifelse(max(plot_input$decile)<=20,1,2)
   pp$decile0 <- ifelse(pp$plottype=="Cumulative gains",1,0)
   if (length(custom_line_colors)==1 & is.na(custom_line_colors[1])){
     pp$levelcols <- pp$randcols[1:pp$nlevels]
@@ -113,11 +115,12 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
 
 annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
                           highlight_decile=highlight_decile,highlight_how=highlight_how,pp=pp){
+
   if(!is.na(highlight_decile)) {
 
     # check if scores_and_deciles exists, otherwise create
-    if (highlight_decile<1 | highlight_decile>10) {
-      stop("Value for highlight_decile not valid! Choose decile value to highlight in range [1:10]")
+    if (highlight_decile<1 | highlight_decile>pp$ntiles) {
+      stop(paste0("Value for highlight_decile not valid! Choose decile value to highlight in range [1:",pp$ntiles,"]"))
     }
     if(!highlight_how %in% c('plot','text','plot_text')){
       cat("no valid value for highlight_how specified; default value (plot_text) is chosen
@@ -128,6 +131,10 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
     }
 
     if(highlight_how %in% c('plot','plot_text')){
+    # check ggplot version (clip=off is available in version 3.0 and later)
+    if(packageVersion("ggplot2") < 3.0) {
+      warning(paste0('You are using ggplot2 version ',packageVersion("ggplot2"),'. ggplot2 >= 3.0.0 is required for nicer annotated plots!'))
+      }
     plot <- plot +
       # add highlighting cicle(s) to plot at decile value
       ggplot2::geom_point(data = plot_input %>% dplyr::filter(decile==highlight_decile & refline==0),
@@ -140,27 +147,45 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
       ggplot2::geom_segment(data = plot_input %>% dplyr::filter(decile==highlight_decile & refline==0),
         ggplot2::aes(x=decile,y=0,xend=decile,yend=plotvalue+0.05),colour="gray",
         linetype="dotted",size=1,show.legend = FALSE) +
-      # add value labels for annotated points to X axis
-      ggplot2::coord_cartesian(clip = 'off' )+
+      # add value labels for annotated points to Y axis
       ggplot2::geom_label(data=plot_input %>% dplyr::filter(decile==highlight_decile & refline==0),
-        ggplot2::aes(x=-Inf,y=plotvalue,label = sprintf("%1.0f%%", 100*plotvalue),color=legend),fill="white",
-        hjust = 0, fontface = "bold",show.legend = FALSE) +
-      # emphasize decile for which annotation is added
+        ggplot2::aes(x=-Inf,y=plotvalue,label = sprintf("%1.0f%%", 100*plotvalue),color=legend),fill="white",alpha=0.6,
+        hjust = 0, fontface = "bold",show.legend = FALSE)
+      # emphasize decile for which annotation is added on X axis
+      if(pp$xlabper %% highlight_decile == 0){
+        xbreaks <- seq(1-pp$decile0,pp$ntiles,pp$xlabper)
+        xfaces <- c(rep("plain",(pp$decile0+highlight_decile-1)/pp$xlabper),
+                    "bold",
+                    rep("plain",(pp$ntiles+pp$decile0-highlight_decile)/pp$xlabper))
+        xsizes <- c(rep(10,(pp$decile0+highlight_decile-1)/pp$xlabper),
+                    12,
+                    rep(10,(pp$ntiles+pp$decile0-highlight_decile)/pp$xlabper))
+      }else{
+        xaxlabs <- data.frame(xbreaks = c(seq(1-pp$decile0,pp$ntiles,pp$xlabper),highlight_decile))
+        xaxlabs$xfaces <- c(rep("plain",NROW(xaxlabs)-1),'bold')
+        xaxlabs$xsizes <- c(rep(10,NROW(xaxlabs)-1),9)
+        xaxlabs <- xaxlabs[order(xaxlabs$xbreaks),]
+        xbreaks <- xaxlabs$xbreaks
+        xfaces <- xaxlabs$xfaces
+        xsizes <- xaxlabs$xsizes
+      }
+    plot <- plot +
+      ggplot2::scale_x_continuous(name="decile", breaks=xbreaks,labels=xbreaks,expand = c(0, 0.02)) +
       ggplot2::theme(
         axis.line = ggplot2::element_line(color="black"),
-        axis.text.x = ggplot2::element_text(
-          face=c(rep("plain",pp$decile0+highlight_decile-1),"bold",rep("plain",10+pp$decile0-highlight_decile-1)),
-          size=c(rep(10,pp$decile0+highlight_decile-1),12,rep(10,10+pp$decile0-highlight_decile-1))))
-    }
+        axis.text.x = ggplot2::element_text(face=xfaces,size=xsizes))
+    # make sure value labels for annotated points to X axis aren't clipped
+    if(packageVersion("ggplot2") >= 3.0) plot <- plot + ggplot2::coord_cartesian(clip = 'off' )
+      }
     annovalues <- plot_input %>% dplyr::filter(decile==highlight_decile & refline==0) %>%
       dplyr::mutate(xmin=rep(0,pp$nlevels),
       xmax=rep(100,pp$nlevels),
       ymin=seq(1,pp$nlevels,1),
       ymax=seq(2,pp$nlevels+1,1),
-      gainstext = paste0("When we select ",highlight_decile*10,"% with the highest probability according to ",
+      gainstext = paste0("When we select ",100*highlight_decile/pp$ntiles,"% with the highest probability according to ",
         model_label,", this selection holds ",sprintf("%1.0f%%", 100*plotvalue),
         " of all ",target_class," cases in ",dataset_label,"."),
-      lifttext = paste0("When we select ",highlight_decile*10,"% with the highest probability according to model ",
+      lifttext = paste0("When we select ",100*highlight_decile/pp$ntiles,"% with the highest probability according to model ",
           model_label," in ",dataset_label,", this selection for ",target_class," cases is ",sprintf("%1.1f", plotvalue),
           ' times better than selecting without a model.'),
       responsetext = paste0("When we select decile ",highlight_decile," according to model ",
@@ -210,7 +235,6 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
   }
   return(plot)
 }
-
 
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 #### plot_cumgains()                   ####
@@ -315,8 +339,7 @@ plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_decile
     ggplot2::scale_linetype_manual(values=pp$gainslinetypes,guide=ggplot2::guide_legend(ncol=pp$gainslegendcolumns))+
     ggplot2::scale_color_manual(values=pp$gainslinecols)+
     ggplot2::scale_size_manual(values=pp$gainslinesizes)+
-    ggplot2::scale_alpha_manual(values=pp$gainsalphas)+
-    ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10,expand = c(0, 0.02)) +
+    ggplot2::scale_alpha_manual(values=pp$gainsalphas) +
     ggplot2::scale_y_continuous(name="cumulative gains",breaks=seq(0,1,0.2),labels = scales::percent ,expand = c(0, 0.02)) +
     ggplot2::labs(title=pp$plottitle,subtitle=pp$plotsubtitle) +
     ggplot2::theme_minimal() +
@@ -333,6 +356,9 @@ plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_decile
   #annotate plot at decile value
   plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,
                         highlight_decile=highlight_decile,highlight_how=highlight_how,pp=pp)
+  #add x axis labels when no annotation is applied
+  if(is.na(highlight_decile)) plot <- plot + ggplot2::scale_x_continuous(name="decile", breaks=seq(0,pp$ntiles,pp$xlabper),
+                                                              labels=seq(0,pp$ntile,pp$xlabper),expand = c(0, 0.02))
 
   #save plot when requested
   if(save_fig) {
@@ -457,8 +483,7 @@ plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=
     ggplot2::scale_linetype_manual(values=pp$liftlinetypes,guide=ggplot2::guide_legend(ncol=pp$liftlegendcolumns))+
     ggplot2::scale_color_manual(values=pp$liftlinecols)+
     ggplot2::scale_size_manual(values=pp$liftlinesizes)+
-    ggplot2::scale_alpha_manual(values=pp$liftalphas)+
-    ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10,expand = c(0, 0.02)) +
+    ggplot2::scale_alpha_manual(values=pp$liftalphas) +
     ggplot2::scale_y_continuous(name="cumulative lift" ,labels = scales::percent,expand = c(0, 0.02)) +
     ggplot2::expand_limits(y=c(0,max(2,max(plot_input_prepared$plotvalue,na.rm = T)))) +
     ggplot2::labs(title=pp$plottitle,subtitle=pp$plotsubtitle) +
@@ -476,6 +501,9 @@ plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=
   #annotate plot at decile value
   plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,
                         highlight_decile=highlight_decile,highlight_how=highlight_how,pp=pp)
+  #add x axis labels when no annotation is applied
+  if(is.na(highlight_decile)) plot <- plot + ggplot2::scale_x_continuous(name="decile", breaks=seq(0,pp$ntiles,pp$xlabper),
+    labels=seq(0,pp$ntile,pp$xlabper),expand = c(0, 0.02))
 
   #save plot when requested
   if(save_fig) {
@@ -607,7 +635,6 @@ plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile
     ggplot2::scale_color_manual(values=pp$resplinecols)+
     ggplot2::scale_size_manual(values=pp$resplinesizes)+
     ggplot2::scale_alpha_manual(values=pp$respalphas)+
-    ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10,expand = c(0, 0.02)) +
     ggplot2::scale_y_continuous(name="response" ,expand = c(0, 0.02),labels = scales::percent) +
     ggplot2::expand_limits(y=0) +
     ggplot2::labs(title=pp$plottitle,subtitle=pp$plotsubtitle) +
@@ -626,6 +653,9 @@ plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile
   #annotate plot at decile value
   plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,
                         highlight_decile=highlight_decile,highlight_how=highlight_how,pp=pp)
+  #add x axis labels when no annotation is applied
+  if(is.na(highlight_decile)) plot <- plot + ggplot2::scale_x_continuous(name="decile", breaks=seq(0,pp$ntiles,pp$xlabper),
+    labels=seq(0,pp$ntile,pp$xlabper),expand = c(0, 0.02))
 
   #save plot when requested
   if(save_fig) {
@@ -757,7 +787,6 @@ plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_dec
     ggplot2::scale_color_manual(values=pp$resplinecols)+
     ggplot2::scale_size_manual(values=pp$resplinesizes)+
     ggplot2::scale_alpha_manual(values=pp$respalphas)+
-    ggplot2::scale_x_continuous(name="decile", breaks=0:10, labels=0:10,expand = c(0, 0.02)) +
     ggplot2::scale_y_continuous(name="cumulative response" ,expand = c(0, 0.02),labels = scales::percent) +
     ggplot2::expand_limits(y=0) +
     ggplot2::labs(title=pp$plottitle,subtitle=pp$plotsubtitle) +
@@ -776,6 +805,9 @@ plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_dec
   #annotate plot at decile value
   plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,
                         highlight_decile=highlight_decile,highlight_how=highlight_how,pp=pp)
+  #add x axis labels when no annotation is applied
+  if(is.na(highlight_decile)) plot <- plot + ggplot2::scale_x_continuous(name="decile", breaks=seq(0,pp$ntiles,pp$xlabper),
+    labels=seq(0,pp$ntile,pp$xlabper),expand = c(0, 0.02))
 
   #save plot when requested
   if(save_fig) {
