@@ -5,8 +5,8 @@
 \title{Response plot}
 \usage{
 plot_response(data = plot_input, custom_line_colors = NA,
-  highlight_decile = NA, highlight_how = "plot_text", save_fig = FALSE,
-  save_fig_filename = NA)
+  highlight_ntile = NA, highlight_how = "plot_text", save_fig = FALSE,
+  save_fig_filename = NA, ...)
 }
 \arguments{
 \item{data}{Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
@@ -15,13 +15,13 @@ or else meet required input format.}
 \item{custom_line_colors}{Vector of Strings. Specifying colors for the lines in the plot.
 When not specified, colors from the RColorBrewer palet "Set1" are used.}
 
-\item{highlight_decile}{Integer. Specifying the decile at which the plot is annotated
+\item{highlight_ntile}{Integer. Specifying the ntile at which the plot is annotated
 and/or performances are highlighted.}
 
 \item{highlight_how}{String. How to annotate the plot. Possible values: "plot_text","plot", "text".
-Default is "plot_text", both highlighting the decile and value on the plot as well as in text below the plot.
-"plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen decile.
-"text" adds text below the plot explaining the plot at chosen decile but does not highlight the plot.}
+Default is "plot_text", both highlighting the ntile and value on the plot as well as in text below the plot.
+"plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen ntile.
+"text" adds text below the plot explaining the plot at chosen ntile but does not highlight the plot.}
 
 \item{save_fig}{Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plots are optimized for 18x12cm.}
 
@@ -32,9 +32,9 @@ ggplot object. Response plot.
 }
 \description{
 Generates the response plot. It plots the percentage of target class observations
-per decile. It can be used to answer the following business question: When we apply
-the model and select decile X, what is the expected percentage of target class observations
-in that decile?
+per ntile. It can be used to answer the following business question: When we apply
+the model and select ntile X, what is the expected percentage of target class observations
+in that ntile?
 }
 \examples{
 data(iris)
@@ -59,29 +59,29 @@ mnl = mlr::train(lrn, task)
 rf = caret::train(Species ~.,data = train, method = "rf")
 mnl = caret::train(Species ~.,data = train, method = "multinom", trace = FALSE)
 # preparation steps
-prepare_scores_and_deciles(datasets=list("train","test"),
+prepare_scores_and_ntiles(datasets=list("train","test"),
                       dataset_labels = list("train data","test data"),
                       models = list("rf","mnl"),
                       model_labels = list("random forest","multinomial logit"),
                       target_column="Species")
-head(scores_and_deciles)
-aggregate_over_deciles()
+head(scores_and_ntiles)
+aggregate_over_ntiles()
 plotting_scope(scope="compare_targetclasses")
 plot_response()
 plot_response(custom_line_colors=RColorBrewer::brewer.pal(3,"Dark2"))
-plot_response(highlight_decile=2)
+plot_response(highlight_ntile=2)
 }
 \seealso{
 \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
 
-\code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
+\code{\link{prepare_scores_and_ntiles}} for details on the function \code{prepare_scores_and_ntiles}
 that generates the required input.
 
-\code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
+\code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
 generates the required input.
 
 \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
-filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
+filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
 
 \url{https://github.com/modelplot/modelplotr} for details on the package
 

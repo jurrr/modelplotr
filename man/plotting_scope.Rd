@@ -4,14 +4,14 @@
 \alias{plotting_scope}
 \title{Build 'plot_input' with subset for selected evaluation type.}
 \usage{
-plotting_scope(prepared_input = deciles_aggregate, scope = "no_comparison",
+plotting_scope(prepared_input = ntiles_aggregate, scope = "no_comparison",
   select_model_label = NA, select_dataset_label = NA,
   select_targetclass = NA, select_smallest_targetclass = TRUE)
 }
 \arguments{
-\item{prepared_input}{Dataframe. Dataframe resulting from function \code{\link{aggregate_over_deciles}()} or with similar
-format. Default value is deciles_aggregate, the output of \code{aggregate_over_deciles()}. When deciles_aggregate is not found, function
-\code{aggregate_over_deciles()} is automatically called.}
+\item{prepared_input}{Dataframe. Dataframe resulting from function \code{\link{aggregate_over_ntiles}()} or with similar
+format. Default value is ntiles_aggregate, the output of \code{aggregate_over_ntiles()}. When ntiles_aggregate is not found, function
+\code{aggregate_over_ntiles()} is automatically called.}
 
 \item{scope}{String. Evaluation type of interest. Possible values:
 "compare_models","compare_datasets", "compare_targetclasses","no_comparison".
@@ -33,10 +33,10 @@ When scope is "compare_targetclasses", select_targetclass can be used to take a 
 interest. Default is True, hence the target value with the least observations is selected.}
 }
 \value{
-Dataframe \code{plot_input} is a subset of \code{deciles_aggregate}.
+Dataframe \code{plot_input} is a subset of \code{ntiles_aggregate}.
 }
 \description{
-Build dataframe 'plot_input' with a subset of 'deciles_aggregate' that meets the requested evaluation perspective.
+Build dataframe 'plot_input' with a subset of 'ntiles_aggregate' that meets the requested evaluation perspective.
 There are four perspectives:
 \describe{
   \item{"no_comparison" (default)}{In this perspective, you're interested in the performance of one model on one dataset
@@ -46,14 +46,14 @@ There are four perspectives:
     the smallest (when \code{select_smallest_targetclass=TRUE}) or first alphabetic target value are selected }
   \item{"compare_models"}{In this perspective, you're interested in how well different models perform in comparison to
     each other on the same dataset and for the same target value. This results in a comparison between models available
-    in deciles_aggregate$model_label for a selected dataset (default: first alphabetic dataset) and for a selected target value
+    in ntiles_aggregate$model_label for a selected dataset (default: first alphabetic dataset) and for a selected target value
     (default: smallest (when \code{select_smallest_targetclass=TRUE}) or first alphabetic target value).}
   \item{"compare_datasets"}{In this perspective, you're interested in how well a model performs in different datasets
   for a specific model on the same target value. This results in a comparison between datasets available in
-  deciles_aggregate$dataset_label for a selected model (default: first alphabetic model) and for a selected target value (default:
+  ntiles_aggregate$dataset_label for a selected model (default: first alphabetic model) and for a selected target value (default:
   smallest (when \code{select_smallest_targetclass=TRUE}) or first alphabetic target value).}
   \item{"compare_targetclasses"}{In this perspective, you're interested in how well a model performs for different target
-   values on a specific dataset.This resuls in a comparison between target classes available in deciles_aggregate$target_class for
+   values on a specific dataset.This resuls in a comparison between target classes available in ntiles_aggregate$target_class for
    a selected model (default: first alphabetic model) and for a selected dataset (default: first alphabetic dataset).}}
 }
 \examples{
@@ -79,37 +79,37 @@ mnl = mlr::train(lrn, task)
 rf = caret::train(Species ~.,data = train, method = "rf")
 mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
 # preparation steps
-prepare_scores_and_deciles(datasets=list("train","test"),
+prepare_scores_and_ntiles(datasets=list("train","test"),
                       dataset_labels = list("train data","test data"),
                       models = list("rf","mnl"),
                       model_labels = list("random forest","multinomial logit"),
                       target_column="Species")
-head(scores_and_deciles)
-aggregate_over_deciles()
+head(scores_and_ntiles)
+aggregate_over_ntiles()
 plotting_scope()
 # various plotting examples with different plotting scopes
 plot_cumgains()
-plot_cumgains(highlight_decile=2)
+plot_cumgains(highlight_ntile=2)
 plotting_scope(scope="compare_models")
 plot_cumlift()
-plot_cumlift(highlight_decile=2,highlight_how="plot")
+plot_cumlift(highlight_ntile=2,highlight_how="plot")
 plotting_scope(scope="compare_targetclasses")
 plot_response()
 plot_response(custom_line_colors = c('green','orange','darkblue'))
 plotting_scope(scope="compare_datasets")
 plot_cumresponse()
-plot_cumresponse(highlight_decile=2,highlight_how="text")
+plot_cumresponse(highlight_ntile=2,highlight_how="text")
 plot_all()
 }
 \seealso{
 \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
 
-\code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
+\code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
 generates the required input.
 
-\code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
+\code{\link{prepare_scores_and_ntiles}} for details on the function \code{prepare_scores_and_ntiles}
 that generates the required input.
-filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
+filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
 
 \url{https://github.com/modelplot/modelplotr} for details on the package
 

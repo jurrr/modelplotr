@@ -20,9 +20,11 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
   pp$nlevels <- length(pp$levels)
   pp$randcols <- RColorBrewer::brewer.pal(n = 8, name = "Set1")
   pp$levelcols <- pp$randcols[1:pp$nlevels]
-  pp$ntiles <- max(plot_input$decile)
-  pp$xlabper <- ifelse(max(plot_input$decile)<=20,1,ifelse(max(plot_input$decile)<=40,2,5))
-  pp$decile0 <- ifelse(pp$plottype=="Cumulative gains",1,0)
+  pp$ntiles <- max(plot_input$ntile)
+  pp$ntiles_label <- ifelse(pp$ntiles==10,'decile',ifelse(pp$ntiles==4,'quartile',ifelse(pp$ntiles==5,'quintile',
+                        ifelse(pp$ntiles==20,'ventile',ifelse(pp$ntiles==100,'percentile','ntile')))))
+  pp$xlabper <- ifelse(max(plot_input$ntile)<=20,1,ifelse(max(plot_input$ntile)<=40,2,5))
+  pp$ntile0 <- ifelse(pp$plottype=="Cumulative gains",1,0)
   if (length(custom_line_colors)==1 & is.na(custom_line_colors[1])){
     pp$levelcols <- pp$randcols[1:pp$nlevels]
   } else if(length(custom_line_colors)==pp$nlevels) {
@@ -79,6 +81,7 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
   pp$gainsalphas <- c(rep(1,pp$nlevels),1,rep(1,pp$noptgainsreflevels))
   pp$gainslinecols <- c(pp$levelcols,'gray',pp$optgainsreflevelcols)
   pp$gainslinesizes <- c(rep(1,pp$nlevels),0.5,rep(1.2,pp$noptgainsreflevels))
+  pp$gainstext = "When we select &PCTNTL with the highest probability according to &MDL, this selection holds &CUMGAINS of all &YVAL cases in &DS."
 
   # LIFT
   pp$liftreflabel <- 'no lift'
@@ -89,6 +92,7 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
   pp$liftalphas <- c(rep(1,pp$nlevels),1)
   pp$liftlinecols <- c(pp$levelcols,'gray')
   pp$liftlinesizes <- c(rep(1,pp$nlevels),0.5)
+  pp$lifttext = "When we select &PCTNTL with the highest probability according to model &MDL in &DS, this selection for &YVAL cases is &CUMLIFT times better than selecting without a model."
 
   # RESPONSE
   if (pp$seltype=='compare_models') {
@@ -105,6 +109,8 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
   pp$respalphas <- c(rep(1,pp$nlevels),rep(1,pp$nrespreflevels))
   pp$resplinecols <- c(pp$levelcols,pp$respreflevelcols)
   pp$resplinesizes <- c(rep(1,pp$nlevels),rep(0.8,pp$nrespreflevels))
+  pp$responsetext = "When we select ntile &NTL according to model &MDL in dataset &DS the %% of &YVAL cases in the selection is &RESPONSE"
+  pp$cumresponsetext = "When we select ntiles 1 until &NTL according to model &MDL in dataset &DS the %% of &YVAL cases in the selection is &CUMRESPONSE."
 
   return(pp)
 }
@@ -114,19 +120,19 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
 annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
-                          highlight_decile=highlight_decile,highlight_how=highlight_how,pp=pp){
+                          highlight_ntile=highlight_ntile,highlight_how=highlight_how,pp=pp){
 
-  if(!is.na(highlight_decile)) {
+  if(!is.na(highlight_ntile)) {
 
-    # check if scores_and_deciles exists, otherwise create
-    if (highlight_decile<1 | highlight_decile>pp$ntiles) {
-      stop(paste0("Value for highlight_decile not valid! Choose decile value to highlight in range [1:",pp$ntiles,"]"))
+    # check if scores_and_ntiles exists, otherwise create
+    if (highlight_ntile<1 | highlight_ntile>pp$ntiles) {
+      stop(paste0("Value for highlight_ntile not valid! Choose ntile value to highlight in range [1:",pp$ntiles,"]"))
     }
     if(!highlight_how %in% c('plot','text','plot_text')){
       cat("no valid value for highlight_how specified; default value (plot_text) is chosen
 -> choose 'plot_text' to highlight both the plot and add explanatory text below the plot
 -> choose 'plot' to only highlight both the plot - no explanatory text is added below the plot
--> choose 'text' to only add explanatory text below the plot - the chosen decile is not highlighted in the plot \n")
+-> choose 'text' to only add explanatory text below the plot - the chosen ntile is not highlighted in the plot \n")
       highlight_how <- 'plot_text'
     }
 
@@ -136,69 +142,79 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
       warning(paste0('You are using ggplot2 version ',packageVersion("ggplot2"),'. ggplot2 >= 3.0.0 is required for nicer annotated plots!'))
       }
     plot <- plot +
-      # add highlighting cicle(s) to plot at decile value
-      ggplot2::geom_point(data = plot_input %>% dplyr::filter(decile==highlight_decile & refline==0),
-        ggplot2::aes(x=decile,y=plotvalue,color=legend),shape=1,size=5,show.legend = FALSE)+
+      # add highlighting cicle(s) to plot at ntile value
+      ggplot2::geom_point(data = plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0),
+        ggplot2::aes(x=ntile,y=plotvalue,color=legend),shape=1,size=5,show.legend = FALSE)+
       # add line(s) from annotated point(s) to Y axis
-      ggplot2::geom_segment(data = plot_input %>% dplyr::filter(decile==highlight_decile & refline==0),
-        ggplot2::aes(x=-Inf,y=plotvalue,xend=decile+0.5,yend=plotvalue,colour=legend),
+      ggplot2::geom_segment(data = plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0),
+        ggplot2::aes(x=-Inf,y=plotvalue,xend=ntile+0.5,yend=plotvalue,colour=legend),
         linetype="dotted",size=0.5,show.legend = FALSE)+
       # add line(s) from annotated point(s) to X axis
-      ggplot2::geom_segment(data = plot_input %>% dplyr::filter(decile==highlight_decile & refline==0),
-        ggplot2::aes(x=decile,y=0,xend=decile,yend=plotvalue+0.05),colour="gray",
+      ggplot2::geom_segment(data = plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0),
+        ggplot2::aes(x=ntile,y=0,xend=ntile,yend=plotvalue+0.05),colour="gray",
         linetype="dotted",size=1,show.legend = FALSE) +
       # add value labels for annotated points to Y axis
-      ggplot2::geom_label(data=plot_input %>% dplyr::filter(decile==highlight_decile & refline==0),
+      ggplot2::geom_label(data=plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0),
         ggplot2::aes(x=-Inf,y=plotvalue,label = sprintf("%1.0f%%", 100*plotvalue),color=legend),fill="white",alpha=0.6,
         hjust = 0, fontface = "bold",show.legend = FALSE)
-      # emphasize decile for which annotation is added on X axis
-      if(highlight_decile %%  pp$xlabper == 0){
-        xbreaks <- seq((1-pp$decile0)*pp$xlabper,pp$ntiles+pp$decile0,pp$xlabper)
-        xfaces <- c(rep("plain",(pp$decile0+highlight_decile-1)/pp$xlabper),
+      # emphasize ntile for which annotation is added on X axis
+      if(highlight_ntile %%  pp$xlabper == 0){
+        xbreaks <- seq((1-pp$ntile0)*pp$xlabper,pp$ntiles+pp$ntile0,pp$xlabper)
+        xfaces <- c(rep("plain",(pp$ntile0+highlight_ntile-1)/pp$xlabper),
                     "bold",
-                    rep("plain",(pp$ntiles+pp$decile0-highlight_decile)/pp$xlabper))
-        xsizes <- c(rep(10,(pp$decile0+highlight_decile-1)/pp$xlabper),
+                    rep("plain",(pp$ntiles+pp$ntile0-highlight_ntile)/pp$xlabper))
+        xsizes <- c(rep(10,(pp$ntile0+highlight_ntile-1)/pp$xlabper),
                     12,
-                    rep(10,(pp$ntiles+pp$decile0-highlight_decile)/pp$xlabper))
+                    rep(10,(pp$ntiles+pp$ntile0-highlight_ntile)/pp$xlabper))
         plot <- plot  +
           ggplot2::theme(
             axis.line = ggplot2::element_line(color="black"),
             axis.text.x = ggplot2::element_text(face=xfaces,size=xsizes))+
-          ggplot2::scale_x_continuous(name="decile", breaks=xbreaks,labels=xbreaks,expand = c(0, 0.02))
+          ggplot2::scale_x_continuous(name=pp$ntiles_label, breaks=xbreaks,labels=xbreaks,expand = c(0, 0.02))
       }else{
-        xbreaks <- seq((1-pp$decile0)*pp$xlabper,pp$ntiles+pp$decile0,pp$xlabper)
-        xfaces <- rep("plain",(pp$ntiles/pp$xlabper)+pp$decile0)
-        xsizes <- rep(10,(pp$ntiles/pp$xlabper)+pp$decile0)
+        xbreaks <- seq((1-pp$ntile0)*pp$xlabper,pp$ntiles+pp$ntile0,pp$xlabper)
+        xfaces <- rep("plain",(pp$ntiles/pp$xlabper)+pp$ntile0)
+        xsizes <- rep(10,(pp$ntiles/pp$xlabper)+pp$ntile0)
         plot <- plot  +
           ggplot2::theme(
             axis.line = ggplot2::element_line(color="black"),
             axis.text.x = ggplot2::element_text(face=xfaces,size=xsizes))+
-          ggplot2::scale_x_continuous(name="decile", breaks=xbreaks,labels=xbreaks,expand = c(0, 0.02))+
+          ggplot2::scale_x_continuous(name=pp$ntiles_label, breaks=xbreaks,labels=xbreaks,expand = c(0, 0.02))+
           # add value labels for annotated points to X axis
-          ggplot2::geom_label(data=plot_input %>% dplyr::filter(decile==highlight_decile & refline==0),
-            ggplot2::aes(x=highlight_decile,y=-Inf,label = highlight_decile),fill="white",vjust=0.2,fontface = "bold",show.legend = FALSE)
+          ggplot2::geom_label(data=plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0),
+            ggplot2::aes(x=highlight_ntile,y=-Inf,label = highlight_ntile),fill="white",vjust=0.2,fontface = "bold",show.legend = FALSE)
       }
     # make sure value labels for annotated points to X axis aren't clipped
     if(packageVersion("ggplot2") >= 3.0) plot <- plot + ggplot2::coord_cartesian(clip = 'off' )
-      }
-    annovalues <- plot_input %>% dplyr::filter(decile==highlight_decile & refline==0) %>%
+    }
+
+    # annotation text
+
+
+    annovalues <- plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0) %>%
       dplyr::mutate(xmin=rep(0,pp$nlevels),
       xmax=rep(100,pp$nlevels),
       ymin=seq(1,pp$nlevels,1),
       ymax=seq(2,pp$nlevels+1,1),
-      gainstext = paste0("When we select ",100*highlight_decile/pp$ntiles,"% with the highest probability according to ",
-        model_label,", this selection holds ",sprintf("%1.0f%%", 100*plotvalue),
-        " of all ",target_class," cases in ",dataset_label,"."),
-      lifttext = paste0("When we select ",100*highlight_decile/pp$ntiles,"% with the highest probability according to model ",
-          model_label," in ",dataset_label,", this selection for ",target_class," cases is ",sprintf("%1.1f", plotvalue),
-          ' times better than selecting without a model.'),
-      responsetext = paste0("When we select decile ",highlight_decile," according to model ",
-          model_label," in dataset ",dataset_label," the % of ",target_class," cases in the selection is ",
-          sprintf("%1.0f%%", 100*plotvalue),"."),
-      cumresponsetext = paste0("When we select deciles 1 until ",highlight_decile," according to model ",
-        model_label," in dataset ",dataset_label," the % of ",target_class," cases in the selection is ",
-        sprintf("%1.0f%%", 100*plotvalue),".")
-      )
+      # create variables with the values needed for the annotation texts
+      NTL=highlight_ntile,
+      PCTNTL=sprintf("%1.0f%%",100*highlight_ntile/pp$ntiles),
+      MDL=model_label,
+      DS=dataset_label,
+      YVAL=target_class,
+      CUMGAINS=sprintf("%1.0f%%", 100*plotvalue),
+      CUMLIFT=sprintf("%1.1f", plotvalue),
+      RESPONSE=sprintf("%1.0f%%",100*plotvalue),
+      CUMRESPONSE=sprintf("%1.0f%%",100*plotvalue),
+      # replace the placeholders for values in the annotation text per plot type
+      gainstext = eval(parse(text=paste0("sprintf('",stringr::str_replace_all(pp$gainstext,'&[A-Z]+','%s'), " ', ",
+          paste(substr(unlist(stringr:: str_extract_all(pp$gainstext,'&[A-Z]+')),2,100),collapse = ', '),')'))),
+      lifttext = eval(parse(text=paste0("sprintf('",stringr::str_replace_all(pp$lifttext,'&[A-Z]+','%s'), " ', ",
+          paste(substr(unlist(stringr:: str_extract_all(pp$lifttext,'&[A-Z]+')),2,100),collapse = ', '),')'))),
+      responsetext = eval(parse(text=paste0("sprintf('",stringr::str_replace_all(pp$responsetext,'&[A-Z]+','%s'), " ', ",
+          paste(substr(unlist(stringr:: str_extract_all(pp$responsetext,'&[A-Z]+')),2,100),collapse = ', '),')'))),
+      cumresponsetext = eval(parse(text=paste0("sprintf('",stringr::str_replace_all(pp$cumresponsetext,'&[A-Z]+','%s'), " ', ",
+          paste(substr(unlist(stringr:: str_extract_all(pp$cumresponsetext,'&[A-Z]+')),2,100),collapse = ', '),')'))))
 
     if(pp$plottype=="Cumulative gains") annovalues$text <- annovalues$gainstext
     if(pp$plottype=="Cumulative lift") annovalues$text <- annovalues$lifttext
@@ -247,18 +263,18 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
 #' Cumulative gains plot
 #'
 #' Generates the cumulative gains plot. This plot, often referred to as the gains chart,
-#' helps answering the question: \bold{\emph{When we apply the model and select the best X deciles,
+#' helps answering the question: \bold{\emph{When we apply the model and select the best X ntiles,
 #' what percentage of the actual target class observations can we expect to target?}}
 #' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
 #' or else meet required input format.
 #' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
-#' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
+#' @param highlight_ntile Integer. Specifying the ntile at which the plot is annotated
 #' and/or performances are highlighted.
 #' @param highlight_how String. How to annotate the plot. Possible values: "plot_text","plot", "text".
-#' Default is "plot_text", both highlighting the decile and value on the plot as well as in text below the plot.
-#' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen decile.
-#' "text" adds text below the plot explaining the plot at chosen decile but does not highlight the plot.
+#' Default is "plot_text", both highlighting the ntile and value on the plot as well as in text below the plot.
+#' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen ntile.
+#' "text" adds text below the plot explaining the plot at chosen ntile but does not highlight the plot.
 #' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plots are optimized for 18x12cm.
 #' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
 #' @return ggplot object. Cumulative gains plot.
@@ -285,53 +301,58 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
 #' rf = caret::train(Species ~.,data = train, method = "rf")
 #' mnl = caret::train(Species ~.,data = train, method = "multinom", trace = FALSE)
 #' # preparation steps
-#' prepare_scores_and_deciles(datasets=list("train","test"),
+#' prepare_scores_and_ntiles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
 #'                       model_labels = list("random forest","multinomial logit"),
 #'                       target_column="Species")
-#' head(scores_and_deciles)
-#' aggregate_over_deciles()
+#' head(scores_and_ntiles)
+#' aggregate_over_ntiles()
 #' plotting_scope(scope="compare_models")
 #' plot_cumgains()
 #' plot_cumgains(custom_line_colors=c("orange","purple"))
-#' plot_cumgains(highlight_decile=2)
+#' plot_cumgains(highlight_ntile=2)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
-#' @seealso \code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
+#' @seealso \code{\link{prepare_scores_and_ntiles}} for details on the function \code{prepare_scores_and_ntiles}
 #' that generates the required input.
-#' @seealso \code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
+#' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
 #' generates the required input.
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
-#' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
+#' filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA,highlight_how='plot_text',
-                          save_fig=FALSE,save_fig_filename=NA) {
+plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_ntile=NA,highlight_how='plot_text',
+                          save_fig=FALSE,save_fig_filename=NA,...) {
 
+  # check if highlight_decile is used instead of highlight_ntile
+  if ('highlight_decile' %in% names(match.call())) {
+    warning("parameter highlight_decile is depreciated and replaced by highlight_ntile.")
+    highlight_ntile <-match.call(expand.dots = FALSE)$...$highlight_decile
+  }
   plot_input <- data
   custom_line_colors <- custom_line_colors
-  highlight_decile <- highlight_decile
+  highlight_ntile <- highlight_ntile
   highlight_how <- highlight_how
 
   pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative gains",custom_line_colors=custom_line_colors)
 
   # rearrange plot_input
-  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::select(scope:decile,plotvalue=cumgain,legend,refline)
+  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::select(scope:ntile,plotvalue=cumgain,legend,refline)
   if (pp$seltype=="compare_models") {
     optreflines <- plot_input %>%
       dplyr::mutate(legend=paste0('optimal gains (',dataset_label,')'),model_label='',plotvalue=gain_opt,refline=1) %>%
-      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
+      dplyr::select(scope:ntile,plotvalue,legend,refline) %>%
       dplyr::distinct()
   } else {
     optreflines <- plot_input%>%
       dplyr::mutate(legend=paste0('optimal gains (',legend,')'),plotvalue=gain_opt,refline=1) %>%
-      dplyr::select(scope:decile,plotvalue,legend,refline)
+      dplyr::select(scope:ntile,plotvalue,legend,refline)
   }
   minrefline <- plot_input %>%
     dplyr::mutate(legend=paste0('minimal gains'),model_label='',dataset_label='',target_class='',plotvalue=gain_ref,refline=1) %>%
-    dplyr::select(scope:decile,plotvalue,legend,refline)%>%
+    dplyr::select(scope:ntile,plotvalue,legend,refline)%>%
     dplyr::distinct()
   plot_input_prepared <- rbind(minrefline,optreflines,vallines)
   plot_input_prepared$legend <- factor(plot_input_prepared$legend,levels=pp$gainslevels)
@@ -339,7 +360,7 @@ plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_decile
   #make plot
   plot <- plot_input_prepared %>%
     ggplot2::ggplot() +
-    ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
+    ggplot2::geom_line(ggplot2::aes(x=ntile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
     ggplot2::scale_linetype_manual(values=pp$gainslinetypes,guide=ggplot2::guide_legend(ncol=pp$gainslegendcolumns))+
     ggplot2::scale_color_manual(values=pp$gainslinecols)+
     ggplot2::scale_size_manual(values=pp$gainslinesizes)+
@@ -357,12 +378,12 @@ plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_decile
       axis.line.x=ggplot2::element_line(),
       axis.line.y=ggplot2::element_line())
 
-  #annotate plot at decile value
+  #annotate plot at ntile value
   plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,
-                        highlight_decile=highlight_decile,highlight_how=highlight_how,pp=pp)
+                        highlight_ntile=highlight_ntile,highlight_how=highlight_how,pp=pp)
   #add x axis labels when no annotation is applied
-  if(is.na(highlight_decile)) plot <- plot + ggplot2::scale_x_continuous(name="decile", breaks=seq(0,pp$ntiles,pp$xlabper),
-                                                              labels=seq(0,pp$ntile,pp$xlabper),expand = c(0, 0.02))
+  if(is.na(highlight_ntile)) plot <- plot + ggplot2::scale_x_continuous(name=pp$ntiles_label, breaks=seq(0,pp$ntiles,pp$xlabper),
+                                                              labels=seq(0,pp$ntiles,pp$xlabper),expand = c(0, 0.02))
 
   #save plot when requested
   if(save_fig) {
@@ -400,18 +421,18 @@ cat(paste0("Plot is saved as: ",filename,"\n\n"))
 #' Cumulative Lift plot
 #'
 #' Generates the cumulative lift plot, often referred to as lift plot or index plot,
-#' helps you answer the question: When we apply the model and select the best X deciles,
+#' helps you answer the question: When we apply the model and select the best X ntiles,
 #' how many times better is that than using no model at all?
 #' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
 #' or else meet required input format.
 #' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
-#' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
+#' @param highlight_ntile Integer. Specifying the ntile at which the plot is annotated
 #' and/or performances are highlighted.
 #' @param highlight_how String. How to annotate the plot. Possible values: "plot_text","plot", "text".
-#' Default is "plot_text", both highlighting the decile and value on the plot as well as in text below the plot.
-#' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen decile.
-#' "text" adds text below the plot explaining the plot at chosen decile but does not highlight the plot.
+#' Default is "plot_text", both highlighting the ntile and value on the plot as well as in text below the plot.
+#' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen ntile.
+#' "text" adds text below the plot explaining the plot at chosen ntile but does not highlight the plot.
 #' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plots are optimized for 18x12cm.
 #' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
 #' @return ggplot object. Lift plot.
@@ -438,43 +459,48 @@ cat(paste0("Plot is saved as: ",filename,"\n\n"))
 #' rf = caret::train(Species ~.,data = train, method = "rf")
 #' mnl = caret::train(Species ~.,data = train, method = "multinom", trace = FALSE)
 #' # preparation steps
-#' prepare_scores_and_deciles(datasets=list("train","test"),
+#' prepare_scores_and_ntiles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
 #'                       model_labels = list("random forest","multinomial logit"),
 #'                       target_column="Species")
-#' head(scores_and_deciles)
-#' aggregate_over_deciles()
+#' head(scores_and_ntiles)
+#' aggregate_over_ntiles()
 #' plotting_scope(scope="compare_datasets")
 #' plot_cumlift()
 #' plot_cumlift(custom_line_colors=c("orange","purple"))
-#' plot_cumlift(highlight_decile=2)
+#' plot_cumlift(highlight_ntile=2)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
-#' @seealso \code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
+#' @seealso \code{\link{prepare_scores_and_ntiles}} for details on the function \code{prepare_scores_and_ntiles}
 #' that generates the required input.
-#' @seealso \code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
+#' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
 #' generates the required input.
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
-#' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
+#' filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA,highlight_how='plot_text',
-                         save_fig=FALSE,save_fig_filename=NA) {
+plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_ntile=NA,highlight_how='plot_text',
+                         save_fig=FALSE,save_fig_filename=NA,...) {
+
+  if ('highlight_decile' %in% names(match.call())) {
+    warning("parameter highlight_decile is depreciated and replaced by highlight_ntile.")
+    highlight_ntile <-match.call(expand.dots = FALSE)$...$highlight_decile
+  }
 
   plot_input <- data
   custom_line_colors <- custom_line_colors
-  highlight_decile <- highlight_decile
+  highlight_ntile <- highlight_ntile
 
   pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative lift",custom_line_colors=custom_line_colors)
 
   # rearrange plot_input
-  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(decile>0) %>%
-    dplyr::select(scope:decile,plotvalue=cumlift,legend,refline)
-  minrefline <- plot_input %>% dplyr::filter(decile>0) %>%
+  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(ntile>0) %>%
+    dplyr::select(scope:ntile,plotvalue=cumlift,legend,refline)
+  minrefline <- plot_input %>% dplyr::filter(ntile>0) %>%
     dplyr::mutate(legend=pp$liftreflabel,model_label='',dataset_label='',target_class='',plotvalue=cumlift_ref,refline=1) %>%
-    dplyr::select(scope:decile,plotvalue,legend,refline)%>%
+    dplyr::select(scope:ntile,plotvalue,legend,refline)%>%
     dplyr::distinct()
   plot_input_prepared <- rbind(minrefline,vallines)
   plot_input_prepared$legend <- factor(plot_input_prepared$legend,levels=pp$liftlevels)
@@ -483,7 +509,7 @@ plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=
   #make plot
   plot <- plot_input_prepared %>%
     ggplot2::ggplot() +
-    ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
+    ggplot2::geom_line(ggplot2::aes(x=ntile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
     ggplot2::scale_linetype_manual(values=pp$liftlinetypes,guide=ggplot2::guide_legend(ncol=pp$liftlegendcolumns))+
     ggplot2::scale_color_manual(values=pp$liftlinecols)+
     ggplot2::scale_size_manual(values=pp$liftlinesizes)+
@@ -502,12 +528,12 @@ plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=
       axis.line.x=ggplot2::element_line(),
       axis.line.y=ggplot2::element_line())
 
-  #annotate plot at decile value
+  #annotate plot at ntile value
   plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,
-                        highlight_decile=highlight_decile,highlight_how=highlight_how,pp=pp)
+                        highlight_ntile=highlight_ntile,highlight_how=highlight_how,pp=pp)
   #add x axis labels when no annotation is applied
-  if(is.na(highlight_decile)) plot <- plot + ggplot2::scale_x_continuous(name="decile", breaks=seq(0,pp$ntiles,pp$xlabper),
-    labels=seq(0,pp$ntile,pp$xlabper),expand = c(0, 0.02))
+  if(is.na(highlight_ntile)) plot <- plot + ggplot2::scale_x_continuous(name=pp$ntiles_label, breaks=seq(0,pp$ntiles,pp$xlabper),
+    labels=seq(0,pp$ntiles,pp$xlabper),expand = c(0, 0.02))
 
   #save plot when requested
   if(save_fig) {
@@ -542,19 +568,19 @@ plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=
 #' Response plot
 #'
 #' Generates the response plot. It plots the percentage of target class observations
-#' per decile. It can be used to answer the following business question: When we apply
-#' the model and select decile X, what is the expected percentage of target class observations
-#' in that decile?
+#' per ntile. It can be used to answer the following business question: When we apply
+#' the model and select ntile X, what is the expected percentage of target class observations
+#' in that ntile?
 #' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
 #' or else meet required input format.
 #' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
-#' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
+#' @param highlight_ntile Integer. Specifying the ntile at which the plot is annotated
 #' and/or performances are highlighted.
 #' @param highlight_how String. How to annotate the plot. Possible values: "plot_text","plot", "text".
-#' Default is "plot_text", both highlighting the decile and value on the plot as well as in text below the plot.
-#' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen decile.
-#' "text" adds text below the plot explaining the plot at chosen decile but does not highlight the plot.
+#' Default is "plot_text", both highlighting the ntile and value on the plot as well as in text below the plot.
+#' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen ntile.
+#' "text" adds text below the plot explaining the plot at chosen ntile but does not highlight the plot.
 #' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plots are optimized for 18x12cm.
 #' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
 #' @return ggplot object. Response plot.
@@ -581,51 +607,56 @@ plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_decile=
 #' rf = caret::train(Species ~.,data = train, method = "rf")
 #' mnl = caret::train(Species ~.,data = train, method = "multinom", trace = FALSE)
 #' # preparation steps
-#' prepare_scores_and_deciles(datasets=list("train","test"),
+#' prepare_scores_and_ntiles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
 #'                       model_labels = list("random forest","multinomial logit"),
 #'                       target_column="Species")
-#' head(scores_and_deciles)
-#' aggregate_over_deciles()
+#' head(scores_and_ntiles)
+#' aggregate_over_ntiles()
 #' plotting_scope(scope="compare_targetclasses")
 #' plot_response()
 #' plot_response(custom_line_colors=RColorBrewer::brewer.pal(3,"Dark2"))
-#' plot_response(highlight_decile=2)
+#' plot_response(highlight_ntile=2)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
-#' @seealso \code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
+#' @seealso \code{\link{prepare_scores_and_ntiles}} for details on the function \code{prepare_scores_and_ntiles}
 #' that generates the required input.
-#' @seealso \code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
+#' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
 #' generates the required input.
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
-#' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
+#' filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA,highlight_how='plot_text',
-                          save_fig=FALSE,save_fig_filename=NA) {
+plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_ntile=NA,highlight_how='plot_text',
+                          save_fig=FALSE,save_fig_filename=NA,...) {
+
+  if ('highlight_decile' %in% names(match.call())) {
+    warning("parameter highlight_decile is depreciated and replaced by highlight_ntile.")
+    highlight_ntile <-match.call(expand.dots = FALSE)$...$highlight_decile
+  }
 
   plot_input <- data
   custom_line_colors <- custom_line_colors
-  highlight_decile <- highlight_decile
+  highlight_ntile <- highlight_ntile
 
   pp <- setplotparams(plot_input = plot_input,plottype = "Response",custom_line_colors=custom_line_colors)
 
   # rearrange plot_input
-  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(decile>0) %>%
-    dplyr::select(scope:decile,plotvalue=pct,legend,refline)
+  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(ntile>0) %>%
+    dplyr::select(scope:ntile,plotvalue=pct,legend,refline)
   if (pp$seltype=="compare_models") {
     minreflines <- plot_input %>%
-      dplyr::filter(decile>0) %>%
+      dplyr::filter(ntile>0) %>%
       dplyr::mutate(legend=paste0('overall response (',dataset_label,')'),model_label='',plotvalue=pcttot,refline=1) %>%
-      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
+      dplyr::select(scope:ntile,plotvalue,legend,refline) %>%
       dplyr::distinct()
   } else {
     minreflines <- plot_input%>%
-      dplyr::filter(decile>0) %>%
+      dplyr::filter(ntile>0) %>%
       dplyr::mutate(legend=paste0('overall response (',legend,')'),plotvalue=pcttot,refline=1) %>%
-      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
+      dplyr::select(scope:ntile,plotvalue,legend,refline) %>%
       dplyr::distinct()
   }
   plot_input_prepared <- rbind(minreflines,vallines)
@@ -634,7 +665,7 @@ plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile
   #make plot
   plot <- plot_input_prepared %>%
     ggplot2::ggplot() +
-    ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
+    ggplot2::geom_line(ggplot2::aes(x=ntile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
     ggplot2::scale_linetype_manual(values=pp$resplinetypes,guide=ggplot2::guide_legend(ncol=pp$resplegendcolumns))+
     ggplot2::scale_color_manual(values=pp$resplinecols)+
     ggplot2::scale_size_manual(values=pp$resplinesizes)+
@@ -654,12 +685,12 @@ plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile
       axis.line.y=ggplot2::element_line())
 
 
-  #annotate plot at decile value
+  #annotate plot at ntile value
   plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,
-                        highlight_decile=highlight_decile,highlight_how=highlight_how,pp=pp)
+                        highlight_ntile=highlight_ntile,highlight_how=highlight_how,pp=pp)
   #add x axis labels when no annotation is applied
-  if(is.na(highlight_decile)) plot <- plot + ggplot2::scale_x_continuous(name="decile", breaks=seq(0,pp$ntiles,pp$xlabper),
-    labels=seq(0,pp$ntile,pp$xlabper),expand = c(0, 0.02))
+  if(is.na(highlight_ntile)) plot <- plot + ggplot2::scale_x_continuous(name=pp$ntiles_label, breaks=seq(0,pp$ntiles,pp$xlabper),
+    labels=seq(0,pp$ntiles,pp$xlabper),expand = c(0, 0.02))
 
   #save plot when requested
   if(save_fig) {
@@ -694,19 +725,19 @@ plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile
 #' Cumulative Respose plot
 #'
 #' Generates the cumulative response plot. It plots the cumulative percentage of
-#' target class observations up until that decile. It helps answering the question:
-#' When we apply the model and select up until decile X, what is the expected percentage of
+#' target class observations up until that ntile. It helps answering the question:
+#' When we apply the model and select up until ntile X, what is the expected percentage of
 #' target class observations in the selection?
 #' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
 #' or else meet required input format.
 #' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
-#' @param highlight_decile Integer. Specifying the decile at which the plot is annotated
+#' @param highlight_ntile Integer. Specifying the ntile at which the plot is annotated
 #' and/or performances are highlighted.
 #' @param highlight_how String. How to annotate the plot. Possible values: "plot_text","plot", "text".
-#' Default is "plot_text", both highlighting the decile and value on the plot as well as in text below the plot.
-#' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen decile.
-#' "text" adds text below the plot explaining the plot at chosen decile but does not highlight the plot.
+#' Default is "plot_text", both highlighting the ntile and value on the plot as well as in text below the plot.
+#' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen ntile.
+#' "text" adds text below the plot explaining the plot at chosen ntile but does not highlight the plot.
 #' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plots are optimized for 18x12cm.
 #' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
 #' @return ggplot object. Cumulative Response plot.
@@ -733,51 +764,56 @@ plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_decile
 #' rf = caret::train(Species ~.,data = train, method = "rf")
 #' mnl = caret::train(Species ~.,data = train, method = "multinom", trace = FALSE)
 #' # preparation steps
-#' prepare_scores_and_deciles(datasets=list("train","test"),
+#' prepare_scores_and_ntiles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
 #'                       model_labels = list("random forest","multinomial logit"),
 #'                       target_column="Species")
-#' head(scores_and_deciles)
-#' aggregate_over_deciles()
+#' head(scores_and_ntiles)
+#' aggregate_over_ntiles()
 #' plotting_scope()
 #' plot_cumresponse()
 #' plot_cumresponse(custom_line_colors="pink")
-#' plot_cumresponse(highlight_decile=3)
+#' plot_cumresponse(highlight_ntile=3)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
-#' @seealso \code{\link{prepare_scores_and_deciles}} for details on the function \code{prepare_scores_and_deciles}
+#' @seealso \code{\link{prepare_scores_and_ntiles}} for details on the function \code{prepare_scores_and_ntiles}
 #' that generates the required input.
-#' @seealso \code{\link{aggregate_over_deciles}} for details on the function \code{aggregate_over_deciles} that
+#' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
 #' generates the required input.
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
-#' filters the output of \code{aggregate_over_deciles} to prepare it for the required evaluation.
+#' filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_decile=NA,highlight_how='plot_text',
-                             save_fig=FALSE,save_fig_filename=NA) {
+plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_ntile=NA,highlight_how='plot_text',
+                             save_fig=FALSE,save_fig_filename=NA,...) {
+
+  if ('highlight_decile' %in% names(match.call())) {
+    warning("parameter highlight_decile is depreciated and replaced by highlight_ntile.")
+    highlight_ntile <-match.call(expand.dots = FALSE)$...$highlight_decile
+  }
 
   plot_input <- data
   custom_line_colors <- custom_line_colors
-  highlight_decile <- highlight_decile
+  highlight_ntile <- highlight_ntile
 
   pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative response",custom_line_colors=custom_line_colors)
   #plot_input = plot_input
   # rearrange plot_input
-  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(decile>0) %>%
-    dplyr::select(scope:decile,plotvalue=cumpct,legend,refline)
+  vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(ntile>0) %>%
+    dplyr::select(scope:ntile,plotvalue=cumpct,legend,refline)
   if (pp$seltype=="compare_models") {
     minreflines <- plot_input %>%
-      dplyr::filter(decile>0) %>%
+      dplyr::filter(ntile>0) %>%
       dplyr::mutate(legend=paste0('overall response (',dataset_label,')'),model_label='',plotvalue=pcttot,refline=1) %>%
-      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
+      dplyr::select(scope:ntile,plotvalue,legend,refline) %>%
       dplyr::distinct()
   } else {
     minreflines <- plot_input %>%
-      dplyr::filter(decile>0) %>%
+      dplyr::filter(ntile>0) %>%
       dplyr::mutate(legend=paste0('overall response (',legend,')'),plotvalue=pcttot,refline=1) %>%
-      dplyr::select(scope:decile,plotvalue,legend,refline) %>%
+      dplyr::select(scope:ntile,plotvalue,legend,refline) %>%
       dplyr::distinct()
   }
   plot_input_prepared <- rbind(minreflines,vallines)
@@ -786,7 +822,7 @@ plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_dec
   #make plot
   plot <- plot_input_prepared %>%
     ggplot2::ggplot() +
-    ggplot2::geom_line(ggplot2::aes(x=decile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
+    ggplot2::geom_line(ggplot2::aes(x=ntile,y=plotvalue, colour=legend,linetype=legend,size=legend,alpha=legend)) +
     ggplot2::scale_linetype_manual(values=pp$resplinetypes,guide=ggplot2::guide_legend(ncol=pp$resplegendcolumns))+
     ggplot2::scale_color_manual(values=pp$resplinecols)+
     ggplot2::scale_size_manual(values=pp$resplinesizes)+
@@ -806,12 +842,12 @@ plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_dec
       axis.line.y=ggplot2::element_line())
 
 
-  #annotate plot at decile value
+  #annotate plot at ntile value
   plot <- annotate_plot(plot=plot,plot_input = plot_input_prepared,
-                        highlight_decile=highlight_decile,highlight_how=highlight_how,pp=pp)
+                        highlight_ntile=highlight_ntile,highlight_how=highlight_how,pp=pp)
   #add x axis labels when no annotation is applied
-  if(is.na(highlight_decile)) plot <- plot + ggplot2::scale_x_continuous(name="decile", breaks=seq(0,pp$ntiles,pp$xlabper),
-    labels=seq(0,pp$ntile,pp$xlabper),expand = c(0, 0.02))
+  if(is.na(highlight_ntile)) plot <- plot + ggplot2::scale_x_continuous(name=pp$ntiles_label, breaks=seq(0,pp$ntiles,pp$xlabper),
+    labels=seq(0,pp$ntiles,pp$xlabper),expand = c(0, 0.02))
 
   #save plot when requested
   if(save_fig) {
@@ -879,13 +915,13 @@ plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_dec
 #' rf = caret::train(Species ~.,data = train, method = "rf")
 #' mnl = caret::train(Species ~.,data = train, method = "multinom", trace = FALSE)
 #' # preparation steps
-#' prepare_scores_and_deciles(datasets=list("train","test"),
+#' prepare_scores_and_ntiles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
 #'                       model_labels = list("random forest","multinomial logit"),
 #'                       target_column="Species")
-#' head(scores_and_deciles)
-#' aggregate_over_deciles()
+#' head(scores_and_ntiles)
+#' aggregate_over_ntiles()
 #' plotting_scope()
 #' plot_cumgains()
 #' plot_cumlift()
@@ -960,4 +996,3 @@ plot_all <- function(data=plot_input,custom_line_colors=NA,save_fig=FALSE,save_f
   grid::grid.draw(plot)
 
 }
-
