@@ -111,7 +111,7 @@ prepare_scores_and_deciles <- function(datasets,
       # 1.2. get probabilities per target class from model and prepare
 
       # 1.2.1. mlr models
-      if(ifelse(is.null(attr(class(get(mdl)), "class")), "", .) == "WrappedModel") {
+      if(ifelse(is.null(attr(class(get(mdl)), "class")), "", attr(class(get(mdl)), "class")) == "WrappedModel") {
         cat(paste0('... scoring mlr model "',mdl,'" on dataset "',dataset,'".\n'))
         if (!requireNamespace("mlr", quietly = TRUE)) {
           stop("Package \"mlr\" needed for this function to work, but it's not installed. Please install it.",
@@ -130,7 +130,7 @@ prepare_scores_and_deciles <- function(datasets,
           y_values <- colnames(probabilities)
         }
       # 1.2.3. h2o models
-      } else if (attr(class(get(mdl)), "package") == "h2o") {
+      } else if (ifelse(is.null(attr(class(get(mdl)), "package")), "", attr(class(get(mdl)), "package")) == "h2o") {
         cat(paste0('... scoring h2o model "',mdl,'" on dataset "',dataset,'".\n'))
         if (!requireNamespace("h2o", quietly = TRUE)) {
           stop("Package \"h2o\" needed for this function to work, but it's not installed. Please install it.",
