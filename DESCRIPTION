@@ -32,6 +32,8 @@ RoxygenNote: 6.0.1
 Suggests: 
     mlr (>= 2.12.1),
     caret (>= 6.0),
+    e1071,
+    h2o,
     knitr,
     rmarkdown,
     testthat,
