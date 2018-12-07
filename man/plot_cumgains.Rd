@@ -5,8 +5,8 @@
 \title{Cumulative gains plot}
 \usage{
 plot_cumgains(data = plot_input, custom_line_colors = NA,
-  highlight_decile = NA, highlight_how = "plot_text", save_fig = FALSE,
-  save_fig_filename = NA)
+  highlight_decile = NA, highlight_how = "plot_text",
+  save_fig = FALSE, save_fig_filename = NA)
 }
 \arguments{
 \item{data}{Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}

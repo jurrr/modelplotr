@@ -4,8 +4,8 @@
 \alias{plot_all}
 \title{Create plot with all four evaluation plots}
 \usage{
-plot_all(data = plot_input, custom_line_colors = NA, save_fig = FALSE,
-  save_fig_filename = NA)
+plot_all(data = plot_input, custom_line_colors = NA,
+  save_fig = FALSE, save_fig_filename = NA)
 }
 \arguments{
 \item{data}{Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}

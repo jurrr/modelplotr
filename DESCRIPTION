@@ -28,7 +28,7 @@ Imports:
     randomForest (>= 4.6.14),
     nnet(>= 7.3-12),
     ggfittext (>= 0.6.0)
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1
 Suggests: 
     mlr (>= 2.12.1),
     caret (>= 6.0),

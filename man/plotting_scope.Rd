@@ -4,9 +4,10 @@
 \alias{plotting_scope}
 \title{Build 'plot_input' with subset for selected evaluation type.}
 \usage{
-plotting_scope(prepared_input = deciles_aggregate, scope = "no_comparison",
-  select_model_label = NA, select_dataset_label = NA,
-  select_targetclass = NA, select_smallest_targetclass = TRUE)
+plotting_scope(prepared_input = deciles_aggregate,
+  scope = "no_comparison", select_model_label = NA,
+  select_dataset_label = NA, select_targetclass = NA,
+  select_smallest_targetclass = TRUE)
 }
 \arguments{
 \item{prepared_input}{Dataframe. Dataframe resulting from function \code{\link{aggregate_over_deciles}()} or with similar
