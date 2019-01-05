@@ -1,4 +1,5 @@
+inst/doc
 .Rproj.user
+package_dev.R
 .Rhistory
 .RData
-.Ruserdata

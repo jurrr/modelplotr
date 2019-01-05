@@ -1,0 +1,512 @@
+pp$optgainsreflevels <- paste0('optimal gains (',unique(plot_input$dataset_label),')')
+} else {
+pp$optgainsreflevels <- paste0('optimal gains (',pp$levels,')')
+}
+pp$noptgainsreflevels <- ifelse(pp$seltype=='compare_models',1,pp$nlevels)
+if (pp$seltype=='compare_models') pp$optgainsreflevelcols <- 'gray' else pp$optgainsreflevelcols <- pp$levelcols
+pp$gainslevels <- c(pp$levels,'minimal gains',pp$optgainsreflevels)
+pp$ngainslevels <- length(pp$gainslevels)
+pp$gainslegendcolumns <- ifelse(pp$ngainslevels>6,2,1)
+pp$gainslinetypes <- c(rep('solid',pp$nlevels),'dashed',rep('dotted',pp$noptgainsreflevels))
+pp$gainsalphas <- c(rep(1,pp$nlevels),1,rep(1,pp$noptgainsreflevels))
+pp$gainslinecols <- c(pp$levelcols,'gray',pp$optgainsreflevelcols)
+pp$gainslinesizes <- c(rep(1,pp$nlevels),0.5,rep(1.2,pp$noptgainsreflevels))
+pp$gainstext = "When we select &PCTNTL with the highest probability according to &MDL, this selection holds &CUMGAINS of all &YVAL cases in &DS."
+# LIFT
+pp$liftreflabel <- 'no lift'
+pp$liftlevels <- c(pp$levels,pp$liftreflabel)
+pp$nliftlevels <- length(pp$liftlevels)
+pp$liftlegendcolumns <- ifelse(pp$nliftlevels>6,2,1)
+pp$liftlinetypes <- c(rep('solid',pp$nlevels),'dashed')
+pp$liftalphas <- c(rep(1,pp$nlevels),1)
+pp$liftlinecols <- c(pp$levelcols,'gray')
+pp$liftlinesizes <- c(rep(1,pp$nlevels),0.5)
+pp$lifttext = "When we select &PCTNTL with the highest probability according to model &MDL in &DS, this selection for &YVAL cases is &CUMLIFT times better than selecting without a model."
+# RESPONSE
+if (pp$seltype=='compare_models') {
+pp$respreflevels <- paste0('overall response (',unique(plot_input$dataset_label),')')
+} else {
+pp$respreflevels <- paste0('overall response (',pp$levels,')')
+}
+pp$nrespreflevels <- ifelse(pp$seltype=='compare_models',1,pp$nlevels)
+if (pp$seltype=='compare_models') pp$respreflevelcols <- 'gray' else pp$respreflevelcols <- pp$levelcols
+pp$resplevels <- c(pp$levels,pp$respreflevels)
+pp$nresplevels <- length(pp$resplevels)
+pp$resplegendcolumns <- ifelse(pp$nresplevels>6,2,1)
+pp$resplinetypes <- c(rep('solid',pp$nlevels),rep('dashed',pp$nrespreflevels))
+pp$respalphas <- c(rep(1,pp$nlevels),rep(1,pp$nrespreflevels))
+pp$resplinecols <- c(pp$levelcols,pp$respreflevelcols)
+pp$resplinesizes <- c(rep(1,pp$nlevels),rep(0.8,pp$nrespreflevels))
+pp$responsetext = "When we select ntile &NTL according to model &MDL in dataset &DS the % of &YVAL cases in the selection is &RESPONSE"
+pp$cumresponsetext = "When we select ntiles 1 until &NTL according to model &MDL in dataset &DS the % of &YVAL cases in the selection is &CUMRESPONSE."
+return(pp)
+}
+pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative gains",custom_line_colors=custom_line_colors)
+vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::select(scope:ntile,plotvalue=cumgain,legend,refline)
+if (pp$seltype=="compare_models") {
+optreflines <- plot_input %>%
+dplyr::mutate(legend=paste0('optimal gains (',dataset_label,')'),model_label='',plotvalue=gain_opt,refline=1) %>%
+dplyr::select(scope:ntile,plotvalue,legend,refline) %>%
+dplyr::distinct()
+} else {
+optreflines <- plot_input%>%
+dplyr::mutate(legend=paste0('optimal gains (',legend,')'),plotvalue=gain_opt,refline=1) %>%
+dplyr::select(scope:ntile,plotvalue,legend,refline)
+}
+minrefline <- plot_input %>%
+dplyr::mutate(legend=paste0('minimal gains'),model_label='',dataset_label='',target_class='',plotvalue=gain_ref,refline=1) %>%
+dplyr::select(scope:ntile,plotvalue,legend,refline)%>%
+dplyr::distinct()
+plot_input_prepared <- rbind(minrefline,optreflines,vallines)
+plot_input_prepared$legend <- factor(plot_input_prepared$legend,levels=pp$gainslevels)
+plot_input_prepared
+prepare_scores_and_ntiles(datasets = list('train','test'),dataset_labels = list('train data','test test'),
+models = list('mnl','rf', 'lda','xgb'),model_labels = list('multion. logit','random forest', 'discriminant','xgboost'),target_column = "y",ntiles = 10)
+aggregate_over_ntiles()
+plotting_scope(scope = "compare_models",select_model_label = list('xgboost','multion. logit'))
+pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative gains",custom_line_colors=custom_line_colors)
+# rearrange plot_input
+vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::select(scope:ntile,plotvalue=cumgain,legend,refline)
+if (pp$seltype=="compare_models") {
+optreflines <- plot_input %>%
+dplyr::mutate(legend=paste0('optimal gains (',dataset_label,')'),model_label='',plotvalue=gain_opt,refline=1) %>%
+dplyr::select(scope:ntile,plotvalue,legend,refline) %>%
+dplyr::distinct()
+} else {
+optreflines <- plot_input%>%
+dplyr::mutate(legend=paste0('optimal gains (',legend,')'),plotvalue=gain_opt,refline=1) %>%
+dplyr::select(scope:ntile,plotvalue,legend,refline)
+}
+minrefline <- plot_input %>%
+dplyr::mutate(legend=paste0('minimal gains'),model_label='',dataset_label='',target_class='',plotvalue=gain_ref,refline=1) %>%
+dplyr::select(scope:ntile,plotvalue,legend,refline)%>%
+dplyr::distinct()
+plot_input_prepared <- rbind(minrefline,optreflines,vallines)
+plot_input_prepared$legend <- factor(plot_input_prepared$legend,levels=pp$gainslevels)
+plot_input_prepared
+plot_input=plot_input_prepared
+plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0)
+plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0) %>%
+dplyr::mutate(xmin=rep(0,pp$nlevels),
+xmax=rep(100,pp$nlevels),
+ymin=seq(1,pp$nlevels,1),
+ymax=seq(2,pp$nlevels+1,1))
+plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0) %>%
+dplyr::mutate(xmin=rep(0,pp$nlevels),
+xmax=rep(100,pp$nlevels),
+ymin=seq(1,pp$nlevels,1),
+ymax=seq(2,pp$nlevels+1,1),ymax2=ymax*2)
+plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0) %>%
+dplyr::mutate(xmin=rep(0,pp$nlevels),
+xmax=rep(100,pp$nlevels),
+ymin=seq(1,pp$nlevels,1),
+ymax=seq(2,pp$nlevels+1,1),
+NTL=highlight_ntile,
+PCTNTL=sprintf("%1.0f",100*highlight_ntile/pp$ntiles),
+MDL=model_label,
+DS=dataset_label,
+YVAL=target_class,
+CUMGAINS=sprintf("%1.0f%%", 100*plotvalue),
+CUMLIFT=sprintf("%1.1f", plotvalue),
+RESPONSE=sprintf("%1.0f%%",100*plotvalue),
+CUMRESPONSE=sprintf("%1.0f%%",100*plotvalue),
+gainstext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$gainstext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$gainstext,'&[A-Z]+')),2,10),collapse = ', '),')'))),
+lifttext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$lifttext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$lifttext,'&[A-Z]+')),2,10),collapse = ', '),')'))),
+responsetext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$responsetext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$responsetext,'&[A-Z]+')),2,10),collapse = ', '),')'))),
+cumresponsetext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$cumresponsetext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$cumresponsetext,'&[A-Z]+')),2,10),collapse = ', '),')'))))
+setplotparams <- function(plot_input,plottype,custom_line_colors) {
+#  plot_input <- plot_input
+#  plottype <- "Lift"
+# custom_line_colors <- NA
+pp <- list()
+# ALL PLOTS
+pp$plottype <- plottype
+pp$seltype <- max(as.character(plot_input$scope))
+pp$selmod <- max(as.character(plot_input$model_label))
+pp$seldata <- max(as.character(plot_input$dataset_label))
+pp$selval <- max(as.character(plot_input$target_class))
+pp$levels <- unique(as.character(plot_input$legend))
+pp$nlevels <- length(pp$levels)
+pp$randcols <- RColorBrewer::brewer.pal(n = 8, name = "Set1")
+pp$levelcols <- pp$randcols[1:pp$nlevels]
+pp$ntiles <- max(plot_input$ntile)
+pp$xlabper <- ifelse(max(plot_input$ntile)<=20,1,ifelse(max(plot_input$ntile)<=40,2,5))
+pp$ntile0 <- ifelse(pp$plottype=="Cumulative gains",1,0)
+if (length(custom_line_colors)==1 & is.na(custom_line_colors[1])){
+pp$levelcols <- pp$randcols[1:pp$nlevels]
+} else if(length(custom_line_colors)==pp$nlevels) {
+pp$levelcols <- custom_line_colors
+} else if (length(custom_line_colors)<pp$nlevels) {
+cat('specified custom_line_colors vector smaller than required length!
+It is extended with extra colors to match required length')
+pp$lencustcols <- length(custom_line_colors)
+pp$levelcols <- c(custom_line_colors,pp$randcols[which(!pp$randcols %in% custom_line_colors)][1:(pp$nlevels-pp$lencustcols)])
+} else if (length(custom_line_colors)>pp$nlevels) {
+cat('specified custom_line_colors vector greater than required length!
+It is cropped to match required length')
+pp$lencustcols <- length(custom_line_colors)
+pp$levelcols <- custom_line_colors[1:pp$nlevels]
+} else {
+pp$levelcols <- pp$randcols[1:pp$nlevels]
+}
+pp$legendcolumns <- ifelse(pp$nnewlevels>6,2,1)
+pp$linetypes <- c(rep('solid',pp$nlevels),'dashed')
+pp$alphas <- c(rep(1,pp$nlevels),1)
+pp$linecols <- c(pp$levelcols,'gray')
+pp$linesizes <- c(rep(1,pp$nlevels),0.5)
+pp$plottitle <- pp$plottype
+pp$plotsubtitle <-
+ifelse(pp$seltype=="compare_datasets",paste0('scope: comparing datasets & model: ',
+pp$selmod,' & target class: ' ,pp$selval),
+ifelse(pp$seltype=="compare_models",paste0('scope: comparing models & dataset: ',
+pp$seldata,' & target class: ',pp$selval),
+ifelse(pp$seltype=="compare_targetclasses",paste0('scope: comparing target classes & dataset: ',
+pp$seldata,'  &  model: ',pp$selmod),
+paste0('model: ',pp$selmod,'  &  dataset: ',pp$seldata,'  &  target class: ',pp$selval))))
+pp$multiplottitle <- ifelse(pp$seltype=="compare_datasets",
+paste0('scope: comparing datasets & model: ',pp$selmod,' & target class: ' ,pp$selval),
+ifelse(pp$seltype=="compare_models",
+paste0('scope: comparing models & dataset: ',pp$seldata,' & target class: ',pp$selval),
+ifelse(pp$seltype=="compare_targetclasses",
+paste0('scope: comparing target classes & dataset: ',pp$seldata,'  &  model: ',pp$selmod),
+paste0('model: ',pp$selmod,'  &  dataset: ',pp$seldata,'  &  target class: ',pp$selval))))
+# GAINS
+if (pp$seltype=='compare_models') {
+pp$optgainsreflevels <- paste0('optimal gains (',unique(plot_input$dataset_label),')')
+} else {
+pp$optgainsreflevels <- paste0('optimal gains (',pp$levels,')')
+}
+pp$noptgainsreflevels <- ifelse(pp$seltype=='compare_models',1,pp$nlevels)
+if (pp$seltype=='compare_models') pp$optgainsreflevelcols <- 'gray' else pp$optgainsreflevelcols <- pp$levelcols
+pp$gainslevels <- c(pp$levels,'minimal gains',pp$optgainsreflevels)
+pp$ngainslevels <- length(pp$gainslevels)
+pp$gainslegendcolumns <- ifelse(pp$ngainslevels>6,2,1)
+pp$gainslinetypes <- c(rep('solid',pp$nlevels),'dashed',rep('dotted',pp$noptgainsreflevels))
+pp$gainsalphas <- c(rep(1,pp$nlevels),1,rep(1,pp$noptgainsreflevels))
+pp$gainslinecols <- c(pp$levelcols,'gray',pp$optgainsreflevelcols)
+pp$gainslinesizes <- c(rep(1,pp$nlevels),0.5,rep(1.2,pp$noptgainsreflevels))
+pp$gainstext = "When we select &PCTNTL with the highest probability according to &MDL, this selection holds &CUMGAINS of all &YVAL cases in &DS."
+# LIFT
+pp$liftreflabel <- 'no lift'
+pp$liftlevels <- c(pp$levels,pp$liftreflabel)
+pp$nliftlevels <- length(pp$liftlevels)
+pp$liftlegendcolumns <- ifelse(pp$nliftlevels>6,2,1)
+pp$liftlinetypes <- c(rep('solid',pp$nlevels),'dashed')
+pp$liftalphas <- c(rep(1,pp$nlevels),1)
+pp$liftlinecols <- c(pp$levelcols,'gray')
+pp$liftlinesizes <- c(rep(1,pp$nlevels),0.5)
+pp$lifttext = "When we select &PCTNTL with the highest probability according to model &MDL in &DS, this selection for &YVAL cases is &CUMLIFT times better than selecting without a model."
+# RESPONSE
+if (pp$seltype=='compare_models') {
+pp$respreflevels <- paste0('overall response (',unique(plot_input$dataset_label),')')
+} else {
+pp$respreflevels <- paste0('overall response (',pp$levels,')')
+}
+pp$nrespreflevels <- ifelse(pp$seltype=='compare_models',1,pp$nlevels)
+if (pp$seltype=='compare_models') pp$respreflevelcols <- 'gray' else pp$respreflevelcols <- pp$levelcols
+pp$resplevels <- c(pp$levels,pp$respreflevels)
+pp$nresplevels <- length(pp$resplevels)
+pp$resplegendcolumns <- ifelse(pp$nresplevels>6,2,1)
+pp$resplinetypes <- c(rep('solid',pp$nlevels),rep('dashed',pp$nrespreflevels))
+pp$respalphas <- c(rep(1,pp$nlevels),rep(1,pp$nrespreflevels))
+pp$resplinecols <- c(pp$levelcols,pp$respreflevelcols)
+pp$resplinesizes <- c(rep(1,pp$nlevels),rep(0.8,pp$nrespreflevels))
+pp$responsetext = "When we select ntile &NTL according to model &MDL in dataset &DS the %% of &YVAL cases in the selection is &RESPONSE"
+pp$cumresponsetext = "When we select ntiles 1 until &NTL according to model &MDL in dataset &DS the %% of &YVAL cases in the selection is &CUMRESPONSE."
+return(pp)
+}
+prepare_scores_and_ntiles(datasets = list('train','test'),dataset_labels = list('train data','test test'),
+models = list('mnl','rf', 'lda','xgb'),model_labels = list('multion. logit','random forest', 'discriminant','xgboost'),target_column = "y",ntiles = 10)
+pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative gains",custom_line_colors=custom_line_colors)
+plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0) %>%
+dplyr::mutate(xmin=rep(0,pp$nlevels),
+xmax=rep(100,pp$nlevels),
+ymin=seq(1,pp$nlevels,1),
+ymax=seq(2,pp$nlevels+1,1),
+NTL=highlight_ntile,
+PCTNTL=sprintf("%1.0f",100*highlight_ntile/pp$ntiles),
+MDL=model_label,
+DS=dataset_label,
+YVAL=target_class,
+CUMGAINS=sprintf("%1.0f%%", 100*plotvalue),
+CUMLIFT=sprintf("%1.1f", plotvalue),
+RESPONSE=sprintf("%1.0f%%",100*plotvalue),
+CUMRESPONSE=sprintf("%1.0f%%",100*plotvalue),
+gainstext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$gainstext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$gainstext,'&[A-Z]+')),2,10),collapse = ', '),')'))),
+lifttext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$lifttext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$lifttext,'&[A-Z]+')),2,10),collapse = ', '),')'))),
+responsetext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$responsetext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$responsetext,'&[A-Z]+')),2,10),collapse = ', '),')'))),
+cumresponsetext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$cumresponsetext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$cumresponsetext,'&[A-Z]+')),2,10),collapse = ', '),')'))))
+plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0) %>%
+dplyr::mutate(xmin=rep(0,pp$nlevels),
+xmax=rep(100,pp$nlevels),
+ymin=seq(1,pp$nlevels,1),
+ymax=seq(2,pp$nlevels+1,1))
+plot_input=plot_input_prepared
+plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0) %>%
+dplyr::mutate(xmin=rep(0,pp$nlevels),
+xmax=rep(100,pp$nlevels),
+ymin=seq(1,pp$nlevels,1),
+ymax=seq(2,pp$nlevels+1,1),
+NTL=highlight_ntile,
+PCTNTL=sprintf("%1.0f",100*highlight_ntile/pp$ntiles),
+MDL=model_label,
+DS=dataset_label,
+YVAL=target_class,
+CUMGAINS=sprintf("%1.0f%%", 100*plotvalue),
+CUMLIFT=sprintf("%1.1f", plotvalue),
+RESPONSE=sprintf("%1.0f%%",100*plotvalue),
+CUMRESPONSE=sprintf("%1.0f%%",100*plotvalue),
+gainstext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$gainstext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$gainstext,'&[A-Z]+')),2,10),collapse = ', '),')'))),
+lifttext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$lifttext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$lifttext,'&[A-Z]+')),2,10),collapse = ', '),')'))),
+responsetext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$responsetext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$responsetext,'&[A-Z]+')),2,10),collapse = ', '),')'))),
+cumresponsetext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$cumresponsetext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$cumresponsetext,'&[A-Z]+')),2,10),collapse = ', '),')'))))
+annovalues <- plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0) %>%
+<-
+plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0)
+pp$nlevels
+unique(as.character(plot_input$legend))
+prepare_scores_and_ntiles(datasets = list('train','test'),dataset_labels = list('train data','test test'),
+models = list('mnl','rf', 'lda','xgb'),model_labels = list('multion. logit','random forest', 'discriminant','xgboost'),target_column = "y",ntiles = 10)
+aggregate_over_ntiles()
+plotting_scope(scope = "compare_models",select_model_label = list('xgboost','multion. logit'))
+pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative gains",custom_line_colors=custom_line_colors)
+plot_input=plot_input_prepared
+plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0) %>%
+dplyr::mutate(xmin=rep(0,pp$nlevels),
+xmax=rep(100,pp$nlevels),
+ymin=seq(1,pp$nlevels,1),
+ymax=seq(2,pp$nlevels+1,1),
+NTL=highlight_ntile,
+PCTNTL=sprintf("%1.0f",100*highlight_ntile/pp$ntiles),
+MDL=model_label,
+DS=dataset_label,
+YVAL=target_class,
+CUMGAINS=sprintf("%1.0f%%", 100*plotvalue),
+CUMLIFT=sprintf("%1.1f", plotvalue),
+RESPONSE=sprintf("%1.0f%%",100*plotvalue),
+CUMRESPONSE=sprintf("%1.0f%%",100*plotvalue),
+gainstext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$gainstext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$gainstext,'&[A-Z]+')),2,10),collapse = ', '),')'))),
+lifttext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$lifttext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$lifttext,'&[A-Z]+')),2,10),collapse = ', '),')'))),
+responsetext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$responsetext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$responsetext,'&[A-Z]+')),2,10),collapse = ', '),')'))),
+cumresponsetext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$cumresponsetext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$cumresponsetext,'&[A-Z]+')),2,10),collapse = ', '),')'))))
+plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0) %>%
+dplyr::mutate(xmin=rep(0,pp$nlevels),
+xmax=rep(100,pp$nlevels),
+ymin=seq(1,pp$nlevels,1),
+ymax=seq(2,pp$nlevels+1,1),
+NTL=highlight_ntile,
+PCTNTL=sprintf("%1.0f",100*highlight_ntile/pp$ntiles),
+MDL=model_label,
+DS=dataset_label,
+YVAL=target_class,
+CUMGAINS=sprintf("%1.0f%%", 100*plotvalue),
+CUMLIFT=sprintf("%1.1f", plotvalue),
+RESPONSE=sprintf("%1.0f%%",100*plotvalue),
+CUMRESPONSE=sprintf("%1.0f%%",100*plotvalue),
+gainstext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$gainstext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$gainstext,'&[A-Z]+')),2,100),collapse = ', '),')'))),
+lifttext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$lifttext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$lifttext,'&[A-Z]+')),2,100),collapse = ', '),')'))),
+responsetext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$responsetext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$responsetext,'&[A-Z]+')),2,100),collapse = ', '),')'))),
+cumresponsetext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$cumresponsetext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$cumresponsetext,'&[A-Z]+')),2,100),collapse = ', '),')'))))
+annovalues <- plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0) %>%
+dplyr::mutate(xmin=rep(0,pp$nlevels),
+xmax=rep(100,pp$nlevels),
+ymin=seq(1,pp$nlevels,1),
+ymax=seq(2,pp$nlevels+1,1),
+NTL=highlight_ntile,
+PCTNTL=sprintf("%1.0f",100*highlight_ntile/pp$ntiles),
+MDL=model_label,
+DS=dataset_label,
+YVAL=target_class,
+CUMGAINS=sprintf("%1.0f%%", 100*plotvalue),
+CUMLIFT=sprintf("%1.1f", plotvalue),
+RESPONSE=sprintf("%1.0f%%",100*plotvalue),
+CUMRESPONSE=sprintf("%1.0f%%",100*plotvalue),
+gainstext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$gainstext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$gainstext,'&[A-Z]+')),2,100),collapse = ', '),')'))),
+lifttext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$lifttext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$lifttext,'&[A-Z]+')),2,100),collapse = ', '),')'))),
+responsetext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$responsetext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$responsetext,'&[A-Z]+')),2,100),collapse = ', '),')'))),
+cumresponsetext = eval(parse(text=paste0("sprintf('",str_replace_all(pp$cumresponsetext,'&[A-Z]+','%s'), " ', ",
+paste(substr(unlist(str_extract_all(pp$cumresponsetext,'&[A-Z]+')),2,100),collapse = ', '),')'))))
+annovalues
+View(annovalues)
+library(modelplotr)
+plot_cumgains()
+prepare_scores_and_ntiles(datasets = list('train','test'),dataset_labels = list('train data','test test'),
+models = list('mnl','rf', 'lda','xgb'),model_labels = list('multion. logit','random forest', 'discriminant','xgboost'),target_column = "y",ntiles = 10)
+aggregate_over_ntiles()
+plotting_scope(scope = "compare_models",select_model_label = list('xgboost','multion. logit'))
+plot_cumgains()
+plot_cumgains(highlight_ntile = 6)
+plot_cumlift(highlight_ntile = 14)
+plot_cumlift(highlight_ntile = 6)
+plot_response(highlight_ntile = 9)
+plot_cumresponse(highlight_ntile = 9)
+library(modelplotr)
+library(modelplotr)
+plot_cumresponse(highlight_ntile = 9)
+plot_cumlift(highlight_ntile = 6)
+prepare_scores_and_ntiles(datasets = list('train','test'),dataset_labels = list('train data','test test'),
+models = list('mnl','rf', 'lda','xgb'),model_labels = list('multion. logit','random forest', 'discriminant','xgboost'),target_column = "y",ntiles = 10)
+plot_cumlift(highlight_ntile = 25)
+aggregate_over_ntiles()
+plotting_scope(scope = "compare_models",select_model_label = list('xgboost','multion. logit'))
+plot_response(highlight_ntile = 25)
+prepare_scores_and_ntiles(datasets = list('train','test'),dataset_labels = list('train data','test test'),
+models = list('mnl','rf', 'lda','xgb'),model_labels = list('multion. logit','random forest', 'discriminant','xgboost'),target_column = "y",ntiles = 100)
+aggregate_over_ntiles()
+plotting_scope(scope = "compare_models",select_model_label = list('xgboost','multion. logit'))
+plot_cumlift(highlight_ntile = 25)
+plot_all()
+library(modelplotr)
+?prepare_scores_and_deciles
+prepare_scores_and_deciles(datasets = list('train','test'),dataset_labels = list('train data','test test'),
+models = list('mnl','rf', 'lda','xgb'),model_labels = list('multion. logit','random forest', 'discriminant','xgboost'),target_column = "y")
+library(modelplotr)
+?prepare_scores_and_deciles
+?prepare_scores_and_ntiles
+library(modelplotr)
+?prepare_scores_and_deciles
+library(modelplotr)
+library(devtools)
+install_github("modelplot/modelplotr")
+#zipname = 'https://archive.ics.uci.edu/ml/machine-learning-databases/00222/bank-additional.zip'
+# we encountered that the source at uci.edu is not always available, therefore we made a copy to our repos.
+zipname = 'https://modelplot.github.io/img/bank-additional.zip'
+csvname = 'bank-additional/bank-additional-full.csv'
+temp <- tempfile()
+download.file(zipname,temp, mode="wb")
+bank <- read.table(unzip(temp,csvname),sep=";", stringsAsFactors=FALSE,header = T)
+unlink(temp)
+bank <- bank[,c('y','duration','campaign','pdays','previous','euribor3m')]
+# rename target class value 'yes' for better interpretation
+bank$y[bank$y=='yes'] <- 'term.deposit'
+#explore data
+str(bank)
+# let's do some predicting with caret and mlr
+# prepare data for training and train models
+test_size = 0.3
+train_index =  sample(seq(1, nrow(bank)),size = (1 - test_size)*nrow(bank) ,replace = F)
+train = bank[train_index,]
+test = bank[-train_index,]
+# estimate some models with caret...
+# setting caret cross validation, here tuned for speed (not accuracy!)
+fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+# mnl model using glmnet package
+mnl = caret::train(y ~.,data = train, method = "glmnet",trControl = fitControl)
+# random forest using ranger package, here tuned for speed (not accuracy!)
+rf = caret::train(y ~.,data = train, method = "ranger",trControl = fitControl,
+tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+# random forest using ranger package, here tuned for speed (not accuracy!)
+# xgb3 = caret::train(y ~.,data = train, method = "xgbTree",trControl = fitControl,
+#   tuneGrid = expand.grid(nrounds = 200,
+#     max_depth = 5,
+#     eta = 0.05,
+#     gamma = 0.01,
+#     colsample_bytree = 0.75,
+#     min_child_weight = 0,
+#     subsample = 0.5))
+#
+# ... and estimate some models with mlr
+mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+task = mlr::makeClassifTask(data = train, target = "y")
+# discriminant model
+lrn = mlr::makeLearner("classif.lda", predict.type = "prob")
+lda = mlr::train(lrn, task)
+#xgboost model
+lrn = mlr::makeLearner("classif.xgboost", predict.type = "prob")
+xgb = mlr::train(lrn, task)
+library(modelplotr)
+package_version(modelplotr)
+package_version("modelplotr")
+package_version(modelplotr)
+?prepare_scores_and_ntiles
+prepare_scores_and_deciles(datasets = list('train','test'),dataset_labels = list('train data','test test'),
+models = list('mnl','rf', 'lda','xgb'),model_labels = list('multion. logit','random forest', 'discriminant','xgboost'),target_column = "y")
+saveRDS(scores_and_deciles,'c:\temp\scores_and_deciles.RDS')
+saveRDS(scores_and_deciles,'c:\\temp\\scores_and_deciles.RDS')
+aggregate_over_deciles()
+saveRDS(deciles_aggregate,'c:\\temp\\deciles_aggregate.RDS')
+plotting_scope(scope = "compare_models",select_model_label = list('xgboost','multion. logit'))
+saveRDS(plot_input,'c:\\temp\\plot_input.RDS')
+plot_cumgains()
+plot_cumlift()
+plot_response()
+plot_cumresponse()
+plot_cumgains(highlight_ntile = 6)
+plot_cumgains(highlight_ntile = 10)
+?plot_cumgains
+?plot_cumgains
+?plot_cumgains
+?plot_cumgains()
+library(devtools)
+install_github("jurrr/modelplotr", ref = "ntiles")
+# voorbeeldje met ntiles op andere waarden dan 10 (default)
+# data ophalen en wat modelletjes schatten
+#zipname = 'https://archive.ics.uci.edu/ml/machine-learning-databases/00222/bank-additional.zip'
+zipname = 'https://modelplot.github.io/img/bank-additional.zip'
+csvname = 'bank-additional/bank-additional-full.csv'
+temp <- tempfile()
+download.file(zipname,temp, mode="wb")
+bank <- read.table(unzip(temp,csvname),sep=";", stringsAsFactors=FALSE,header = T)
+unlink(temp)
+bank <- bank[,c('y','duration','campaign','pdays','previous','euribor3m')]
+# rename target class value 'yes' for better interpretation
+bank$y[bank$y=='yes'] <- 'term.deposit'
+# prepare data for training and train models
+test_size = 0.3
+train_index =  sample(seq(1, nrow(bank)),size = (1 - test_size)*nrow(bank) ,replace = F)
+train = bank[train_index,]
+test = bank[-train_index,]
+# estimate some models with caret...
+# setting caret cross validation, here tuned for speed (not accuracy!)
+fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+# mnl model using glmnet package
+mnl = caret::train(y ~.,data = train, method = "glmnet",trControl = fitControl)
+# random forest using ranger package, here tuned for speed (not accuracy!)
+rf = caret::train(y ~.,data = train, method = "ranger",trControl = fitControl,
+tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+# plotten!!
+library(modelplotr)
+# ntiles = 100 (percentiles)
+prepare_scores_and_ntiles(datasets = list('train','test'),
+dataset_labels = list('train data','test data'),
+models = list('mnl','rf'),
+model_labels = list('logistic regression','random forest'),
+target_column = "y",
+ntiles = 100)
+aggregate_over_ntiles()
+plotting_scope(scope = "compare_models",select_model_label = list('logistic regression','random forest'))
+test1 <- prepare_scores_and_ntiles(datasets = list('train','test'),
+dataset_labels = list('train data','test data'),
+models = list('mnl','rf'),
+model_labels = list('logistic regression','random forest'),
+target_column = "y",
+ntiles = 100)
+test1
+prepare_scores_and_deciles(datasets = list('train','test'),
+dataset_labels = list('train data','test data'),
+models = list('mnl','rf'),
+model_labels = list('logistic regression','random forest'),
+target_column = "y")
