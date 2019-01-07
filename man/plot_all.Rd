@@ -57,13 +57,13 @@ gbm <- h2o::h2o.gbm(y = "Species",
                           training_frame = h2o_train,
                           nfolds = 5)
 # preparation steps
-prepare_scores_and_deciles(datasets=list("train","test"),
+prepare_scores_and_ntiles(datasets=list("train","test"),
                       dataset_labels = list("train data","test data"),
                       models = list("rf","mnl", "gbm"),
                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
                       target_column="Species")
-head(scores_and_deciles)
-aggregate_over_deciles()
+head(scores_and_ntiles)
+aggregate_over_ntiles()
 plotting_scope()
 plot_cumgains()
 plot_cumlift()
