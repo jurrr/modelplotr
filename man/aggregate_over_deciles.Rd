@@ -17,7 +17,8 @@ Dataframe \code{ntiles_aggregate} is built based on \code{scores_and_ntiles}.\cr
 This function is depreciated, since modelplotr now supports that you can specify the number of bins (ntiles) you prefer.
 You can choose a value for the \code{ntiles} parameter between 4 and 100, the default is 10 (deciles).
 Therefore, please use \code{\link{aggregate_over_deciles}} instead.
+
 }
 \seealso{
-use \code{\link{aggregate_over_deciles}} instead.
+use \code{\link{aggregate_over_ntiles}} instead.
 }

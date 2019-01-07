@@ -140,7 +140,7 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
     # check ggplot version (clip=off is available in version 3.0 and later)
     if(packageVersion("ggplot2") < 3.0) {
       warning(paste0('You are using ggplot2 version ',packageVersion("ggplot2"),'. ggplot2 >= 3.0.0 is required for nicer annotated plots!'))
-      }
+    }
     plot <- plot +
       # add highlighting cicle(s) to plot at ntile value
       ggplot2::geom_point(data = plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0),
@@ -297,9 +297,24 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
-#' #... or train models using caret
+#' #... or train models using caret...
 #' rf = caret::train(Species ~.,data = train, method = "rf")
-#' mnl = caret::train(Species ~.,data = train, method = "multinom", trace = FALSE)
+#' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
+#' #.. or train models using h2o
+#' h2o::h2o.init()
+#' h2o::h2o.no_progress()
+#' h2o_train = h2o::as.h2o(train)
+#' h2o_test = h2o::as.h2o(test)
+#' gbm <- h2o::h2o.gbm(y = "Species",
+#'                           x = setdiff(colnames(train), "Species"),
+#'                           training_frame = h2o_train,
+#'                           nfolds = 5)
+#' # preparation steps
+#' prepare_scores_and_deciles(datasets=list("train","test"),
+#'                       dataset_labels = list("train data","test data"),
+#'                       models = list("rf","mnl", "gbm"),
+#'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
+#'                       target_column="Species")
 #' # preparation steps
 #' prepare_scores_and_ntiles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
@@ -455,14 +470,23 @@ cat(paste0("Plot is saved as: ",filename,"\n\n"))
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
-#' #... or train models using caret
+#' #... or train models using caret...
 #' rf = caret::train(Species ~.,data = train, method = "rf")
-#' mnl = caret::train(Species ~.,data = train, method = "multinom", trace = FALSE)
+#' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
+#' #.. or train models using h2o
+#' h2o::h2o.init()
+#' h2o::h2o.no_progress()
+#' h2o_train = h2o::as.h2o(train)
+#' h2o_test = h2o::as.h2o(test)
+#' gbm <- h2o::h2o.gbm(y = "Species",
+#'                           x = setdiff(colnames(train), "Species"),
+#'                           training_frame = h2o_train,
+#'                           nfolds = 5)
 #' # preparation steps
 #' prepare_scores_and_ntiles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl"),
-#'                       model_labels = list("random forest","multinomial logit"),
+#'                       models = list("rf","mnl", "gbm"),
+#'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
 #'                       target_column="Species")
 #' head(scores_and_ntiles)
 #' aggregate_over_ntiles()
@@ -603,14 +627,23 @@ plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_ntile=N
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
-#' #... or train models using caret
+#' #... or train models using caret...
 #' rf = caret::train(Species ~.,data = train, method = "rf")
-#' mnl = caret::train(Species ~.,data = train, method = "multinom", trace = FALSE)
+#' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
+#' #.. or train models using h2o
+#' h2o::h2o.init()
+#' h2o::h2o.no_progress()
+#' h2o_train = h2o::as.h2o(train)
+#' h2o_test = h2o::as.h2o(test)
+#' gbm <- h2o::h2o.gbm(y = "Species",
+#'                           x = setdiff(colnames(train), "Species"),
+#'                           training_frame = h2o_train,
+#'                           nfolds = 5)
 #' # preparation steps
 #' prepare_scores_and_ntiles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl"),
-#'                       model_labels = list("random forest","multinomial logit"),
+#'                       models = list("rf","mnl", "gbm"),
+#'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
 #'                       target_column="Species")
 #' head(scores_and_ntiles)
 #' aggregate_over_ntiles()
@@ -760,14 +793,23 @@ plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_ntile=
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
-#' #... or train models using caret
+#' #... or train models using caret...
 #' rf = caret::train(Species ~.,data = train, method = "rf")
-#' mnl = caret::train(Species ~.,data = train, method = "multinom", trace = FALSE)
+#' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
+#' #.. or train models using h2o
+#' h2o::h2o.init()
+#' h2o::h2o.no_progress()
+#' h2o_train = h2o::as.h2o(train)
+#' h2o_test = h2o::as.h2o(test)
+#' gbm <- h2o::h2o.gbm(y = "Species",
+#'                           x = setdiff(colnames(train), "Species"),
+#'                           training_frame = h2o_train,
+#'                           nfolds = 5)
 #' # preparation steps
 #' prepare_scores_and_ntiles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl"),
-#'                       model_labels = list("random forest","multinomial logit"),
+#'                       models = list("rf","mnl", "gbm"),
+#'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
 #'                       target_column="Species")
 #' head(scores_and_ntiles)
 #' aggregate_over_ntiles()
@@ -911,14 +953,23 @@ plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_nti
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
-#' #... or train models using caret
+#' #... or train models using caret...
 #' rf = caret::train(Species ~.,data = train, method = "rf")
-#' mnl = caret::train(Species ~.,data = train, method = "multinom", trace = FALSE)
+#' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
+#' #.. or train models using h2o
+#' h2o::h2o.init()
+#' h2o::h2o.no_progress()
+#' h2o_train = h2o::as.h2o(train)
+#' h2o_test = h2o::as.h2o(test)
+#' gbm <- h2o::h2o.gbm(y = "Species",
+#'                           x = setdiff(colnames(train), "Species"),
+#'                           training_frame = h2o_train,
+#'                           nfolds = 5)
 #' # preparation steps
 #' prepare_scores_and_ntiles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl"),
-#'                       model_labels = list("random forest","multinomial logit"),
+#'                       models = list("rf","mnl", "gbm"),
+#'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
 #'                       target_column="Species")
 #' head(scores_and_ntiles)
 #' aggregate_over_ntiles()

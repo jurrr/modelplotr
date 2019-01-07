@@ -1,5 +1,14 @@
-inst/doc
 .Rproj.user
-package_dev.R
 .Rhistory
 .RData
+<<<<<<< HEAD
+.Ruserdata
+=======
+ALL.png
+Cumulative lift.png
+comparing_datasets_all_plots.png
+mnl.RDS
+v2.png
+xgb.RDS
+xgb3.RDS
+>>>>>>> seabbs-master

@@ -17,8 +17,8 @@ When dataset_labels is not specified, the names from \code{datasets} are used.}
 
 \item{models}{List of Strings. Names of the model objects containing parameters to
 apply models to data. To use this function, model objects need to be generated
-by the mlr package or by the caret package.
-Modelplotr automatically detects whether the model is built using mlr or caret.}
+by the mlr package or by the caret package or by the h20 package.
+Modelplotr automatically detects whether the model is built using mlr or caret or h2o.}
 
 \item{model_labels}{List of Strings. Labels for the models to use in plots.
 When model_labels is not specified, the names from \code{moddels} are used.}
