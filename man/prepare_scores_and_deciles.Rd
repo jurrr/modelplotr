@@ -17,8 +17,8 @@ When dataset_labels is not specified, the names from \code{datasets} are used.}
 
 \item{models}{List of Strings. Names of the model objects containing parameters to
 apply models to data. To use this function, model objects need to be generated
-by the mlr package or by the caret package.
-Modelplotr automatically detects whether the model is built using mlr or caret.}
+by the mlr package or by the caret package or by the h20 package.
+Modelplotr automatically detects whether the model is built using mlr or caret or h2o.}
 
 \item{model_labels}{List of Strings. Labels for the models to use in plots.
 When model_labels is not specified, the names from \code{moddels} are used.}
@@ -63,14 +63,23 @@ lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 rf = mlr::train(lrn, task)
 lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 mnl = mlr::train(lrn, task)
-#... or train models using caret
+#... or train models using caret...
 rf = caret::train(Species ~.,data = train, method = "rf")
 mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
+#.. or train models using h2o
+h2o::h2o.init()
+h2o::h2o.no_progress()
+h2o_train = h2o::as.h2o(train)
+h2o_test = h2o::as.h2o(test)
+gbm <- h2o::h2o.gbm(y = "Species",
+                          x = setdiff(colnames(train), "Species"),
+                          training_frame = h2o_train,
+                          nfolds = 5)
 # preparation steps
 prepare_scores_and_deciles(datasets=list("train","test"),
                       dataset_labels = list("train data","test data"),
-                      models = list("rf","mnl"),
-                      model_labels = list("random forest","multinomial logit"),
+                      models = list("rf","mnl", "gbm"),
+                      model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
                       target_column="Species")
 head(scores_and_deciles)
 aggregate_over_deciles()
