@@ -62,7 +62,7 @@
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
-#' #... or train models using caret
+#' #... or train models using caret...
 #' rf = caret::train(Species ~.,data = train, method = "rf")
 #' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
 #' #.. or train models using h2o
@@ -70,15 +70,15 @@
 #' h2o::h2o.no_progress()
 #' h2o_train = h2o::as.h2o(train)
 #' h2o_test = h2o::as.h2o(test)
-#' h2o_model <- h2o::h2o.gbm(y = "Species",
+#' gbm <- h2o::h2o.gbm(y = "Species",
 #'                           x = setdiff(colnames(train), "Species"),
 #'                           training_frame = h2o_train,
 #'                           nfolds = 5)
 #' # preparation steps
 #' prepare_scores_and_deciles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl", "h2o_model"),
-#'                       model_labels = list("random forest","multinomial logit", "H2O GBM"),
+#'                       models = list("rf","mnl", "gbm"),
+#'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
 #'                       target_column="Species")
 #' head(scores_and_deciles)
 #' aggregate_over_deciles()

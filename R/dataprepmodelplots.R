@@ -20,8 +20,8 @@
 #'   When dataset_labels is not specified, the names from \code{datasets} are used.
 #' @param models List of Strings. Names of the model objects containing parameters to
 #'   apply models to data. To use this function, model objects need to be generated
-#'   by the mlr package or by the caret package.
-#'   Modelplotr automatically detects whether the model is built using mlr or caret.
+#'   by the mlr package or by the caret package or by the h20 package.
+#'   Modelplotr automatically detects whether the model is built using mlr or caret or h2o.
 #' @param model_labels List of Strings. Labels for the models to use in plots.
 #'   When model_labels is not specified, the names from \code{moddels} are used.
 #' @param target_column String. Name of the target variable in datasets. Target
@@ -57,14 +57,23 @@
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
-#' #... or train models using caret
+#' #... or train models using caret...
 #' rf = caret::train(Species ~.,data = train, method = "rf")
 #' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
+#' #.. or train models using h2o
+#' h2o::h2o.init()
+#' h2o::h2o.no_progress()
+#' h2o_train = h2o::as.h2o(train)
+#' h2o_test = h2o::as.h2o(test)
+#' gbm <- h2o::h2o.gbm(y = "Species",
+#'                           x = setdiff(colnames(train), "Species"),
+#'                           training_frame = h2o_train,
+#'                           nfolds = 5)
 #' # preparation steps
 #' prepare_scores_and_deciles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl"),
-#'                       model_labels = list("random forest","multinomial logit"),
+#'                       models = list("rf","mnl", "gbm"),
+#'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
 #'                       target_column="Species")
 #' head(scores_and_deciles)
 #' aggregate_over_deciles()
@@ -99,86 +108,90 @@ prepare_scores_and_deciles <- function(datasets,
   for (dataset in datasets) {
     for (mdl in models) {
 
-      # if(max(class(try((mlr::getTaskDesc(get(mdl))),TRUE)))== "try-error") {
-      #   stop('model objects need to be generated with mlr package')}
-      #
-      # 1.1. get target class prediction from model (NOT YET DYNAMIC!) and prepare
-      actuals = get(dataset) %>% dplyr::select_(y_true=target_column)
-      # check if target is factor, otherwise make it a factor
-      if(typeof(actuals$y_true)!='factor') actuals$y_true <- as.factor(actuals$y_true)
-      #print(typeof(actuals$y_true))
+      # 1.0 check if specified model object exists
+      if(exists(mdl)){
 
-      # 1.2. get probabilities per target class from model and prepare
+        # if(max(class(try((mlr::getTaskDesc(get(mdl))),TRUE)))== "try-error") {
+        #   stop('model objects need to be generated with mlr package')}
+        #
+        # 1.1. get target class prediction from model (NOT YET DYNAMIC!) and prepare
+        actuals = get(dataset) %>% dplyr::select_(y_true=target_column)
+        # check if target is factor, otherwise make it a factor
+        if(typeof(actuals$y_true)!='factor') actuals$y_true <- as.factor(actuals$y_true)
+        #print(typeof(actuals$y_true))
 
-      # 1.2.1. mlr models
-      if(ifelse(is.null(class(get(mdl))), "", class(get(mdl))) == "WrappedModel") {
-        cat(paste0('... scoring mlr model "',mdl,'" on dataset "',dataset,'".\n'))
-        if (!requireNamespace("mlr", quietly = TRUE)) {
-          stop("Package \"mlr\" needed for this function to work, but it's not installed. Please install it.",
-            call. = FALSE)
+        # 1.2. get probabilities per target class from model and prepare
+
+        # 1.2.1. mlr models
+        if(ifelse(is.null(class(get(mdl))), "", class(get(mdl))) == "WrappedModel") {
+          cat(paste0('... scoring mlr model "',mdl,'" on dataset "',dataset,'".\n'))
+          if (!requireNamespace("mlr", quietly = TRUE)) {
+            stop("Package \"mlr\" needed for this function to work, but it's not installed. Please install it.",
+              call. = FALSE)
+          }
+          mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+          # for binary targets
+          if (!is.na(mlr::getTaskDesc(get(mdl))$positive)) {
+              y_values <- c(mlr::getTaskDesc(get(mdl))$positive,mlr::getTaskDesc(get(mdl))$negative)
+              prob_pos <- mlr::getPredictionProbabilities(predict(get(mdl),newdata=get(dataset)))
+              probabilities <- data.frame(pos=prob_pos,neg=1-prob_pos)
+          }
+          # for multiclass targets
+          else {
+            probabilities <- as.data.frame(mlr::getPredictionProbabilities(predict(get(mdl),newdata=get(dataset))))
+            y_values <- colnames(probabilities)
+          }
+        # 1.2.2. h2o models
+        } else if (ifelse(is.null(attr(class(get(mdl)), "package")), "", attr(class(get(mdl)), "package")) == "h2o") {
+          cat(paste0('... scoring h2o model "',mdl,'" on dataset "',dataset,'".\n'))
+          if (!requireNamespace("h2o", quietly = TRUE)) {
+            stop("Package \"h2o\" needed for this function to work, but it's not installed. Please install it.",
+                 call. = FALSE)
+          }else{
+            # for binary and multiclass targets
+            probabilities <- as.data.frame(h2o::h2o.predict(get(mdl),
+                                                            h2o::as.h2o(get(dataset))
+                                                            )
+                                           )[, -1]
+            y_values <- colnames(probabilities)
+          }
         }
-        mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-        # for binary targets
-        if (!is.na(mlr::getTaskDesc(get(mdl))$positive)) {
-            y_values <- c(mlr::getTaskDesc(get(mdl))$positive,mlr::getTaskDesc(get(mdl))$negative)
-            prob_pos <- mlr::getPredictionProbabilities(predict(get(mdl),newdata=get(dataset)))
-            probabilities <- data.frame(pos=prob_pos,neg=1-prob_pos)
-        }
-        # for multiclass targets
+        # 1.2.3. caret models
         else {
-          probabilities <- as.data.frame(mlr::getPredictionProbabilities(predict(get(mdl),newdata=get(dataset))))
+          cat(paste0('... scoring caret model "',mdl,'" on dataset "',dataset,'".\n'))
+          if (!requireNamespace("caret", quietly = TRUE)) {
+            stop("Package \"caret\" needed for this function to work, but it's not installed. Please install it.",
+              call. = FALSE)
+          }
+          probabilities <- predict(get(mdl),newdata=get(dataset),type='prob')
           y_values <- colnames(probabilities)
         }
-      # 1.2.3. h2o models
-      } else if (ifelse(is.null(attr(class(get(mdl)), "package")), "", attr(class(get(mdl)), "package")) == "h2o") {
-        cat(paste0('... scoring h2o model "',mdl,'" on dataset "',dataset,'".\n'))
-        if (!requireNamespace("h2o", quietly = TRUE)) {
-          stop("Package \"h2o\" needed for this function to work, but it's not installed. Please install it.",
-               call. = FALSE)
-        }else{
-          # for binary and multiclass targets
-          probabilities <- as.data.frame(h2o::h2o.predict(get(mdl),
-                                                          h2o::as.h2o(get(dataset))
-                                                          )
-                                         )[, -1]
-          y_values <- colnames(probabilities)
+
+        #name probability per target class
+        colnames(probabilities) = paste0('prob_',y_values)
+        y_probvars = colnames(probabilities)
+
+        probabilities = cbind(model_label=unlist(model_labels[match(mdl,models)]),
+                              dataset_label=unlist(dataset_labels[match(dataset,datasets)]),
+                              actuals,
+                              probabilities)
+
+        # 1.3. calculate deciles per target class
+        for (i in 1:length(y_values)) {
+          #! Added small proportion to prevent equal decile bounds
+          # and reset to 0-1 range (to prevent probs > 1.0)
+          range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+          prob_plus_smallrandom = range01(probabilities[,y_probvars[i]]+
+              runif(NROW(probabilities))/1000000)
+          # determine cutoffs based on prob_plus_smallrandom
+          cutoffs = c(quantile(prob_plus_smallrandom,probs = seq(0,1,0.1),
+                               na.rm = TRUE))
+          # add decile variable per y-class
+          probabilities[,paste0('dcl_',y_values[i])] <- 11-as.numeric(
+            cut(prob_plus_smallrandom,breaks=cutoffs,include.lowest = T))
         }
-      }
-      # 1.2.3. caret models
-      else {
-        cat(paste0('... scoring caret model "',mdl,'" on dataset "',dataset,'".\n'))
-        if (!requireNamespace("caret", quietly = TRUE)) {
-          stop("Package \"caret\" needed for this function to work, but it's not installed. Please install it.",
-            call. = FALSE)
-        }
-        probabilities <- predict(get(mdl),newdata=get(dataset),type='prob')
-        y_values <- colnames(probabilities)
-      }
-
-      #name probability per target class
-      colnames(probabilities) = paste0('prob_',y_values)
-      y_probvars = colnames(probabilities)
-
-      probabilities = cbind(model_label=unlist(model_labels[match(mdl,models)]),
-                            dataset_label=unlist(dataset_labels[match(dataset,datasets)]),
-                            actuals,
-                            probabilities)
-
-      # 1.3. calculate deciles per target class
-      for (i in 1:length(y_values)) {
-        #! Added small proportion to prevent equal decile bounds
-        # and reset to 0-1 range (to prevent probs > 1.0)
-        range01 <- function(x){(x-min(x))/(max(x)-min(x))}
-        prob_plus_smallrandom = range01(probabilities[,y_probvars[i]]+
-            runif(NROW(probabilities))/1000000)
-        # determine cutoffs based on prob_plus_smallrandom
-        cutoffs = c(quantile(prob_plus_smallrandom,probs = seq(0,1,0.1),
-                             na.rm = TRUE))
-        # add decile variable per y-class
-        probabilities[,paste0('dcl_',y_values[i])] <- 11-as.numeric(
-          cut(prob_plus_smallrandom,breaks=cutoffs,include.lowest = T))
-      }
-      scores_and_deciles = rbind(scores_and_deciles,probabilities)
+      } else {warning(paste0('Model object \'',mdl,'\' does not exist!'))}
+    scores_and_deciles = rbind(scores_and_deciles,probabilities)
     }
   }
   scores_and_deciles <<- scores_and_deciles
@@ -279,14 +292,23 @@ prepare_scores_and_deciles <- function(datasets,
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
-#' #... or train models using caret
+#' #... or train models using caret...
 #' rf = caret::train(Species ~.,data = train, method = "rf")
 #' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
+#' #.. or train models using h2o
+#' h2o::h2o.init()
+#' h2o::h2o.no_progress()
+#' h2o_train = h2o::as.h2o(train)
+#' h2o_test = h2o::as.h2o(test)
+#' gbm <- h2o::h2o.gbm(y = "Species",
+#'                           x = setdiff(colnames(train), "Species"),
+#'                           training_frame = h2o_train,
+#'                           nfolds = 5)
 #' # preparation steps
 #' prepare_scores_and_deciles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl"),
-#'                       model_labels = list("random forest","multinomial logit"),
+#'                       models = list("rf","mnl", "gbm"),
+#'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
 #'                       target_column="Species")
 #' head(scores_and_deciles)
 #' aggregate_over_deciles()
@@ -454,14 +476,23 @@ aggregate_over_deciles <- function(prepared_input=scores_and_deciles){
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
-#' #... or train models using caret
+#' #... or train models using caret...
 #' rf = caret::train(Species ~.,data = train, method = "rf")
 #' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
+#' #.. or train models using h2o
+#' h2o::h2o.init()
+#' h2o::h2o.no_progress()
+#' h2o_train = h2o::as.h2o(train)
+#' h2o_test = h2o::as.h2o(test)
+#' gbm <- h2o::h2o.gbm(y = "Species",
+#'                           x = setdiff(colnames(train), "Species"),
+#'                           training_frame = h2o_train,
+#'                           nfolds = 5)
 #' # preparation steps
 #' prepare_scores_and_deciles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl"),
-#'                       model_labels = list("random forest","multinomial logit"),
+#'                       models = list("rf","mnl", "gbm"),
+#'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
 #'                       target_column="Species")
 #' head(scores_and_deciles)
 #' aggregate_over_deciles()
