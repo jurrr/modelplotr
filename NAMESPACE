@@ -2,6 +2,7 @@
 
 export(aggregate_over_deciles)
 export(aggregate_over_ntiles)
+export(customize_plot_text)
 export(plot_all)
 export(plot_cumgains)
 export(plot_cumlift)

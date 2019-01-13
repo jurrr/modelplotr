@@ -4,16 +4,13 @@
 \alias{plot_cumgains}
 \title{Cumulative gains plot}
 \usage{
-plot_cumgains(data = plot_input, custom_line_colors = NA,
-  highlight_ntile = NA, highlight_how = "plot_text", save_fig = FALSE,
-  save_fig_filename = NA, ...)
+plot_cumgains(data = plot_input, highlight_ntile = NA,
+  highlight_how = "plot_text", save_fig = FALSE, save_fig_filename = NA,
+  custom_line_colors = NA, custom_plot_text = NULL, ...)
 }
 \arguments{
 \item{data}{Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
 or else meet required input format.}
-
-\item{custom_line_colors}{Vector of Strings. Specifying colors for the lines in the plot.
-When not specified, colors from the RColorBrewer palet "Set1" are used.}
 
 \item{highlight_ntile}{Integer. Specifying the ntile at which the plot is annotated
 and/or performances are highlighted.}
@@ -26,6 +23,9 @@ Default is "plot_text", both highlighting the ntile and value on the plot as wel
 \item{save_fig}{Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plots are optimized for 18x12cm.}
 
 \item{save_fig_filename}{String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.}
+
+\item{custom_line_colors}{Vector of Strings. Specifying colors for the lines in the plot.
+When not specified, colors from the RColorBrewer palet "Set1" are used.}
 }
 \value{
 ggplot object. Cumulative gains plot.
@@ -66,12 +66,6 @@ gbm <- h2o::h2o.gbm(y = "Species",
                           x = setdiff(colnames(train), "Species"),
                           training_frame = h2o_train,
                           nfolds = 5)
-# preparation steps
-prepare_scores_and_deciles(datasets=list("train","test"),
-                      dataset_labels = list("train data","test data"),
-                      models = list("rf","mnl", "gbm"),
-                      model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
-                      target_column="Species")
 # preparation steps
 prepare_scores_and_ntiles(datasets=list("train","test"),
                       dataset_labels = list("train data","test data"),

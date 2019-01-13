@@ -4,19 +4,19 @@
 \alias{plot_all}
 \title{Create plot with all four evaluation plots}
 \usage{
-plot_all(data = plot_input, custom_line_colors = NA, save_fig = FALSE,
-  save_fig_filename = NA)
+plot_all(data = plot_input, save_fig = FALSE, save_fig_filename = NA,
+  custom_line_colors = NA, custom_plot_text = NULL, ...)
 }
 \arguments{
 \item{data}{Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
 or else meet required input format.}
 
-\item{custom_line_colors}{Vector of Strings. Specifying colors for the lines in the plot.
-When not specified, colors from the RColorBrewer palet "Set1" are used.}
-
 \item{save_fig}{Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plot_all is optimized for 36x24cm.}
 
 \item{save_fig_filename}{String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.}
+
+\item{custom_line_colors}{Vector of Strings. Specifying colors for the lines in the plot.
+When not specified, colors from the RColorBrewer palet "Set1" are used.}
 }
 \value{
 gtable, containing 6 grobs.
