@@ -1,13 +1,180 @@
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### customize_plot_text()        ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+
+#' Customize textual elements of the plots
+#'
+#' Function to overrule the default textual elements in the plots, like title, subtitle,
+#' axis labels and annotation texts when the highlighting parameter \code{highlight_ntile}
+#' is specified.
+#'
+#' @section How to customize textual elements of plots:
+#' All textual parts of the plots can be customized, for instance to translate
+#' textual elements to another language or to change the annotation text that is added with the
+#' \code{highlight_ntile} parameter. Once you have created the \code{plot_input} dataframe
+#' using \code{plotting_Scope}, you can run this \code{customize_plot_text()} function.
+#' It returns a list, containing all textual elements of the plots, including annotation texts.
+#' For instance, run \cr\cr
+#' \code{my_plot_text <- customize_plot_text(plot_input = plot_input)} \cr\cr
+#' The list contains plot-specific elements (e.g. \code{...$cumgains$...})). \cr
+#' Now, you can change the textual elements by overriding the element(s) you want to customize.
+#' For instance, if you want to change the textual elements of the gains plot to Dutch:\cr\cr
+#' \code{my_plot_text$gains$plottitle <- 'Cumulatieve Gains grafiek'}\cr
+#' \code{my_plot_text$gains$x_axis_label <- 'Deciel'}\cr
+#' \code{my_plot_text$gains$y_axis_label <- 'cumulatieve gains'}\cr
+#' \code{my_plot_text$cumgains$optimal_gains_label <- 'maximale gains'}\cr
+#' \code{my_plot_text$cumgains$minimal_gains_label <- 'minimale gains'}\cr
+#' \code{plot_cumgains(custom_plot_text = my_plot_text)}\cr\cr
+#' To change the annotation text, use the placeholders starting with '&' to dynamically include:
+#' \tabular{ll}{
+#'   \bold{palaceholder} \tab \bold{placeholder value}\cr
+#'   \code{&NTL} \tab ntile specified with parameter \code{highlight_ntile}.\cr
+#'   \code{&PCTNTL} \tab Total percentage of dataset selected up until specified ntile.\cr
+#'   \code{&MDL} \tab Selected model label(s).\cr
+#'   \code{&DS} \tab Selected dataset label(s).\cr
+#'   \code{&YVAL} \tab Selected target class (Y-value).\cr
+#'   \code{&CUMGAINS} \tab Cumulative gains value at specified ntile.\cr
+#'   \code{&CUMLIFT} \tab Cumulative lift value at specified ntile.\cr
+#'   \code{&RESPONSE} \tab Response value at specified ntile.\cr
+#'   \code{&CUMRESPONSE} \tab Cumulative response value at specified ntile.\cr
+#' }
+#' For instance, to translate the gains plot annotation text to Dutch:\cr
+#' \code{my_plot_text$cumlift$annotationtext <- "Door &PCTNTL met de hoogste modelkans volgens model &MDL
+#' in &DS te selecteren is deze selectie van &YVAL observaties &CUMLIFT keer beter dan een random selectie."}\cr
+#' \code{plot_cumlift(highlight_ntile=3,custom_plot_text=custom_plot_text)}
+#'
+#' @param plot_input Dataframe. Dataframe needs to be created with
+#' \code{\link{plotting_scope}} or else meet required input format.
+#' @return List \code{custom_plot_text} .
+#' @examples
+#' data(iris)
+#' # add some noise to iris to prevent perfect models
+#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
+#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
+#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
+#' iris <- rbind(iris,iris_addnoise)
+#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
+#' train = iris[train_index,]
+#' test = iris[-train_index,]
+#' #train models using mlr...
+#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
+#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
+#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
+#' task = mlr::makeClassifTask(data = train, target = "Species")
+#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
+#' rf = mlr::train(lrn, task)
+#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
+#' mnl = mlr::train(lrn, task)
+#' #... or train models using caret...
+#' rf = caret::train(Species ~.,data = train, method = "rf")
+#' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
+#' #.. or train models using h2o
+#' h2o::h2o.init()
+#' h2o::h2o.no_progress()
+#' h2o_train = h2o::as.h2o(train)
+#' h2o_test = h2o::as.h2o(test)
+#' gbm <- h2o::h2o.gbm(y = "Species",
+#'                           x = setdiff(colnames(train), "Species"),
+#'                           training_frame = h2o_train,
+#'                           nfolds = 5)
+#' # preparation steps
+#' prepare_scores_and_ntiles(datasets=list("train","test"),
+#'                       dataset_labels = list("train data","test data"),
+#'                       models = list("rf","mnl"),
+#'                       model_labels = list("random forest","multinomial logit"),
+#'                       target_column="Species")
+#' head(scores_and_ntiles)
+#' aggregate_over_ntiles()
+#' plotting_scope(scope="compare_models")
+#' custom_plot_text <- customize_plot_text(plot_input=plot_input)
+#' custom_plot_text$cumlift$plottitle <- 'Cumulatieve Lift grafiek'
+#' custom_plot_text$cumlift$x_axis_label <- 'Deciel'
+#' plot_cumlift(custom_plot_text=custom_plot_text)
+#' custom_plot_text$cumlift$annotationtext <- "Door &PCTNTL met de hoogste modelkans volgens model &MDL in &DS te selecteren is deze selectie van &YVAL observaties &CUMLIFT keer beter dan een random selectie."
+#' plot_cumlift(highlight_ntile=3,custom_plot_text=custom_plot_text)
+#' @export
+#' @importFrom magrittr %>%
+#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
+#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
+customize_plot_text <- function(plot_input=plot_input){
+  scope <- max(as.character(plot_input$scope))
+  sel_model <- max(as.character(plot_input$model_label))
+  sel_dataset <- max(as.character(plot_input$dataset_label))
+  sel_target_class <- max(as.character(plot_input$target_class))
+  ntiles = max(plot_input$ntile)
+
+  custom_plot_text <- list()
+  plotsubtitle <-
+    ifelse(scope=="compare_datasets",
+           paste0('scope: comparing datasets & model: ',sel_model,' & target class: ' ,sel_target_class),
+             ifelse(scope=="compare_models",
+                    paste0('scope: comparing models & dataset: ',sel_dataset,' & target class: ',sel_target_class),
+                    ifelse(scope=="compare_targetclasses",
+                           paste0('scope: comparing target classes & dataset: ',sel_dataset,'  &  model: ',sel_model),
+                           paste0('model: ',sel_model,'  &  dataset: ',sel_dataset,'  &  target class: ',sel_target_class))))
+  x_axis_label <-
+      ifelse(ntiles==10,'decile',ifelse(ntiles==4,'quartile',ifelse(ntiles==5,'quintile',
+          ifelse(ntiles==20,'ventile',ifelse(ntiles==100,'percentile','ntile')))))
+  custom_plot_text$multiplot$plottitle <-
+    ifelse(scope=="compare_datasets",
+         paste0('scope: comparing datasets & model: ',sel_model,' & target class: ' ,sel_target_class),
+         ifelse(scope=="compare_models",
+                paste0('scope: comparing models & dataset: ',sel_dataset,' & target class: ',sel_target_class),
+                ifelse(scope=="compare_targetclasses",
+                       paste0('scope: comparing target classes & dataset: ',sel_dataset,'  &  model: ',sel_model),
+                       paste0('model: ',sel_model,'  &  dataset: ',sel_dataset,'  &  target class: ',sel_target_class))))
+  custom_plot_text$cumlift$plottitle <- "Cumulative lift"
+  custom_plot_text$cumgains$plottitle <- "Cumulative gains"
+  custom_plot_text$response$plottitle <- "Response"
+  custom_plot_text$cumresponse$plottitle <- "Cumulative response"
+  custom_plot_text$cumlift$plotsubtitle <- plotsubtitle
+  custom_plot_text$cumgains$plotsubtitle <- plotsubtitle
+  custom_plot_text$response$plotsubtitle <- plotsubtitle
+  custom_plot_text$cumresponse$plotsubtitle <- plotsubtitle
+  custom_plot_text$multiplot$plotsubtitle <- plotsubtitle
+  custom_plot_text$cumresponse$x_axis_label <- x_axis_label
+  custom_plot_text$cumlift$x_axis_label <- x_axis_label
+  custom_plot_text$cumgains$x_axis_label <- x_axis_label
+  custom_plot_text$response$x_axis_label <- x_axis_label
+  custom_plot_text$multiplot$x_axis_label <- x_axis_label
+  custom_plot_text$cumresponse$y_axis_label <- "cumulative response"
+  custom_plot_text$cumlift$y_axis_label <- "cumulative lift"
+  custom_plot_text$cumgains$y_axis_label <- "cumulative gains"
+  custom_plot_text$response$y_axis_label <- "response"
+  custom_plot_text$cumgains$optimal_gains_label <- 'optimal gains'
+  custom_plot_text$cumgains$minimal_gains_label <- 'minimal gains'
+  custom_plot_text$cumlift$annotationtext <- "When we select &PCTNTL with the highest probability according to model &MDL in &DS, this selection for &YVAL cases is &CUMLIFT times better than selecting without a model."
+  custom_plot_text$cumgains$annotationtext <- "When we select &PCTNTL with the highest probability according to &MDL, this selection holds &CUMGAINS of all &YVAL cases in &DS."
+  custom_plot_text$response$annotationtext <- "When we select ntile &NTL according to model &MDL in dataset &DS the %% of &YVAL cases in the selection is &RESPONSE"
+  custom_plot_text$cumresponse$annotationtext <- "When we select ntiles 1 until &NTL according to model &MDL in dataset &DS the %% of &YVAL cases in the selection is &CUMRESPONSE."
+  custom_plot_text$multiplot$annotationtext <- NA
+  cat('List with default values for all textual plot elements is created.
+To customize titles, axis labels and annotation text, modify specific list elements.
+E.g, when List is named \'mylist\', to change the lift plot title to \'Cumulatieve Lift grafiek\', use:
+    mylist$cumlift$title <- \'Cumulatieve Lift grafiek\'
+    plot_cumlift(custom_plot_text = mylist)' )
+
+  return(custom_plot_text)
+
+  }
+
+
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 #### setplotparams()              ####
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
 
-setplotparams <- function(plot_input,plottype,custom_line_colors) {
+setplotparams <- function(plot_input,plottype,custom_line_colors,custom_plot_text) {
 
 #  plot_input <- plot_input
-#  plottype <- "Lift"
-# custom_line_colors <- NA
+#  plottype <- "cumlift"
+#  custom_line_colors <- NA
+#  custom_plot_text <- custom_plot_text
+
+  # PLOT TEXT
+  #if(is.na(custom_plot_text[1])) custom_plot_text <- customize_plot_text(plot_input=plot_input)
+
   pp <- list()
 
   # ALL PLOTS
@@ -21,10 +188,9 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
   pp$randcols <- RColorBrewer::brewer.pal(n = 8, name = "Set1")
   pp$levelcols <- pp$randcols[1:pp$nlevels]
   pp$ntiles <- max(plot_input$ntile)
-  pp$ntiles_label <- ifelse(pp$ntiles==10,'decile',ifelse(pp$ntiles==4,'quartile',ifelse(pp$ntiles==5,'quintile',
-                        ifelse(pp$ntiles==20,'ventile',ifelse(pp$ntiles==100,'percentile','ntile')))))
+  pp$ntiles_label <- get('x_axis_label',get(pp$plottype,custom_plot_text))
   pp$xlabper <- ifelse(max(plot_input$ntile)<=20,1,ifelse(max(plot_input$ntile)<=40,2,5))
-  pp$ntile0 <- ifelse(pp$plottype=="Cumulative gains",1,0)
+  pp$ntile0 <- ifelse(pp$plottype=="cumgains",1,0)
   if (length(custom_line_colors)==1 & is.na(custom_line_colors[1])){
     pp$levelcols <- pp$randcols[1:pp$nlevels]
   } else if(length(custom_line_colors)==pp$nlevels) {
@@ -48,40 +214,30 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
   pp$linecols <- c(pp$levelcols,'gray')
   pp$linesizes <- c(rep(1,pp$nlevels),0.5)
 
-  pp$plottitle <- pp$plottype
-  pp$plotsubtitle <-
-    ifelse(pp$seltype=="compare_datasets",paste0('scope: comparing datasets & model: ',
-      pp$selmod,' & target class: ' ,pp$selval),
-      ifelse(pp$seltype=="compare_models",paste0('scope: comparing models & dataset: ',
-        pp$seldata,' & target class: ',pp$selval),
-        ifelse(pp$seltype=="compare_targetclasses",paste0('scope: comparing target classes & dataset: ',
-          pp$seldata,'  &  model: ',pp$selmod),
-          paste0('model: ',pp$selmod,'  &  dataset: ',pp$seldata,'  &  target class: ',pp$selval))))
+  pp$plottitle <- get('plottitle',get(pp$plottype,custom_plot_text))
+  pp$plotsubtitle <- get('plotsubtitle',get(pp$plottype,custom_plot_text))
 
-  pp$multiplottitle <- ifelse(pp$seltype=="compare_datasets",
-                          paste0('scope: comparing datasets & model: ',pp$selmod,' & target class: ' ,pp$selval),
-                        ifelse(pp$seltype=="compare_models",
-                          paste0('scope: comparing models & dataset: ',pp$seldata,' & target class: ',pp$selval),
-                        ifelse(pp$seltype=="compare_targetclasses",
-                          paste0('scope: comparing target classes & dataset: ',pp$seldata,'  &  model: ',pp$selmod),
-                          paste0('model: ',pp$selmod,'  &  dataset: ',pp$seldata,'  &  target class: ',pp$selval))))
+  pp$multiplottitle <- get('plottitle',get('multiplot',custom_plot_text))
+
+  pp$annotationtext = get('annotationtext',get(pp$plottype,custom_plot_text))
 
   # GAINS
   if (pp$seltype=='compare_models') {
-    pp$optgainsreflevels <- paste0('optimal gains (',unique(plot_input$dataset_label),')')
+    pp$optgainsreflevels <- paste0(get('optimal_gains_label',get('cumgains',custom_plot_text)),' (',unique(plot_input$dataset_label),')')
   } else {
-    pp$optgainsreflevels <- paste0('optimal gains (',pp$levels,')')
+    pp$optgainsreflevels <- paste0(get('optimal_gains_label',get('cumgains',custom_plot_text)),' (',pp$levels,')')
   }
+  pp$optimalgainslabel <- get('optimal_gains_label',get('cumgains',custom_plot_text))
+  pp$minimalgainslabel <- get('minimal_gains_label',get('cumgains',custom_plot_text))
   pp$noptgainsreflevels <- ifelse(pp$seltype=='compare_models',1,pp$nlevels)
   if (pp$seltype=='compare_models') pp$optgainsreflevelcols <- 'gray' else pp$optgainsreflevelcols <- pp$levelcols
-  pp$gainslevels <- c(pp$levels,'minimal gains',pp$optgainsreflevels)
+  pp$gainslevels <- c(pp$levels,pp$minimalgainslabel,pp$optgainsreflevels)
   pp$ngainslevels <- length(pp$gainslevels)
   pp$gainslegendcolumns <- ifelse(pp$ngainslevels>6,2,1)
   pp$gainslinetypes <- c(rep('solid',pp$nlevels),'dashed',rep('dotted',pp$noptgainsreflevels))
   pp$gainsalphas <- c(rep(1,pp$nlevels),1,rep(1,pp$noptgainsreflevels))
   pp$gainslinecols <- c(pp$levelcols,'gray',pp$optgainsreflevelcols)
   pp$gainslinesizes <- c(rep(1,pp$nlevels),0.5,rep(1.2,pp$noptgainsreflevels))
-  pp$gainstext = "When we select &PCTNTL with the highest probability according to &MDL, this selection holds &CUMGAINS of all &YVAL cases in &DS."
 
   # LIFT
   pp$liftreflabel <- 'no lift'
@@ -92,7 +248,6 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
   pp$liftalphas <- c(rep(1,pp$nlevels),1)
   pp$liftlinecols <- c(pp$levelcols,'gray')
   pp$liftlinesizes <- c(rep(1,pp$nlevels),0.5)
-  pp$lifttext = "When we select &PCTNTL with the highest probability according to model &MDL in &DS, this selection for &YVAL cases is &CUMLIFT times better than selecting without a model."
 
   # RESPONSE
   if (pp$seltype=='compare_models') {
@@ -109,8 +264,6 @@ setplotparams <- function(plot_input,plottype,custom_line_colors) {
   pp$respalphas <- c(rep(1,pp$nlevels),rep(1,pp$nrespreflevels))
   pp$resplinecols <- c(pp$levelcols,pp$respreflevelcols)
   pp$resplinesizes <- c(rep(1,pp$nlevels),rep(0.8,pp$nrespreflevels))
-  pp$responsetext = "When we select ntile &NTL according to model &MDL in dataset &DS the %% of &YVAL cases in the selection is &RESPONSE"
-  pp$cumresponsetext = "When we select ntiles 1 until &NTL according to model &MDL in dataset &DS the %% of &YVAL cases in the selection is &CUMRESPONSE."
 
   return(pp)
 }
@@ -190,7 +343,6 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
 
     # annotation text
 
-
     annovalues <- plot_input %>% dplyr::filter(ntile==highlight_ntile & refline==0) %>%
       dplyr::mutate(xmin=rep(0,pp$nlevels),
       xmax=rep(100,pp$nlevels),
@@ -207,26 +359,15 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
       RESPONSE=sprintf("%1.0f%%",100*plotvalue),
       CUMRESPONSE=sprintf("%1.0f%%",100*plotvalue),
       # replace the placeholders for values in the annotation text per plot type
-      gainstext = eval(parse(text=paste0("sprintf('",stringr::str_replace_all(pp$gainstext,'&[A-Z]+','%s'), " ', ",
-          paste(substr(unlist(stringr:: str_extract_all(pp$gainstext,'&[A-Z]+')),2,100),collapse = ', '),')'))),
-      lifttext = eval(parse(text=paste0("sprintf('",stringr::str_replace_all(pp$lifttext,'&[A-Z]+','%s'), " ', ",
-          paste(substr(unlist(stringr:: str_extract_all(pp$lifttext,'&[A-Z]+')),2,100),collapse = ', '),')'))),
-      responsetext = eval(parse(text=paste0("sprintf('",stringr::str_replace_all(pp$responsetext,'&[A-Z]+','%s'), " ', ",
-          paste(substr(unlist(stringr:: str_extract_all(pp$responsetext,'&[A-Z]+')),2,100),collapse = ', '),')'))),
-      cumresponsetext = eval(parse(text=paste0("sprintf('",stringr::str_replace_all(pp$cumresponsetext,'&[A-Z]+','%s'), " ', ",
-          paste(substr(unlist(stringr:: str_extract_all(pp$cumresponsetext,'&[A-Z]+')),2,100),collapse = ', '),')'))))
+      annotationtext = eval(parse(text=paste0("sprintf('",stringr::str_replace_all(pp$annotationtext,'&[A-Z]+','%s'), " ', ",
+                                              paste(substr(unlist(stringr:: str_extract_all(pp$annotationtext,'&[A-Z]+')),2,100),collapse = ', '),')'))))
 
-    if(pp$plottype=="Cumulative gains") annovalues$text <- annovalues$gainstext
-    if(pp$plottype=="Cumulative lift") annovalues$text <- annovalues$lifttext
-    if(pp$plottype=="Response") annovalues$text <- annovalues$responsetext
-    if(pp$plottype=="Cumulative response") annovalues$text <- annovalues$cumresponsetext
-
-    cat(paste(' ','Plot annotation:',paste(paste0('- ',annovalues$text), collapse = '\n'),' ',' ', sep = '\n'))
+    cat(paste(' ','Plot annotation:',paste(paste0('- ',annovalues$annotationtext), collapse = '\n'),' ',' ', sep = '\n'))
 
     if(highlight_how %in% c('text','plot_text')){
       # create annotation text element to add to grob
       annotextplot <- ggplot2::ggplot(annovalues,
-      ggplot2::aes(label = text, xmin = xmin, xmax = xmax, ymin = ymin,ymax = ymax,color=legend)) +
+      ggplot2::aes(label = annotationtext, xmin = xmin, xmax = xmax, ymin = ymin,ymax = ymax,color=legend)) +
       ggplot2::geom_rect(fill=NA,color=NA) +
       ggplot2::scale_color_manual(values=pp$levelcols)+
       ggfittext::geom_fit_text(place = "center",grow = TRUE,reflow = FALSE) +
@@ -255,6 +396,14 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
   }
   return(plot)
 }
+
+
+quiet <- function(x) {
+  sink(tempfile())
+  on.exit(sink())
+  invisible(force(x))
+}
+
 
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 #### plot_cumgains()                   ####
@@ -310,12 +459,6 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
 #'                           training_frame = h2o_train,
 #'                           nfolds = 5)
 #' # preparation steps
-#' prepare_scores_and_deciles(datasets=list("train","test"),
-#'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl", "gbm"),
-#'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
-#'                       target_column="Species")
-#' # preparation steps
 #' prepare_scores_and_ntiles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl"),
@@ -338,8 +481,8 @@ annotate_plot <- function(plot=plot,plot_input=plot_input_prepared,
 #' filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_ntile=NA,highlight_how='plot_text',
-                          save_fig=FALSE,save_fig_filename=NA,...) {
+plot_cumgains <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_text',
+                          save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL,...) {
 
   # check if highlight_decile is used instead of highlight_ntile
   if ('highlight_decile' %in% names(match.call())) {
@@ -351,22 +494,28 @@ plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_ntile=
   highlight_ntile <- highlight_ntile
   highlight_how <- highlight_how
 
-  pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative gains",custom_line_colors=custom_line_colors)
+  if(is.null(custom_plot_text)) custom_plot_text <- quiet(customize_plot_text(plot_input = plot_input))
+
+  pp <- setplotparams(plot_input = plot_input,plottype = "cumgains",custom_line_colors=custom_line_colors,custom_plot_text=custom_plot_text)
 
   # rearrange plot_input
   vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::select(scope:ntile,plotvalue=cumgain,legend,refline)
   if (pp$seltype=="compare_models") {
     optreflines <- plot_input %>%
-      dplyr::mutate(legend=paste0('optimal gains (',dataset_label,')'),model_label='',plotvalue=gain_opt,refline=1) %>%
+      dplyr::mutate(legend=paste0(pp$optimalgainslabel,' (',dataset_label,')'),model_label='',plotvalue=gain_opt,refline=1) %>%
       dplyr::select(scope:ntile,plotvalue,legend,refline) %>%
       dplyr::distinct()
   } else {
     optreflines <- plot_input%>%
-      dplyr::mutate(legend=paste0('optimal gains (',legend,')'),plotvalue=gain_opt,refline=1) %>%
+      dplyr::mutate(legend=paste0(pp$optimalgainslabel,' (',legend,')'),plotvalue=gain_opt,refline=1) %>%
       dplyr::select(scope:ntile,plotvalue,legend,refline)
   }
+  # optreflines <- plot_input %>%
+  #     dplyr::mutate(legend=pp$optgainsreflevels,model_label='',plotvalue=gain_opt,refline=1) %>%
+  #     dplyr::select(scope:ntile,plotvalue,legend,refline) %>%
+  #     dplyr::distinct()
   minrefline <- plot_input %>%
-    dplyr::mutate(legend=paste0('minimal gains'),model_label='',dataset_label='',target_class='',plotvalue=gain_ref,refline=1) %>%
+    dplyr::mutate(legend=paste0(pp$minimalgainslabel),model_label='',dataset_label='',target_class='',plotvalue=gain_ref,refline=1) %>%
     dplyr::select(scope:ntile,plotvalue,legend,refline)%>%
     dplyr::distinct()
   plot_input_prepared <- rbind(minrefline,optreflines,vallines)
@@ -380,7 +529,7 @@ plot_cumgains <- function(data=plot_input,custom_line_colors=NA,highlight_ntile=
     ggplot2::scale_color_manual(values=pp$gainslinecols)+
     ggplot2::scale_size_manual(values=pp$gainslinesizes)+
     ggplot2::scale_alpha_manual(values=pp$gainsalphas) +
-    ggplot2::scale_y_continuous(name="cumulative gains",breaks=seq(0,1,0.2),labels = scales::percent ,expand = c(0, 0.02)) +
+    ggplot2::scale_y_continuous(name=get('y_axis_label',get(pp$plottype,custom_plot_text)),breaks=seq(0,1,0.2),labels = scales::percent ,expand = c(0, 0.02)) +
     ggplot2::labs(title=pp$plottitle,subtitle=pp$plotsubtitle) +
     ggplot2::theme_minimal() +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 14,hjust = 0.5),
@@ -505,8 +654,8 @@ cat(paste0("Plot is saved as: ",filename,"\n\n"))
 #' filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_ntile=NA,highlight_how='plot_text',
-                         save_fig=FALSE,save_fig_filename=NA,...) {
+plot_cumlift <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_text',
+                         save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL,...) {
 
   if ('highlight_decile' %in% names(match.call())) {
     warning("parameter highlight_decile is depreciated and replaced by highlight_ntile.")
@@ -516,8 +665,11 @@ plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_ntile=N
   plot_input <- data
   custom_line_colors <- custom_line_colors
   highlight_ntile <- highlight_ntile
+  highlight_how <- highlight_how
 
-  pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative lift",custom_line_colors=custom_line_colors)
+  if(is.null(custom_plot_text)) custom_plot_text <- quiet(customize_plot_text(plot_input = plot_input))
+
+  pp <- setplotparams(plot_input = plot_input,plottype = "cumlift",custom_line_colors=custom_line_colors,custom_plot_text=custom_plot_text)
 
   # rearrange plot_input
   vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(ntile>0) %>%
@@ -662,8 +814,8 @@ plot_cumlift <- function(data=plot_input,custom_line_colors=NA,highlight_ntile=N
 #' filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_ntile=NA,highlight_how='plot_text',
-                          save_fig=FALSE,save_fig_filename=NA,...) {
+plot_response <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_text',
+                          save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL,...) {
 
   if ('highlight_decile' %in% names(match.call())) {
     warning("parameter highlight_decile is depreciated and replaced by highlight_ntile.")
@@ -673,8 +825,11 @@ plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_ntile=
   plot_input <- data
   custom_line_colors <- custom_line_colors
   highlight_ntile <- highlight_ntile
+  highlight_how <- highlight_how
 
-  pp <- setplotparams(plot_input = plot_input,plottype = "Response",custom_line_colors=custom_line_colors)
+  if(is.null(custom_plot_text)) custom_plot_text <- quiet(customize_plot_text(plot_input = plot_input))
+
+  pp <- setplotparams(plot_input = plot_input,plottype = "response",custom_line_colors=custom_line_colors,custom_plot_text=custom_plot_text)
 
   # rearrange plot_input
   vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(ntile>0) %>%
@@ -828,8 +983,8 @@ plot_response <- function(data=plot_input,custom_line_colors=NA,highlight_ntile=
 #' filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
-plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_ntile=NA,highlight_how='plot_text',
-                             save_fig=FALSE,save_fig_filename=NA,...) {
+plot_cumresponse <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_text',
+                             save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL,...) {
 
   if ('highlight_decile' %in% names(match.call())) {
     warning("parameter highlight_decile is depreciated and replaced by highlight_ntile.")
@@ -839,8 +994,11 @@ plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_nti
   plot_input <- data
   custom_line_colors <- custom_line_colors
   highlight_ntile <- highlight_ntile
+  highlight_how <- highlight_how
 
-  pp <- setplotparams(plot_input = plot_input,plottype = "Cumulative response",custom_line_colors=custom_line_colors)
+  if(is.null(custom_plot_text)) custom_plot_text <- quiet(customize_plot_text(plot_input = plot_input))
+
+  pp <- setplotparams(plot_input = plot_input,plottype = "cumresponse",custom_line_colors=custom_line_colors,custom_plot_text=custom_plot_text)
   #plot_input = plot_input
   # rearrange plot_input
   vallines <- plot_input %>% dplyr::mutate(refline=0) %>% dplyr::filter(ntile>0) %>%
@@ -980,11 +1138,14 @@ plot_cumresponse <- function(data=plot_input,custom_line_colors=NA,highlight_nti
 #' plot_cumresponse()
 #' plot_all()
 #' @export
-plot_all <- function(data=plot_input,custom_line_colors=NA,save_fig=FALSE,save_fig_filename=NA) {
+plot_all <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL,...) {
 
   plot_input <- data
   custom_line_colors <- custom_line_colors
-  pp <- setplotparams(plot_input = plot_input,plottype = "ALL",custom_line_colors=custom_line_colors)
+
+  if(is.null(custom_plot_text)) custom_plot_text <- quiet(customize_plot_text(plot_input = plot_input))
+
+  pp <- setplotparams(plot_input = plot_input,plottype = "multiplot",custom_line_colors=custom_line_colors,custom_plot_text=custom_plot_text)
 
   # make plot_cumgains without
   cumgainsplot <- plot_cumgains() + ggplot2::labs(title="Cumulative gains",subtitle=NA) +
