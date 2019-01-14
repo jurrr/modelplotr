@@ -98,7 +98,6 @@
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 customize_plot_text <- function(plot_input=plot_input){
-
   scope <- max(as.character(plot_input$scope))
   sel_model <- max(as.character(plot_input$model_label))
   sel_dataset <- max(as.character(plot_input$dataset_label))
@@ -268,6 +267,15 @@ setplotparams <- function(plot_input,plottype,custom_line_colors,custom_plot_tex
   pp$respalphas <- c(rep(1,pp$nlevels),rep(1,pp$nrespreflevels))
   pp$resplinecols <- c(pp$levelcols,pp$respreflevelcols)
   pp$resplinesizes <- c(rep(1,pp$nlevels),rep(0.8,pp$nrespreflevels))
+
+  # CUMRESPONSE
+  if (pp$seltype=='compare_models') {
+    pp$cumrespreflevels <- paste0(get('response_refline_label',get('cumresponse',custom_plot_text)),' (',unique(plot_input$dataset_label),')')
+  } else {
+    pp$cumrespreflevels <- paste0(get('response_refline_label',get('cumresponse',custom_plot_text)),' (',pp$levels,')')
+  }
+  pp$cumresplevels <- c(pp$levels,pp$cumrespreflevels)
+
 
   return(pp)
 }
@@ -1021,7 +1029,7 @@ plot_cumresponse <- function(data=plot_input,highlight_ntile=NA,highlight_how='p
       dplyr::distinct()
   }
   plot_input_prepared <- rbind(minreflines,vallines)
-  plot_input_prepared$legend <- factor(plot_input_prepared$legend,levels=pp$resplevels)
+  plot_input_prepared$legend <- factor(plot_input_prepared$legend,levels=pp$cumresplevels)
 
   #make plot
   plot <- plot_input_prepared %>%
