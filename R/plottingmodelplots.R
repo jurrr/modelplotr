@@ -98,7 +98,10 @@
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 customize_plot_text <- function(plot_input=plot_input){
+<<<<<<< HEAD
 
+=======
+>>>>>>> 9d9e5ffeabb4a8912af58ae2985d9c59c530af5b
   scope <- max(as.character(plot_input$scope))
   sel_model <- max(as.character(plot_input$model_label))
   sel_dataset <- max(as.character(plot_input$dataset_label))
@@ -145,9 +148,12 @@ customize_plot_text <- function(plot_input=plot_input){
   custom_plot_text$response$y_axis_label <- "response"
   custom_plot_text$cumgains$optimal_gains_label <- 'optimal gains'
   custom_plot_text$cumgains$minimal_gains_label <- 'minimal gains'
+<<<<<<< HEAD
   custom_plot_text$cumlift$lift_refline_label <- 'no lift'
   custom_plot_text$response$response_refline_label <- 'overall response'
   custom_plot_text$cumresponse$response_refline_label <- 'overall response'
+=======
+>>>>>>> 9d9e5ffeabb4a8912af58ae2985d9c59c530af5b
   custom_plot_text$cumlift$annotationtext <- "When we select &PCTNTL with the highest probability according to model &MDL in &DS, this selection for &YVAL cases is &CUMLIFT times better than selecting without a model."
   custom_plot_text$cumgains$annotationtext <- "When we select &PCTNTL with the highest probability according to &MDL, this selection holds &CUMGAINS of all &YVAL cases in &DS."
   custom_plot_text$response$annotationtext <- "When we select ntile &NTL according to model &MDL in dataset &DS the %% of &YVAL cases in the selection is &RESPONSE"
@@ -1146,6 +1152,13 @@ plot_all <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,custom_
 
   plot_input <- data
   custom_line_colors <- custom_line_colors
+<<<<<<< HEAD
+=======
+
+  if(is.null(custom_plot_text)) custom_plot_text <- quiet(customize_plot_text(plot_input = plot_input))
+
+  pp <- setplotparams(plot_input = plot_input,plottype = "multiplot",custom_line_colors=custom_line_colors,custom_plot_text=custom_plot_text)
+>>>>>>> 9d9e5ffeabb4a8912af58ae2985d9c59c530af5b
 
   if(is.null(custom_plot_text)) custom_plot_text <- quiet(customize_plot_text(plot_input = plot_input))
 
