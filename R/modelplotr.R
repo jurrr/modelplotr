@@ -5,8 +5,8 @@
 
 #' modelplotr: Plots to Evaluate the Business Performance of Predictive Models.
 #'
-#' The modelplotr package provides two categories of important functions:
-#' datapreparation and plotting.
+#' The modelplotr package provides three categories of important functions:
+#' datapreparation, parameterization and plotting.
 #'
 #' @author Jurriaan Nagelkerke <jurriaan.nagelkerke@@gmail.com> [aut, cre]
 #' @author Pieter Marcus <pieter.marcus@@persgroep.net> [aut]
@@ -22,6 +22,12 @@
 #'     of datasets-ntile.}
 #'   \item{\code{\link{plotting_scope}}}{a function that creates a dataframe \code{'plot_input'}  with a subset
 #'     of 'ntiles_aggregate', relevant to the selected scope of evaluation. }}
+#' @section Parameterization functions:
+#'  Most parameterization functions are internal functions. However, one is available for customization:
+#' \describe{
+#'   \item{\code{\link{customize_plot_text}}}{a
+#'   function that returns a list that containsall textual elements of all plots that can be created with modelplotr.
+#'   By changing the list and including the list in plot functions, plot texts can be customized (eg. translated)  }}
 #' @section Plotting functions:
 #'   The plotting functions are:
 #' \describe{
@@ -39,7 +45,12 @@
 #'      target class observations up until that ntile. It helps answering the question:
 #'      \strong{\emph{When we apply the model and select up until ntile X, what is the expected percentage of
 #'      target class observations in the selection? }}}
-#'     \item{\code{\link{plot_all}}}{Generates a canvas with all four evaluation plots combined}}
+#'     \item{\code{\link{plot_all}}}{Generates a canvas with all four evaluation plots combined}
+#'     \item{\code{\link{plot_profit}}}{Generates the profit plot. It plots the expected cumulative profit up until that ntile.}
+#'     \item{\code{\link{plot_roi}}}{Generates the roi plot. It plots the expected return on investment up until that ntile.}
+#'     \item{\code{\link{plot_costsrevs}}}{Generates the costs versus revenues plot. It plots both expected costs and
+#'     expected revenues up until that ntile.}
+#'     }
 #'
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog posts on using modelplotr

@@ -5,7 +5,8 @@
 \title{Create plot with all four evaluation plots}
 \usage{
 plot_all(data = plot_input, save_fig = FALSE, save_fig_filename = NA,
-  custom_line_colors = NA, custom_plot_text = NULL, ...)
+  custom_line_colors = NA, highlight_ntile = NA,
+  custom_plot_text = NULL, ...)
 }
 \arguments{
 \item{data}{Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
@@ -17,6 +18,12 @@ or else meet required input format.}
 
 \item{custom_line_colors}{Vector of Strings. Specifying colors for the lines in the plot.
 When not specified, colors from the RColorBrewer palet "Set1" are used.}
+
+\item{highlight_ntile}{Integer. Specifying the ntile at which the plot is annotated
+and/or performances are highlighted.}
+
+\item{custom_plot_text}{List. List with customized textual elements for plot. Create a list with defaults
+by using \code{\link{customize_plot_text}} and override default values to customize.}
 }
 \value{
 gtable, containing 6 grobs.
