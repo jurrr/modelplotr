@@ -333,7 +333,7 @@ setplotparams <- function(plot_input,plottype,custom_line_colors,plot_text) {
   pp$cumresponse$linesizes <- c(rep(1,pp$scope$nlevels),rep(0.8,pp$cumresponse$nreflevels))
   pp$cumresponse$annolabelfmt <- 'scales::percent_format(accuracy=0.1)'
 
-  # CUMRESPONSE
+  # MULTIPLOT
   pp$multiplot$annolabelfmt <- ''
 
   # PROFIT
@@ -512,13 +512,6 @@ annotate_plot <- function(plot=plot,highlight_input=plot_input_prepared,
                     DS=dataset_label,
                     YVAL=target_class,
                     VALUE=eval(parse(text=paste0(pp$scope$annolabelfmt,"(plotvalue)"))),
-                    CUMGAINS=eval(parse(text=paste0(pp$scope$annolabelfmt,"(plotvalue)"))),
-                    CUMLIFT=eval(parse(text=paste0(pp$scope$annolabelfmt,"(plotvalue)"))),
-                    RESPONSE=eval(parse(text=paste0(pp$scope$annolabelfmt,"(plotvalue)"))),
-                    CUMRESPONSE=eval(parse(text=paste0(pp$scope$annolabelfmt,"(plotvalue)"))),
-                    PROFIT=eval(parse(text=paste0(pp$scope$annolabelfmt,"(plotvalue)"))),
-                    ROI=eval(parse(text=paste0(pp$scope$annolabelfmt,"(plotvalue)"))),
-                    REVENUES=eval(parse(text=paste0(pp$scope$annolabelfmt,"(plotvalue)"))),
                     # replace the placeholders for values in the annotation text per plot type
                     annotationtext =
                       eval(parse(text=paste0("sprintf('",stringr::str_replace_all(pp$scope$annotationtext,'&[A-Z]+','%s'), " ', ",

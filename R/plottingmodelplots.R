@@ -1151,7 +1151,6 @@ plot_profit <- function(data=plot_input,highlight_ntile='max_profit',highlight_h
   plot_input_prepared$legend <- factor(plot_input_prepared$legend,levels=pp$profit$levels)
 
 
-
   #make profit plot
 
   plot <- plot_input_prepared %>%
