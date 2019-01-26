@@ -3,16 +3,11 @@
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
 
-#' Build 'scores_and_ntiles' containing Actuals, Probabilities and Ntiles
+#' Build a dataframe containing Actuals, Probabilities and Ntiles
 #'
-#' Build dataframe object 'scores_and_ntiles' that contains actuals and predictions on
+#' Build dataframe object that contains actuals and predictions on
 #' the target variable for each dataset in datasets and each model in models
 #'
-#' @section When you build scores_and_ntiles yourself:
-#' To make plots with modelplotr, is not required to use this function to generate scores_and_ntiles.
-#' You can create your own dataframe containing actuals and predictions and ntiles,
-#' Please do check the required input for the \code{\link{aggregate_over_ntiles}} function if you
-#' want to use that function to aggregate actuals and predictions
 #' @param datasets List of Strings. A list of the names of the dataframe
 #'   objects to include in model evaluation. All dataframes need to contain
 #'   target variable and feature variables.
@@ -29,16 +24,23 @@
 #' @param ntiles Integer. Number of ntiles. The ntile parameter represents the specified number
 #'   of equally sized buckets the observations in each dataset are grouped into.
 #'   By default, observations are grouped in 10 equally sized buckets, often referred to as deciles.
-#' @return Dataframe. Dataframe \code{scores_and_ntiles} is built, based on the \code{datasets}
+#' @return Dataframe. A dataframe is built, based on the \code{datasets}
 #'   and \code{models} specified. It contains the dataset name, actuals on the \code{target} ,
 #'   the predicted probabilities for each class of the target and attribution to
 #'   ntiles in the dataset for each class of the target.
 #'
+#' @section When you build scores_and_ntiles yourself:
+#' To make plots with modelplotr, is not required to use this function to generate input for function \code{plotting_scope}
+#' You can create your own dataframe containing actuals and predictions and ntiles,
+#' Please do check the required input for the \code{\link{aggregate_over_ntiles}} function if you
+#' want to use that function to aggregate actuals and predictions
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
-#' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
-#' aggregates the output to the input for the plots.
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
-#' filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
+#' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
+#' a dataframe in the required format for all modelplotr plots.
+#' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
+#' aggregates the output of \code{prepare_scores_and_ntiles} to create a dataframe with aggregated actuals and predictions.
+#' In most cases, you do not need to use it since the \code{plotting_scope} function will call this function automatically.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 #' @examples
@@ -73,19 +75,20 @@
 #'                           training_frame = h2o_train,
 #'                           nfolds = 5)
 #' # preparation steps
-#' prepare_scores_and_ntiles(datasets=list("train","test"),
+#' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl", "gbm"),
 #'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
 #'                       target_column="Species")
-#' head(scores_and_ntiles)
-#' aggregate_over_ntiles()
-#' plotting_scope()
-#' plot_cumgains()
-#' plot_cumlift()
-#' plot_response()
-#' plot_cumresponse()
-#' plot_all()
+#' plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
+#' plot_cumgains(data = plot_input)
+#' plot_cumlift(data = plot_input)
+#' plot_response(data = plot_input)
+#' plot_cumresponse(data = plot_input)
+#' plot_multiplot(data = plot_input)
+#' plot_costsrevs(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
+#' plot_profit(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
+#' plot_roi(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
 #' @export
 #' @importFrom magrittr %>%
 prepare_scores_and_ntiles <- function(datasets,
@@ -200,49 +203,8 @@ prepare_scores_and_ntiles <- function(datasets,
     scores_and_ntiles = rbind(scores_and_ntiles,probabilities)
     }
   }
-  scores_and_ntiles <<- scores_and_ntiles
-  return('Data preparation step 1 succeeded! Dataframe \'scores_and_ntiles\' created.')
-}
-
-#' DEPRECIATED: prepare_scores_and_deciles()
-#'
-#' This function is depreciated, since modelplotr now supports that you can specify the number of bins (ntiles) you prefer.
-#' You can choose a value for the \code{ntiles} parameter between 4 and 100, the default is 10 (deciles).
-#' Therefore, please use \code{\link{prepare_scores_and_ntiles}} instead.
-#'
-#' @param datasets List of Strings. A list of the names of the dataframe
-#'   objects to include in model evaluation. All dataframes need to contain
-#'   target variable and feature variables.
-#' @param dataset_labels List of Strings. A list of labels for the datasets, user.
-#'   When dataset_labels is not specified, the names from \code{datasets} are used.
-#' @param models List of Strings. Names of the model objects containing parameters to
-#'   apply models to data. To use this function, model objects need to be generated
-#'   by the mlr package or by the caret package.
-#'   Modelplotr automatically detects whether the model is built using mlr or caret.
-#' @param model_labels List of Strings. Labels for the models to use in plots.
-#'   When model_labels is not specified, the names from \code{moddels} are used.
-#' @param target_column String. Name of the target variable in datasets. Target
-#'   can be either binary or multinomial. Continuous targets are not supported.
-#' @return Dataframe. Dataframe \code{scores_and_ntiles} is built, based on the \code{datasets}
-#'   and \code{models} specified. It contains the dataset name, actuals on the \code{target} ,
-#'   the predicted probabilities for each class of the target and attribution to
-#'   ntiles in the dataset for each class of the target.
-#'
-#' @seealso use \code{\link{prepare_scores_and_ntiles}} instead.
-#' @export
-#  Depreciated: prepare_scores_and_deciles
-prepare_scores_and_deciles <- function(datasets,
-  dataset_labels,
-  models,
-  model_labels ,
-  target_column){
-  .Deprecated("prepare_scores_and_ntiles")
-  prepare_scores_and_ntiles(datasets=datasets,
-    dataset_labels=dataset_labels,
-    models=models,
-    model_labels=model_labels,
-    target_column=target_column,
-    ntiles=10)
+  cat('Data preparation step 1 succeeded! Dataframe created.')
+  return(scores_and_ntiles)
 }
 
 
@@ -250,15 +212,15 @@ prepare_scores_and_deciles <- function(datasets,
 #### aggregate_over_ntiles()         ####
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
-#' Build 'ntiles_aggregate' with aggregated evaluation measures
+#' Build a dataframe with aggregated evaluation measures
 #'
-#' Build dataframe 'ntiles_aggregate' with aggregated actuals and predictions .
-#' A record in 'ntiles_aggregate' is unique on the combination of models [m], datasets [d], targetvalues [t] and ntiles.
-#' The size of ntiles_aggregate is (m*d*t*10) rows and 23 columns.
-#' @param scores_and_ntiles Dataframe resulting from function \code{\link{prepare_scores_and_ntiles}} or a data frame that meets
-#' requirements as specified in the section below: \bold{When you build scores_and_ntiles yourself} .
-#' @return Dataframe \code{ntiles_aggregate} is built based on \code{scores_and_ntiles}.\cr\cr
-#' \code{ntiles_aggregate} contains:
+#' Build a dataframe with aggregated actuals and predictions .
+#' Records in this dataframe represent the unique combinations of models [m], datasets [d], targetvalues [t] and ntiles [n].
+#' The size of this dataframe therefore is (m*d*t*n) rows and 23 columns. \cr\cr \bold{\emph{In most cases, you do not need to use function
+#'   since the \code{\link{plotting_scope}} function will call this function automatically.}}
+#' @param prepared_input Dataframe resulting from function \code{\link{prepare_scores_and_ntiles}} or a data frame that meets
+#' requirements as specified in the section below: \bold{When you build input for aggregate_over_ntiles() yourself} .
+#' @return Dataframe object is returned, containing:
 #' \tabular{lll}{
 #'   \bold{column} \tab \bold{type} \tab \bold{definition} \cr
 #'   model_label \tab String \tab Name of the model object \cr
@@ -294,9 +256,9 @@ prepare_scores_and_deciles <- function(datasets,
 #'     ((cumpos/cumtot)/pcttot)\cr
 #'   cumlift_ref\tab Decimal\tab Reference value for Cumulative lift value (constant: 1)
 #'  }
-#' @section When you build scores_and_ntiles yourself:
-#' To make plots with modelplotr, is not required to use the function prepare_scores_and_ntiles to generate scores_and_ntiles.
-#' You can create your own dataframe containing actuals and predictions and ntiles (1st ntile = (1/#ntiles) percent
+#' @section When you build input for aggregate_over_ntiles() yourself:
+#' To make plots with modelplotr, is not required to use the function prepare_scores_and_ntiles to generate the required input data.
+#' You can create your own dataframe containing actuals and probabilities and ntiles (1st ntile = (1/#ntiles) percent
 #' with highest model probability, last ntile = (1/#ntiles) percent with lowest probability according to model) ,
 #' In that case, make sure the input dataframe contains the folowing columns & formats:
 #' \tabular{lll}{
@@ -352,38 +314,32 @@ prepare_scores_and_deciles <- function(datasets,
 #'                           training_frame = h2o_train,
 #'                           nfolds = 5)
 #' # preparation steps
-#' prepare_scores_and_ntiles(datasets=list("train","test"),
+#' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl", "gbm"),
 #'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
 #'                       target_column="Species")
-#' head(scores_and_ntiles)
-#' aggregate_over_ntiles()
-#' plotting_scope()
-#' # various plotting examples with different plotting scopes
-#' plot_cumgains()
-#' plot_cumgains(highlight_ntile=2)
-#' plotting_scope(scope="compare_models")
-#' plot_cumlift()
-#' plot_cumlift(highlight_ntile=2,highlight_how="plot")
-#' plotting_scope(scope="compare_targetclasses")
-#' plot_response()
-#' plot_response(custom_line_colors = c('green','orange','darkblue'))
-#' plotting_scope(scope="compare_datasets")
-#' plot_cumresponse()
-#' plot_cumresponse(highlight_ntile=2,highlight_how="text")
-#' plot_all()
+#' aggregated <- aggregate_over_ntiles(prepared_input=scores_and_ntiles)
+#' head(aggregated)
+#' plot_input <- plotting_scope(prepared_input = aggregated)
+#' head(plot_input)
 #' @export
 #' @importFrom magrittr %>%
-aggregate_over_ntiles <- function(prepared_input=scores_and_ntiles){
+aggregate_over_ntiles <- function(prepared_input){
 
-  # check if scores_and_ntiles exists, otherwise create
-  if (missing(prepared_input)&!exists("scores_and_ntiles")) {
-    stop("Input dataframe (similar to) scores_and_ntiles not available!
-      First run prepare_scores_and_ntiles() to generate scores_and_ntiles.")
-  }
+  # check if input is dataframe
   if(!is.data.frame(prepared_input)) {
     stop('"prepared_input" should a be a dataframe!')}
+
+  # check if input dataframe has required input columns
+  needed_colnames <- c('model_label','dataset_label','y_true')
+  check_colnames <- all(needed_colnames %in% colnames(prepared_input))
+  check_probcols <- sum(stringr::str_count(colnames(prepared_input),'prob_'))>=1
+  check_ntlcols <- sum(stringr::str_count(colnames(prepared_input),'ntl_'))>=1
+  if(!all(check_colnames,check_probcols,check_ntlcols)) {
+    stop('"prepared_input" dataframe does not contain all needed columns.
+Use prepare_scores_and_deciles() or see ?aggregate_over_ntiles for details how to build required input yourself.')
+    }
 
   modelgroups = levels(prepared_input$dataset_label)
   yvals = levels(prepared_input$y_true)
@@ -448,54 +404,22 @@ aggregate_over_ntiles <- function(prepared_input=scores_and_ntiles){
     ntiles_aggregate = rbind(ntiles_aggregate,eval_t_zero,eval_t_add)
     ntiles_aggregate = ntiles_aggregate[with(ntiles_aggregate,order(target_class,dataset_label,ntile)),]
   }
-  ntiles_aggregate <<- ntiles_aggregate
-  return('Data preparation step 2 succeeded! Dataframe \'ntiles_aggregate\' created.')
-
+  cat('Data preparation step 2 succeeded! Dataframe created.')
+  return(ntiles_aggregate)
 }
 
-# Depreciated: prepare_scores_and_deciles
-
-convert_scoresanddeciles_to_scoresandntiles <- function(scores_and_deciles){
-  scores_and_ntiles <- scores_and_deciles %>% dplyr::rename_(.dots=setNames(names(.), gsub("dcl_", "ntl_", names(.))))
-}
-
-
-#' DEPRECIATED: aggregate_over_deciles()
-#'
-#' This function is depreciated, since modelplotr now supports that you can specify the number of bins (ntiles) you prefer.
-#' You can choose a value for the \code{ntiles} parameter between 4 and 100, the default is 10 (deciles).
-#' Therefore, please use \code{\link{aggregate_over_deciles}} instead.
-#'
-#' @param scores_and_ntiles Dataframe resulting from function \code{\link{prepare_scores_and_ntiles}} or a data frame
-#' that meets requirements as specified in \code{\link{aggregate_over_deciles}} in the section: \bold{When you build scores_and_ntiles yourself} . It is made backward compatible to also work on a \code{scores_and_deciles} dataframe created in earlier version of modelplotr .
-#' @return Dataframe \code{ntiles_aggregate} is built based on \code{scores_and_ntiles}.\cr\cr
-#' @seealso use \code{\link{aggregate_over_deciles}} instead.
-#' @importFrom magrittr %>%
-#' @export
-aggregate_over_deciles <- function(prepared_input){
-  .Deprecated("aggregate_over_ntiles")
-  # check if valid prepared input  exists, else stop
-  if (missing(prepared_input)&!exists("scores_and_ntiles")&!exists("scores_and_deciles")) {
-    stop("Input dataframe (similar to) scores_and_ntiles (scores_and_deciles) not available!
-      First run prepare_scores_and_ntiles() to generate scores_and_ntiles and then run aggregate_over_ntiles().")
-    # check if prepared_input exists and build ntiles_aggregate
-    }else if(!missing(prepared_input)){
-    aggregate_over_ntiles(prepared_input)
-    # check if scores_and_ntiles exists and build ntiles_aggregate
-    }else if(!exists("scores_and_deciles")&exists("scores_and_ntiles")){
-    aggregate_over_ntiles(scores_and_ntiles)
-    # check if scores_and_deciles exists and build ntiles_aggregate
-    } else {aggregate_over_ntiles(convert_scoresanddeciles_to_scoresandntiles(scores_and_deciles))}
-}
 
 
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 #### plotting_scope()         ####
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
-#' Build 'plot_input' with subset for selected evaluation type.
+#' Build dataframe with formatted input for all plots.
 #'
-#' Build dataframe 'plot_input' with a subset of 'ntiles_aggregate' that meets the requested evaluation perspective.
+#' Build a dataframe in the required format for all modelplotr plots, relevant to the selected scope of evaluation.
+#' Each record in this dataframe represents a unique combination of datasets, models, target classes and ntiles.
+#' As an input, plotting_scope can handle both a dataframe created with \code{aggregate_over_ntiles} as well as a dataframe
+#' created with \code{prepare_scores_and_ntiles} (or created otherwise with similar layout).
 #' There are four perspectives:
 #' \describe{
 #'   \item{"no_comparison" (default)}{In this perspective, you're interested in the performance of one model on one dataset
@@ -531,6 +455,25 @@ aggregate_over_deciles <- function(prepared_input){
 #' When scope is "compare_targetclasses", select_targetclass can be used to take a subset of available target classes.
 #' @param select_smallest_targetclass Boolean. Select the target value with the smallest number of cases in dataset as group of
 #' interest. Default is True, hence the target value with the least observations is selected.
+#' @section When you build input for plotting_scope() yourself:
+#' To make plots with modelplotr, is not required to use the function prepare_scores_and_ntiles to generate the required input data.
+#' You can create your own dataframe containing actuals and probabilities and ntiles (1st ntile = (1/#ntiles) percent
+#' with highest model probability, last ntile = (1/#ntiles) percent with lowest probability according to model) ,
+#' In that case, make sure the input dataframe contains the folowing columns & formats:
+#' \tabular{lll}{
+#'   \bold{column} \tab \bold{type} \tab \bold{definition} \cr
+#'   model_label \tab Factor \tab Name of the model object \cr
+#'   dataset_label \tab Factor \tab Datasets to include in the plot as factor levels\cr
+#'   y_true \tab Factor \tab Target with actual values \cr
+#'   prob_[tv1] \tab Decimal \tab Probability according to model for target value 1 \cr
+#'   prob_[tv2] \tab Decimal \tab Probability according to model for target value 2 \cr
+#'   ... \tab ... \tab ... \cr
+#'   prob_[tvn] \tab Decimal \tab Probability according to model for target value n \cr
+#'   ntl_[tv1] \tab Integer \tab Ntile based on probability according to model for target value 1 \cr
+#'   ntl_[tv2] \tab Integerl \tab Ntile based on probability according to model for target value 2 \cr
+#'   ... \tab ... \tab ... \cr
+#'   ntl_[tvn] \tab Integer \tab Ntile based on probability according to model for target value n
+#'  }
 #' @return Dataframe \code{plot_input} is a subset of \code{ntiles_aggregate}.
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
 #' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
@@ -592,29 +535,36 @@ aggregate_over_deciles <- function(prepared_input){
 #' plotting_scope(scope="compare_datasets")
 #' plot_cumresponse()
 #' plot_cumresponse(highlight_ntile=2,highlight_how="text")
-#' plot_all()
+#' plot_multiplot()
 #' @export
 #' @importFrom magrittr %>%
-plotting_scope <- function(prepared_input=ntiles_aggregate,
+plotting_scope <- function(prepared_input,
                                scope="no_comparison",
                                select_model_label=NA,
                                select_dataset_label=NA,
                                select_targetclass=NA,
                                select_smallest_targetclass=TRUE){
 
-  # check if ntiles_aggregate exists, otherwise create
-  # check if parameter is empty or default - hence ntiles_aggregate is needed - and check if )
-  if (missing(prepared_input)) {
-    if(!exists("ntiles_aggregate")) {
-      if(!exists("scores_and_ntiles")){
-    stop("prepared_input unavailable and input dataframe scores_and_ntiles to create prepared_input
-          not available! First run prepare_scores_and_ntiles() to generate scores_and_ntiles.")
-      } else if (!is.data.frame(scores_and_ntiles)) {
-            stop('"ntiles_aggregate" should a be a dataframe!')
-      } else {
-    print('ntiles_aggregate not available; input_modelevalplots() is run...')
-    aggregate_over_ntiles()
-  }}}
+  # check if input has required input columns
+  needed_colnames <- c('model_label','dataset_label','target_class','ntile','neg','pos','tot','pct',
+                               'negtot','postot','tottot','pcttot','cumneg','cumpos','cumtot','cumpct',
+                               'gain','cumgain','gain_ref','gain_opt','lift','cumlift','cumlift_ref')
+  if(!all(needed_colnames %in% colnames(prepared_input))) {
+    # if not, check if input data has format for aggregate_over_deciles
+    # check if input dataframe has required input columns
+    needed_colnames <- c('model_label','dataset_label','y_true')
+    check_colnames <- all(needed_colnames %in% colnames(prepared_input))
+    check_probcols <- sum(stringr::str_count(colnames(prepared_input),'prob_'))>=1
+    check_ntlcols <- sum(stringr::str_count(colnames(prepared_input),'ntl_'))>=1
+    if(!all(check_colnames,check_probcols,check_ntlcols)) {
+      stop('"prepared_input" dataframe does not contain all needed columns.
+Use prepare_scores_and_deciles() or see ?aggregate_over_ntiles for details how to build required input yourself.')
+    } else{
+      prepared_input <- aggregate_over_ntiles(prepared_input)
+      cat('"prepared_input" aggregated...\n')
+    }
+  }
+
 
   # check if scope has a valid value
   if (!scope %in% c(NA,"compare_models","compare_datasets", "compare_targetclasses","no_comparison")) {
@@ -713,8 +663,8 @@ Single evaluation line will be plotted: Target value "',
 -> To compare target classes, specify: scope = "compare_targetclasses"
 -> To plot one line, do not specify scope or specify scope = "no_comparison".'))
     }
-  plot_input <<- cbind(scope=scope,
-                        plot_input)
-  cat(paste0('Data preparation step 3 succeeded! Dataframe \'plot_input\' created.\n\n',type_print,'\n\n'))
+  plot_input <- cbind(scope=scope,plot_input)
+  cat(paste0('Data preparation step 3 succeeded! Dataframe created.\n\n',type_print,'\n\n'))
+  return(plot_input)
 }
 

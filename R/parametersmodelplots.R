@@ -545,10 +545,19 @@ annotate_plot <- function(plot=plot,highlight_input=plot_input_prepared,
       title <- grid::textGrob(pp$scope$plottitle, gp=grid::gpar(fontsize=18))
       subtitle <- grid::textGrob(pp$scope$plotsubtitle, gp=grid::gpar(fontsize=10,fontface="italic",col="black"))
 
+      #add x axis labels when no annotation is applied to plot
+      if(highlight_how =='text') {
+        plot <- plot + ggplot2::scale_x_continuous(name=pp$cumgains$x_axis_label,
+                                                                            breaks=seq(0,pp$scope$ntiles,pp$scope$xlabper),
+                                                                            labels=seq(0,pp$scope$ntiles,pp$scope$xlabper),expand = c(0, 0.02))+
+                       ggplot2::theme(axis.line.x=ggplot2::element_line(),axis.line.y=ggplot2::element_line())
+      }
+
       # create grob layout and add elements to it
       lay <- as.matrix(c(1,2,rep(3,20),rep(4,1+pp$scope$nlevels)))
       plot <- gridExtra::arrangeGrob(title,subtitle,plot,annotextplot, layout_matrix = lay,
                                      widths = grid::unit(18, "cm"),heights = grid::unit(rep(12/(23+pp$scope$nlevels),23+pp$scope$nlevels), "cm"))
+
     }
     }
   return(plot)

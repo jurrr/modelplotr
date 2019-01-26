@@ -22,7 +22,7 @@ Default is "plot_text", both highlighting the ntile and value on the plot as wel
 "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen ntile.
 "text" adds text below the plot explaining the plot at chosen ntile but does not highlight the plot.}
 
-\item{save_fig}{Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plot_all is optimized for 36x24cm.}
+\item{save_fig}{Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plot is optimized for 36x24cm.}
 
 \item{save_fig_filename}{String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.}
 

@@ -5,8 +5,12 @@
 
 #' modelplotr: Plots to Evaluate the Business Performance of Predictive Models.
 #'
+#' Plots to evaluate the business performance of predictive models in R.
+#' A number of widely used plots to assess the quality of a predictive model from a business perspective
+#' can easily be created. Using these plots, it can be shown how implementation of the model will impact
+#' business targets like response on a campaign or return on investment.
 #' The modelplotr package provides three categories of important functions:
-#' datapreparation, parameterization and plotting.
+#' datapreparation, plot parameterization and plotting.
 #'
 #' @author Jurriaan Nagelkerke <jurriaan.nagelkerke@@gmail.com> [aut, cre]
 #' @author Pieter Marcus <pieter.marcus@@persgroep.net> [aut]
@@ -14,20 +18,25 @@
 #' @section Datapreparation functions:
 #'  The datapreparation functions are:
 #' \describe{
-#'   \item{\code{\link{prepare_scores_and_ntiles}}}{a
-#'   function that builds a dataframe object \code{'scores_and_ntiles'} that contains
-#'   actuals and predictions on dependent variable for each dataset in datasets.}
-#'   \item{\code{\link{aggregate_over_ntiles}}}{a function that creates a dataframe \code{'ntiles_aggregate'} with aggregated
-#'     actuals and predictions. A record in 'ntiles_aggregate' is unique on the combination
-#'     of datasets-ntile.}
-#'   \item{\code{\link{plotting_scope}}}{a function that creates a dataframe \code{'plot_input'}  with a subset
-#'     of 'ntiles_aggregate', relevant to the selected scope of evaluation. }}
+#'   \item{\code{\link{prepare_scores_and_ntiles}}}{a function that builds a dataframe
+#'   that contains actuals and predictions on dependent variable for each dataset in datasets. As inputs, it takes dataframes
+#'   to score and model objects created with \strong{catet},  \strong{mlr} or  \strong{H2o}.
+#'   To use modelplotr on top of models created otherwise, see \code{\link{aggregate_over_ntiles}}}
+#'   \item{\code{\link{plotting_scope}}}{a function that creates a dataframe in the required format for all
+#'   modelplotr plots, relevant to the selected scope of evaluation. Each record in this dataframe represents
+#'   a unique combination of datasets, models, target classes and ntiles. As an input, plotting_scope can handle
+#'   both a dataframe created with \code{aggregate_over_ntiles} as well as a dataframe created with
+#'   \code{prepare_scores_and_ntiles} (or created otherwise with similar layout). }
+#'   \item{\code{\link{aggregate_over_ntiles}}}{a function that aggregates the output of \code{prepare_scores_and_ntiles}
+#'   to create a dataframe with aggregated actuals and predictions. Each record in this dataframe represents
+#'   a unique combination of datasets, models, target classes and ntiles. In most cases, you do not need to use function
+#'   since the \code{plotting_scope} function will call this function automatically.}}
 #' @section Parameterization functions:
 #'  Most parameterization functions are internal functions. However, one is available for customization:
 #' \describe{
-#'   \item{\code{\link{customize_plot_text}}}{a
-#'   function that returns a list that containsall textual elements of all plots that can be created with modelplotr.
-#'   By changing the list and including the list in plot functions, plot texts can be customized (eg. translated)  }}
+#'   \item{\code{\link{customize_plot_text}}}{a function that returns a list that contains all textual elements for
+#'   all plots that can be created with modelplotr. By changing the elements in this list - simply by overwriting values -
+#'   and then including this list with the \code{custom_plot_text} parameter in plot functions, plot texts can easily be customized}}
 #' @section Plotting functions:
 #'   The plotting functions are:
 #' \describe{
@@ -45,11 +54,19 @@
 #'      target class observations up until that ntile. It helps answering the question:
 #'      \strong{\emph{When we apply the model and select up until ntile X, what is the expected percentage of
 #'      target class observations in the selection? }}}
-#'     \item{\code{\link{plot_all}}}{Generates a canvas with all four evaluation plots combined}
-#'     \item{\code{\link{plot_profit}}}{Generates the profit plot. It plots the expected cumulative profit up until that ntile.}
-#'     \item{\code{\link{plot_roi}}}{Generates the roi plot. It plots the expected return on investment up until that ntile.}
-#'     \item{\code{\link{plot_costsrevs}}}{Generates the costs versus revenues plot. It plots both expected costs and
-#'     expected revenues up until that ntile.}
+#'     \item{\code{\link{plot_multiplot}}}{Generates a canvas with all four evaluation plots - cumulative gains, cumulative lift,
+#'     response and cumulative response - combined on one canvas}
+#'     \item{\code{\link{plot_costsrevs}}}{It plots the cumulative costs and revenues up until that ntile when the model
+#'     is used for campaign selection. It can be used to answer the following business question:
+#'      \strong{\emph{When we apply the model and select up until ntile X, what are the expected costs and
+#'      revenues of the campaign?}}}
+#'     \item{\code{\link{plot_profit}}}{Generates the Profit plot. It plots the cumulative profit up until that ntile when the
+#'     model is used for campaign selection. It can be used to answer the following business question:
+#'      \strong{\emph{When we apply the model and select up until ntile X, what is the expected profit of the campaign?}}}
+#'     \item{\code{\link{plot_roi}}}{Generates the Return on Investment plot. It plots the cumulative revenues as a percentage
+#'     of investments up until that ntile when the model is used for campaign selection. It can be used to answer the following
+#'     business question: \strong{\emph{When we apply the model and select up until ntile X, what is the expected % return on
+#'     investment of the campaign?}}}
 #'     }
 #'
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
@@ -86,27 +103,29 @@
 #'                           training_frame = h2o_train,
 #'                           nfolds = 5)
 #' # preparation steps
-#' prepare_scores_and_ntiles(datasets=list("train","test"),
+#' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
 #'                       models = list("rf","mnl", "gbm"),
 #'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
 #'                       target_column="Species")
-#' head(scores_and_ntiles)
-#' aggregate_over_ntiles()
-#' plotting_scope()
+#' plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
+#' head(plot_input)
 #' # various plotting examples with different plotting scopes
-#' plot_cumgains()
-#' plot_cumgains(highlight_ntile=2)
-#' plotting_scope(scope="compare_models")
-#' plot_cumlift()
-#' plot_cumlift(highlight_ntile=2,highlight_how="plot")
-#' plotting_scope(scope="compare_targetclasses")
-#' plot_response()
-#' plot_response(custom_line_colors = c('green','orange','darkblue'))
-#' plotting_scope(scope="compare_datasets")
-#' plot_cumresponse()
-#' plot_cumresponse(highlight_ntile=2,highlight_how="text")
-#' plot_all()
+#' plot_cumgains(data=plot_input)
+#' plot_cumgains(data=plot_input,highlight_ntile=2)
+#' plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_models")
+#' plot_cumlift(data=plot_input)
+#' plot_cumlift(data=plot_input,highlight_ntile=2,highlight_how="plot")
+#' plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_targetclasses")
+#' plot_response(data=plot_input)
+#' plot_response(data=plot_input,custom_line_colors = c('green','orange','darkblue'))
+#' plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_datasets")
+#' plot_cumresponse(data=plot_input)
+#' plot_cumresponse(data=plot_input,highlight_ntile=2,highlight_how="text")
+#' plot_multiplot(data=plot_input)
+#' plot_costsrevs(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
+#' plot_profit(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
+#' plot_roi(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
 #'
 #' @docType package
 #' @name modelplotr

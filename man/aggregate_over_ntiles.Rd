@@ -2,17 +2,16 @@
 % Please edit documentation in R/dataprepmodelplots.R
 \name{aggregate_over_ntiles}
 \alias{aggregate_over_ntiles}
-\title{Build 'ntiles_aggregate' with aggregated evaluation measures}
+\title{Build a dataframe with aggregated evaluation measures}
 \usage{
-aggregate_over_ntiles(prepared_input = scores_and_ntiles)
+aggregate_over_ntiles(prepared_input)
 }
 \arguments{
-\item{scores_and_ntiles}{Dataframe resulting from function \code{\link{prepare_scores_and_ntiles}} or a data frame that meets
-requirements as specified in the section below: \bold{When you build scores_and_ntiles yourself} .}
+\item{prepared_input}{Dataframe resulting from function \code{\link{prepare_scores_and_ntiles}} or a data frame that meets
+requirements as specified in the section below: \bold{When you build input for aggregate_over_ntiles() yourself} .}
 }
 \value{
-Dataframe \code{ntiles_aggregate} is built based on \code{scores_and_ntiles}.\cr\cr
-\code{ntiles_aggregate} contains:
+Dataframe object is returned, containing:
 \tabular{lll}{
   \bold{column} \tab \bold{type} \tab \bold{definition} \cr
   model_label \tab String \tab Name of the model object \cr
@@ -50,14 +49,15 @@ Dataframe \code{ntiles_aggregate} is built based on \code{scores_and_ntiles}.\cr
  }
 }
 \description{
-Build dataframe 'ntiles_aggregate' with aggregated actuals and predictions .
-A record in 'ntiles_aggregate' is unique on the combination of models [m], datasets [d], targetvalues [t] and ntiles.
-The size of ntiles_aggregate is (m*d*t*10) rows and 23 columns.
+Build a dataframe with aggregated actuals and predictions .
+Records in this dataframe represent the unique combinations of models [m], datasets [d], targetvalues [t] and ntiles [n].
+The size of this dataframe therefore is (m*d*t*n) rows and 23 columns. \cr\cr \bold{\emph{In most cases, you do not need to use function
+  since the \code{\link{plotting_scope}} function will call this function automatically.}}
 }
-\section{When you build scores_and_ntiles yourself}{
+\section{When you build input for aggregate_over_ntiles() yourself}{
 
-To make plots with modelplotr, is not required to use the function prepare_scores_and_ntiles to generate scores_and_ntiles.
-You can create your own dataframe containing actuals and predictions and ntiles (1st ntile = (1/#ntiles) percent
+To make plots with modelplotr, is not required to use the function prepare_scores_and_ntiles to generate the required input data.
+You can create your own dataframe containing actuals and probabilities and ntiles (1st ntile = (1/#ntiles) percent
 with highest model probability, last ntile = (1/#ntiles) percent with lowest probability according to model) ,
 In that case, make sure the input dataframe contains the folowing columns & formats:
 \tabular{lll}{
@@ -108,27 +108,15 @@ gbm <- h2o::h2o.gbm(y = "Species",
                           training_frame = h2o_train,
                           nfolds = 5)
 # preparation steps
-prepare_scores_and_ntiles(datasets=list("train","test"),
+scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
                       dataset_labels = list("train data","test data"),
                       models = list("rf","mnl", "gbm"),
                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
                       target_column="Species")
-head(scores_and_ntiles)
-aggregate_over_ntiles()
-plotting_scope()
-# various plotting examples with different plotting scopes
-plot_cumgains()
-plot_cumgains(highlight_ntile=2)
-plotting_scope(scope="compare_models")
-plot_cumlift()
-plot_cumlift(highlight_ntile=2,highlight_how="plot")
-plotting_scope(scope="compare_targetclasses")
-plot_response()
-plot_response(custom_line_colors = c('green','orange','darkblue'))
-plotting_scope(scope="compare_datasets")
-plot_cumresponse()
-plot_cumresponse(highlight_ntile=2,highlight_how="text")
-plot_all()
+aggregated <- aggregate_over_ntiles(prepared_input=scores_and_ntiles)
+head(aggregated)
+plot_input <- plotting_scope(prepared_input = aggregated)
+head(plot_input)
 }
 \seealso{
 \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}

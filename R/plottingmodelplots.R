@@ -716,7 +716,7 @@ plot_cumresponse <- function(data=plot_input,highlight_ntile=NA,highlight_how='p
 
 
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
-#### plot_all()              ####
+#### plot_multiplot()              ####
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
 
@@ -729,7 +729,7 @@ plot_cumresponse <- function(data=plot_input,highlight_ntile=NA,highlight_how='p
 #' or else meet required input format.
 #' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
-#' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plot_all is optimized for 36x24cm.
+#' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plot is optimized for 36x24cm.
 #' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
 #' @param highlight_ntile Integer. Specifying the ntile at which the plot is annotated
 #' and/or performances are highlighted.
@@ -780,9 +780,9 @@ plot_cumresponse <- function(data=plot_input,highlight_ntile=NA,highlight_how='p
 #' plot_cumlift()
 #' plot_response()
 #' plot_cumresponse()
-#' plot_all()
+#' plot_multiplot()
 #' @export
-plot_all <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,
+plot_multiplot <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,
                      highlight_ntile = NA, custom_plot_text=NULL,...) {
 
   plot_input <- data
@@ -800,22 +800,22 @@ plot_all <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,custom_
   cumgainsplot <- plot_cumgains(custom_line_colors=custom_line_colors,highlight_ntile = highlight_ntile,highlight_how = 'plot') +
     ggplot2::labs(title=pp$cumgains$plottitle,subtitle=NA) +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),
-      plot.subtitle = ggplot2::element_blank(),axis.title.x = ggplot2::element_blank())
+      plot.subtitle = ggplot2::element_blank(),axis.title.x = ggplot2::element_blank(),axis.line.x=ggplot2::element_line(),axis.line.y=ggplot2::element_line())
   # make plot_cumlift without subtitle
   cumliftplot <- plot_cumlift(custom_line_colors=custom_line_colors,highlight_ntile = highlight_ntile,highlight_how = 'plot') +
     ggplot2::labs(title=pp$cumlift$plottitle,subtitle=NA) +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),
-      plot.subtitle = ggplot2::element_blank(),axis.title.x = ggplot2::element_blank())
+      plot.subtitle = ggplot2::element_blank(),axis.title.x = ggplot2::element_blank(),axis.line.x=ggplot2::element_line(),axis.line.y=ggplot2::element_line())
   # make plot_response without subtitle
   responseplot <- plot_response(custom_line_colors=custom_line_colors,highlight_ntile = highlight_ntile,highlight_how = 'plot') +
     ggplot2::labs(title=pp$response$plottitle,subtitle=NA) +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),
-      plot.subtitle = ggplot2::element_blank())
+      plot.subtitle = ggplot2::element_blank(),axis.line.x=ggplot2::element_line(),axis.line.y=ggplot2::element_line())
   # make plot_cumresponse without subtitle
   cumresponseplot <- plot_cumresponse(custom_line_colors=custom_line_colors,highlight_ntile = highlight_ntile,highlight_how = 'plot')+
     ggplot2::labs(title=pp$cumresponse$plottitle,subtitle=NA) +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),
-      plot.subtitle = ggplot2::element_blank())
+      plot.subtitle = ggplot2::element_blank(),axis.line.x=ggplot2::element_line(),axis.line.y=ggplot2::element_line())
 
   # create title text element to add to grob
   plottitle <- data.frame(text=pp$multiplot$plottitle)
@@ -891,7 +891,7 @@ plot_all <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,custom_
 #' Default is "plot_text", both highlighting the ntile and value on the plot as well as in text below the plot.
 #' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen ntile.
 #' "text" adds text below the plot explaining the plot at chosen ntile but does not highlight the plot.
-#' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plot_all is optimized for 36x24cm.
+#' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plot is optimized for 36x24cm.
 #' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
 #' @param custom_plot_text List. List with customized textual elements for plot. Create a list with defaults
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
@@ -1060,7 +1060,7 @@ plot_roi <- function(data=plot_input,highlight_ntile='max_roi',highlight_how='pl
 #' Default is "plot_text", both highlighting the ntile and value on the plot as well as in text below the plot.
 #' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen ntile.
 #' "text" adds text below the plot explaining the plot at chosen ntile but does not highlight the plot.
-#' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plot_all is optimized for 36x24cm.
+#' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plot is optimized for 36x24cm.
 #' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
 #' @param custom_plot_text List. List with customized textual elements for plot. Create a list with defaults
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
@@ -1238,7 +1238,7 @@ plot_profit <- function(data=plot_input,highlight_ntile='max_profit',highlight_h
 #' Default is "plot_text", both highlighting the ntile and value on the plot as well as in text below the plot.
 #' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen ntile.
 #' "text" adds text below the plot explaining the plot at chosen ntile but does not highlight the plot.
-#' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plot_all is optimized for 36x24cm.
+#' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plot is optimized for 36x24cm.
 #' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
 #' @param custom_plot_text List. List with customized textual elements for plot. Create a list with defaults
 #' by using \code{\link{customize_plot_text}} and override default values to customize.

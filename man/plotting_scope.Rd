@@ -2,12 +2,11 @@
 % Please edit documentation in R/dataprepmodelplots.R
 \name{plotting_scope}
 \alias{plotting_scope}
-\title{Build 'plot_input' with subset for selected evaluation type.}
+\title{Build dataframe with formatted input for all plots.}
 \usage{
-plotting_scope(prepared_input = ntiles_aggregate,
-  scope = "no_comparison", select_model_label = NA,
-  select_dataset_label = NA, select_targetclass = NA,
-  select_smallest_targetclass = TRUE)
+plotting_scope(prepared_input, scope = "no_comparison",
+  select_model_label = NA, select_dataset_label = NA,
+  select_targetclass = NA, select_smallest_targetclass = TRUE)
 }
 \arguments{
 \item{prepared_input}{Dataframe. Dataframe resulting from function \code{\link{aggregate_over_ntiles}()} or with similar
@@ -37,7 +36,10 @@ interest. Default is True, hence the target value with the least observations is
 Dataframe \code{plot_input} is a subset of \code{ntiles_aggregate}.
 }
 \description{
-Build dataframe 'plot_input' with a subset of 'ntiles_aggregate' that meets the requested evaluation perspective.
+Build a dataframe in the required format for all modelplotr plots, relevant to the selected scope of evaluation.
+Each record in this dataframe represents a unique combination of datasets, models, target classes and ntiles.
+As an input, plotting_scope can handle both a dataframe created with \code{aggregate_over_ntiles} as well as a dataframe
+created with \code{prepare_scores_and_ntiles} (or created otherwise with similar layout).
 There are four perspectives:
 \describe{
   \item{"no_comparison" (default)}{In this perspective, you're interested in the performance of one model on one dataset
@@ -57,6 +59,28 @@ There are four perspectives:
    values on a specific dataset.This resuls in a comparison between target classes available in ntiles_aggregate$target_class for
    a selected model (default: first alphabetic model) and for a selected dataset (default: first alphabetic dataset).}}
 }
+\section{When you build input for plotting_scope() yourself}{
+
+To make plots with modelplotr, is not required to use the function prepare_scores_and_ntiles to generate the required input data.
+You can create your own dataframe containing actuals and probabilities and ntiles (1st ntile = (1/#ntiles) percent
+with highest model probability, last ntile = (1/#ntiles) percent with lowest probability according to model) ,
+In that case, make sure the input dataframe contains the folowing columns & formats:
+\tabular{lll}{
+  \bold{column} \tab \bold{type} \tab \bold{definition} \cr
+  model_label \tab Factor \tab Name of the model object \cr
+  dataset_label \tab Factor \tab Datasets to include in the plot as factor levels\cr
+  y_true \tab Factor \tab Target with actual values \cr
+  prob_[tv1] \tab Decimal \tab Probability according to model for target value 1 \cr
+  prob_[tv2] \tab Decimal \tab Probability according to model for target value 2 \cr
+  ... \tab ... \tab ... \cr
+  prob_[tvn] \tab Decimal \tab Probability according to model for target value n \cr
+  ntl_[tv1] \tab Integer \tab Ntile based on probability according to model for target value 1 \cr
+  ntl_[tv2] \tab Integerl \tab Ntile based on probability according to model for target value 2 \cr
+  ... \tab ... \tab ... \cr
+  ntl_[tvn] \tab Integer \tab Ntile based on probability according to model for target value n
+ }
+}
+
 \examples{
 data(iris)
 # add some noise to iris to prevent perfect models
@@ -109,7 +133,7 @@ plot_response(custom_line_colors = c('green','orange','darkblue'))
 plotting_scope(scope="compare_datasets")
 plot_cumresponse()
 plot_cumresponse(highlight_ntile=2,highlight_how="text")
-plot_all()
+plot_multiplot()
 }
 \seealso{
 \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
