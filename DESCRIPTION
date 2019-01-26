@@ -1,7 +1,7 @@
 Package: modelplotr
 Type: Package
 Title: Plots to Evaluate the Business Performance of Predictive Models
-Version: 0.4
+Version: 1.0
 Authors@R: as.person(c(
     "Jurriaan Nagelkerke <jurriaan.nagelkerke@gmail.com> [aut, cre]", 
     "Pieter Marcus <pieter.marcus@persgroep.net> [aut]"))

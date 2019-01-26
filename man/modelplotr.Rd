@@ -7,19 +7,18 @@
 \title{modelplotr: Plots to Evaluate the Business Performance of Predictive Models.}
 \description{
 The modelplotr package provides three categories of important functions:
-datapreparation, parameterization and plotting.
+datapreparation, plot parameterization and plotting.
 }
 \section{Datapreparation functions}{
 
  The datapreparation functions are:
 \describe{
-  \item{\code{\link{prepare_scores_and_ntiles}}}{a
-  function that builds a dataframe object \code{'scores_and_ntiles'} that contains
-  actuals and predictions on dependent variable for each dataset in datasets.}
-  \item{\code{\link{aggregate_over_ntiles}}}{a function that creates a dataframe \code{'ntiles_aggregate'} with aggregated
+  \item{\code{\link{prepare_scores_and_ntiles}}}{a function that builds a dataframe
+  that contains actuals and predictions on dependent variable for each dataset in datasets.}
+  \item{\code{\link{aggregate_over_ntiles}}}{a function that creates a dataframe with aggregated
     actuals and predictions. A record in 'ntiles_aggregate' is unique on the combination
     of datasets-ntile.}
-  \item{\code{\link{plotting_scope}}}{a function that creates a dataframe \code{'plot_input'}  with a subset
+  \item{\code{\link{plotting_scope}}}{a function that creates a dataframe with a subset
     of 'ntiles_aggregate', relevant to the selected scope of evaluation. }}
 }
 
@@ -28,34 +27,8 @@ datapreparation, parameterization and plotting.
  Most parameterization functions are internal functions. However, one is available for customization:
 \describe{
   \item{\code{\link{customize_plot_text}}}{a
-  function that returns a list that containsall textual elements of all plots that can be created with modelplotr.
+  function that returns a list that contains all textual elements of all plots that can be created with modelplotr.
   By changing the list and including the list in plot functions, plot texts can be customized (eg. translated)  }}
-}
-
-\section{Plotting functions}{
-
-  The plotting functions are:
-\describe{
-  \item{\code{\link{plot_cumgains}}}{Generates the cumulative gains plot. This plot, often referred to as the gains chart,
-    helps answering the question: \strong{\emph{When we apply the model and select the best X ntiles,
-    what percentage of the actual target class observations can we expect to target?}} }
-    \item{\code{\link{plot_cumlift}}}{Generates the cumulative lift plot, often referred to as lift plot or index plot,
-    helps you answer the question: \strong{\emph{When we apply the model and select the best X ntiles,
-    how many times better is that than using no model at all?}}}
-    \item{\code{\link{plot_response}}}{Generates the response plot. It plots the percentage of target class observations
-    per ntile. It can be used to answer the following business question: \strong{\emph{When we apply
-    the model and select ntile X, what is the expected percentage of target class observations
-    in that ntile?}}}
-    \item{\code{\link{plot_cumresponse}}}{Generates the cumulative response plot. It plots the cumulative percentage of
-     target class observations up until that ntile. It helps answering the question:
-     \strong{\emph{When we apply the model and select up until ntile X, what is the expected percentage of
-     target class observations in the selection? }}}
-    \item{\code{\link{plot_all}}}{Generates a canvas with all four evaluation plots combined}
-    \item{\code{\link{plot_profit}}}{Generates the profit plot. It plots the expected cumulative profit up until that ntile.}
-    \item{\code{\link{plot_roi}}}{Generates the roi plot. It plots the expected return on investment up until that ntile.}
-    \item{\code{\link{plot_costsrevs}}}{Generates the costs versus revenues plot. It plots both expected costs and
-    expected revenues up until that ntile.}
-    }
 }
 
 \examples{
@@ -90,16 +63,15 @@ gbm <- h2o::h2o.gbm(y = "Species",
                           training_frame = h2o_train,
                           nfolds = 5)
 # preparation steps
-prepare_scores_and_ntiles(datasets=list("train","test"),
+scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
                       dataset_labels = list("train data","test data"),
                       models = list("rf","mnl", "gbm"),
                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
                       target_column="Species")
 head(scores_and_ntiles)
-aggregate_over_ntiles()
-plotting_scope()
+plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
 # various plotting examples with different plotting scopes
-plot_cumgains()
+plot_cumgains(data=plot_input)
 plot_cumgains(highlight_ntile=2)
 plotting_scope(scope="compare_models")
 plot_cumlift()

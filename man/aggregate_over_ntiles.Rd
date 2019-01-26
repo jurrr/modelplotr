@@ -4,7 +4,7 @@
 \alias{aggregate_over_ntiles}
 \title{Build 'ntiles_aggregate' with aggregated evaluation measures}
 \usage{
-aggregate_over_ntiles(prepared_input = scores_and_ntiles)
+aggregate_over_ntiles(prepared_input)
 }
 \arguments{
 \item{scores_and_ntiles}{Dataframe resulting from function \code{\link{prepare_scores_and_ntiles}} or a data frame that meets
