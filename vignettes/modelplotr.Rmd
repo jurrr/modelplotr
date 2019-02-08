@@ -466,6 +466,7 @@ plot_cumresponse(data = plot_input,save_fig_filename = 'D:\\plot123.png')
 
 ```
 
+
 ### Multiple plots on one canvas
 
 ...
