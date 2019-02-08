@@ -438,9 +438,9 @@ Use prepare_scores_and_deciles() or see ?aggregate_over_ntiles for details how t
 #'   \item{"compare_targetclasses"}{In this perspective, you're interested in how well a model performs for different target
 #'    values on a specific dataset.This resuls in a comparison between target classes available in ntiles_aggregate$target_class for
 #'    a selected model (default: first alphabetic model) and for a selected dataset (default: first alphabetic dataset).}}
-#' @param prepared_input Dataframe. Dataframe resulting from function \code{\link{aggregate_over_ntiles}()} or with similar
-#' format. Default value is ntiles_aggregate, the output of \code{aggregate_over_ntiles()}. When ntiles_aggregate is not found, function
-#' \code{aggregate_over_ntiles()} is automatically called.
+#' @param prepared_input Dataframe. Dataframe created with \code{\link{prepare_scores_and_ntiles}} or dataframe created with
+#' \code{\link{aggregate_over_ntiles}} or a dataframe that is created otherwise with similar layout as the output of these functions
+#' (see ?prepare_scores_and_ntiles and ?aggregate_over_ntiles for layout details).
 #' @param scope String. Evaluation type of interest. Possible values:
 #' "compare_models","compare_datasets", "compare_targetclasses","no_comparison".
 #' Default is NA, equivalent to "no_comparison".

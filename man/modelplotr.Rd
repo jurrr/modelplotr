@@ -76,60 +76,83 @@ datapreparation, plot parameterization and plotting.
 }
 
 \examples{
-data(iris)
-# add some noise to iris to prevent perfect models
-addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
-iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
-iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
-iris <- rbind(iris,iris_addnoise)
-train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-train = iris[train_index,]
-test = iris[-train_index,]
-#train models using mlr...
-trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-testTask <- mlr::makeClassifTask(data = test, target = "Species")
-mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-task = mlr::makeClassifTask(data = train, target = "Species")
-lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
-rf = mlr::train(lrn, task)
-lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
-mnl = mlr::train(lrn, task)
-#... or train models using caret...
-rf = caret::train(Species ~.,data = train, method = "rf")
-mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
-#.. or train models using h2o
-h2o::h2o.init()
-h2o::h2o.no_progress()
-h2o_train = h2o::as.h2o(train)
-h2o_test = h2o::as.h2o(test)
-gbm <- h2o::h2o.gbm(y = "Species",
-                          x = setdiff(colnames(train), "Species"),
-                          training_frame = h2o_train,
-                          nfolds = 5)
-# preparation steps
+# load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+data("bank_td")
+
+# prepare data for training model for binomial target has_td and train models
+train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+
+#train models using caret... (or use mlr or H2o to train your models... )
+# setting caret cross validation, here tuned for speed (not accuracy!)
+fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+# random forest using ranger package, here tuned for speed (not accuracy!)
+rf = caret::train(has_td ~.,data = train, method = "ranger",trControl = fitControl,
+                 tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+# mnl model using glmnet package
+mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
+
+# load modelplotr
+library(modelplotr)
+
+# transform datasets and model objects to input for modelplotr
 scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
-                      dataset_labels = list("train data","test data"),
-                      models = list("rf","mnl", "gbm"),
-                      model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
-                      target_column="Species")
+                                              dataset_labels = list("train data","test data"),
+                                              models = list("rf","mnl"),
+                                              model_labels = list("random forest","multinomial logit"),
+                                              target_column="has_td",
+                                              ntiles=100)
+
+# set scope for analysis (default: no comparison)
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
 head(plot_input)
-# various plotting examples with different plotting scopes
+
+# ALL PLOTS, with defaults
 plot_cumgains(data=plot_input)
-plot_cumgains(data=plot_input,highlight_ntile=2)
-plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_models")
 plot_cumlift(data=plot_input)
-plot_cumlift(data=plot_input,highlight_ntile=2,highlight_how="plot")
+plot_response(data=plot_input)
+plot_cumresponse(data=plot_input)
+plot_multiplot(data=plot_input)
+# financial plots - these need some financial parameters
+plot_costsrevs(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
+plot_profit(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
+plot_roi(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
+
+# CHANGING THE SCOPE OF ANALYSIS
+# changing the scope - compare models:
+plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_models")
+plot_cumgains(data=plot_input)
+# changing the scope - compare datasets:
+plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_datasets")
+plot_roi(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
+# changing the scope - compare target classes:
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_targetclasses")
 plot_response(data=plot_input)
-plot_response(data=plot_input,custom_line_colors = c('green','orange','darkblue'))
-plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_datasets")
-plot_cumresponse(data=plot_input)
-plot_cumresponse(data=plot_input,highlight_ntile=2,highlight_how="text")
-plot_multiplot(data=plot_input)
-plot_costsrevs(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
-plot_profit(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
-plot_roi(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
+
+# HIGHLIGHTING OPTIONS
+plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope = 'compare_datasets',select_model_label = 'random forest')
+plot_cumgains(data=plot_input,highlight_ntile=20)
+plot_cumlift(data=plot_input,highlight_ntile=20,highlight_how = 'plot')
+plot_response(data=plot_input,highlight_ntile=20,highlight_how = 'text')
+plot_cumresponse(data=plot_input,highlight_ntile=20,highlight_how = 'plot_text')
+plot_costsrevs(data=plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile='max_roi')
+plot_profit(data=plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
+plot_roi(data=plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
+
+# OTHER PLOT CUSTOMIZATIONS
+# customize line colors
+plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope = 'compare_models')
+plot_cumgains(data=plot_input,custom_line_colors = c('pink','navyblue'))
+# customize all textual elements of plots
+plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
+mytexts <- customize_plot_text(plot_input = plot_input)
+mytexts$cumresponse$plottitle <- 'Expected conversion rate for Campaign XYZ'
+mytexts$cumresponse$plotsubtitle <- 'proposed selection: best 15 percentiles according to our model'
+mytexts$cumresponse$y_axis_label <- '\% Conversion'
+mytexts$cumresponse$x_axis_label <- 'percentiles (percentile = 1\% of customers)'
+mytexts$cumresponse$annotationtext <- "Selecting up until the &NTL percentile with our &MDL model has an expected conversion rate of &VALUE"
+plot_cumresponse(data=plot_input,custom_plot_text = mytexts,highlight_ntile = 15)
 
 }
 \seealso{

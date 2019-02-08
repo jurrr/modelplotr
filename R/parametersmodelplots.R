@@ -410,8 +410,9 @@ annotate_plot <- function(plot=plot,highlight_input=plot_input_prepared,
   if(!is.na(highlight_ntile)) {
 
     # check if scores_and_ntiles exists, otherwise create
-    if (highlight_ntile<1 | (highlight_ntile>pp$scope$ntiles & highlight_ntile!='max_roi'& highlight_ntile!='max_profit')) {
-      stop(paste0("Value for highlight_ntile not valid! Choose ntile value to highlight in range [1:",pp$scope$ntiles,"]
+    if (highlight_ntile<1 | (highlight_ntile>pp$scope$ntiles & highlight_ntile!='max_roi'& highlight_ntile!='max_profit')|
+        ifelse(is.numeric(highlight_ntile),highlight_ntile %% 1 > 0,FALSE)) {
+      stop(paste0("Value for highlight_ntile not valid! Choose ntile (integer) value to highlight in range [1:",pp$scope$ntiles,"]
                   or use highlight_ntile='max_profit' or highlight_ntile='max_roi' for maximum value highlighting"))
     }
     if(!highlight_how %in% c('plot','text','plot_text')){
@@ -478,7 +479,7 @@ annotate_plot <- function(plot=plot,highlight_input=plot_input_prepared,
           ggplot2::theme(
             axis.line = ggplot2::element_line(color="black"),
             axis.text.x = ggplot2::element_text(face=xfaces,size=xsizes))+
-          ggplot2::scale_x_continuous(name=pp$scope$x_axis_label, breaks=xbreaks,labels=xbreaks,expand = c(0, 0.02))
+          ggplot2::scale_x_continuous(name=get('x_axis_label',get(pp$scope$plottype,pp)), breaks=xbreaks,labels=xbreaks,expand = c(0, 0.02))
       }else{
         xbreaks <- seq((1-pp$scope$ntile0)*pp$scope$xlabper,pp$scope$ntiles+pp$scope$ntile0,pp$scope$xlabper)
         xfaces <- rep("plain",(pp$scope$ntiles/pp$scope$xlabper)+pp$scope$ntile0)
@@ -487,7 +488,7 @@ annotate_plot <- function(plot=plot,highlight_input=plot_input_prepared,
           ggplot2::theme(
             axis.line = ggplot2::element_line(color="black"),
             axis.text.x = ggplot2::element_text(face=xfaces,size=xsizes))+
-          ggplot2::scale_x_continuous(name=pp$scope$x_axis_label, breaks=xbreaks,labels=xbreaks,expand = c(0, 0.02))+
+          ggplot2::scale_x_continuous(name=get('x_axis_label',get(pp$scope$plottype,pp)), breaks=xbreaks,labels=xbreaks,expand = c(0, 0.02))+
           # add value labels for annotated points to X axis
           ggplot2::geom_label(data=highlight_input %>% dplyr::filter(ntile %in% highlight_ntile_num & refline==0),
                               ggplot2::aes(x=highlight_ntile_num,y=-Inf,label = highlight_ntile_num,color=legend),fill="white",
@@ -547,7 +548,7 @@ annotate_plot <- function(plot=plot,highlight_input=plot_input_prepared,
 
       #add x axis labels when no annotation is applied to plot
       if(highlight_how =='text') {
-        plot <- plot + ggplot2::scale_x_continuous(name=pp$cumgains$x_axis_label,
+        plot <- plot + ggplot2::scale_x_continuous(name=get('x_axis_label',get(pp$scope$plottype,pp)),
                                                                             breaks=seq(0,pp$scope$ntiles,pp$scope$xlabper),
                                                                             labels=seq(0,pp$scope$ntiles,pp$scope$xlabper),expand = c(0, 0.02))+
                        ggplot2::theme(axis.line.x=ggplot2::element_line(),axis.line.y=ggplot2::element_line())

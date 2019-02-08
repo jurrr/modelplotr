@@ -9,9 +9,9 @@ plotting_scope(prepared_input, scope = "no_comparison",
   select_targetclass = NA, select_smallest_targetclass = TRUE)
 }
 \arguments{
-\item{prepared_input}{Dataframe. Dataframe resulting from function \code{\link{aggregate_over_ntiles}()} or with similar
-format. Default value is ntiles_aggregate, the output of \code{aggregate_over_ntiles()}. When ntiles_aggregate is not found, function
-\code{aggregate_over_ntiles()} is automatically called.}
+\item{prepared_input}{Dataframe. Dataframe created with \code{\link{prepare_scores_and_ntiles}} or dataframe created with
+\code{\link{aggregate_over_ntiles}} or a dataframe that is created otherwise with similar layout as the output of these functions
+(see ?prepare_scores_and_ntiles and ?aggregate_over_ntiles for layout details).}
 
 \item{scope}{String. Evaluation type of interest. Possible values:
 "compare_models","compare_datasets", "compare_targetclasses","no_comparison".

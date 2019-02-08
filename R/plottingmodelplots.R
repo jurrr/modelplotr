@@ -686,7 +686,8 @@ plot_cumresponse <- function(data=plot_input,highlight_ntile=NA,highlight_how='p
   plot <- annotate_plot(plot=plot,highlight_input = plot_input_prepared,
                         highlight_ntile=highlight_ntile,highlight_how=highlight_how,pp=pp)
   #add x axis labels when no annotation is applied
-  if(is.na(highlight_ntile)) plot <- plot + ggplot2::scale_x_continuous(name=pp$cumresponse$x_axis_label, breaks=seq(0,pp$scope$ntiles,pp$scope$xlabper),
+  if(is.na(highlight_ntile)) plot <- plot + ggplot2::scale_x_continuous(name=pp$cumresponse$x_axis_label,
+                                                                        breaks=seq(0,pp$scope$ntiles,pp$scope$xlabper),
     labels=seq(0,pp$scope$ntiles,pp$scope$xlabper),expand = c(0, 0.02))
 
   #save plot when requested
@@ -784,6 +785,8 @@ plot_cumresponse <- function(data=plot_input,highlight_ntile=NA,highlight_how='p
 #' @export
 plot_multiplot <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,
                      highlight_ntile = NA, custom_plot_text=NULL,...) {
+
+  # check if required parameters for financial plots are provided
 
   plot_input <- data
   custom_line_colors <- custom_line_colors
@@ -900,6 +903,12 @@ plot_multiplot <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,c
 plot_roi <- function(data=plot_input,highlight_ntile='max_roi',highlight_how='plot_text',
                      save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL,
                      fixed_costs,variable_costs_per_unit,profit_per_unit,...){
+
+  # check if required parameters for financial plots are provided
+
+  if(any(missing(fixed_costs),missing(variable_costs_per_unit),missing(profit_per_unit))) {
+    stop("required parameters 'fixed_costs', 'variable_costs_per_unit' and 'profit_per_unit' are not all specified!")
+  }
 
   plot_input <- data
   custom_line_colors <- custom_line_colors
@@ -1179,7 +1188,7 @@ plot_profit <- function(data=plot_input,highlight_ntile='max_profit',highlight_h
                         highlight_ntile=highlight_ntile,highlight_how=highlight_how,pp=pp)
 
   #add x axis labels when no annotation is applied
-  if(is.na(highlight_ntile)) plot <- plot + ggplot2::scale_x_continuous(name=pp$cumgains$x_axis_label,
+  if(is.na(highlight_ntile)) plot <- plot + ggplot2::scale_x_continuous(name=pp$profit$x_axis_label,
                                                                         breaks=seq(0,pp$scope$ntiles,pp$scope$xlabper),
                                                                         labels=seq(0,pp$scope$ntiles,pp$scope$xlabper),expand = c(0, 0.02))
 
@@ -1247,6 +1256,10 @@ plot_profit <- function(data=plot_input,highlight_ntile='max_profit',highlight_h
 plot_costsrevs <- function(data=plot_input,highlight_ntile='max_profit',highlight_how='plot_text',
                         save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL,
                         fixed_costs,variable_costs_per_unit,profit_per_unit,...){
+
+  if(any(missing(fixed_costs),missing(variable_costs_per_unit),missing(profit_per_unit))) {
+    stop("required parameters 'fixed_costs', 'variable_costs_per_unit' and 'profit_per_unit' are not all specified!")
+  }
 
   #fixed_costs = 32000,variable_costs_per_unit = 20,profit_per_unit = 100
   plot_input <- data
@@ -1349,7 +1362,7 @@ plot_costsrevs <- function(data=plot_input,highlight_ntile='max_profit',highligh
                         highlight_ntile=highlight_ntile,highlight_how=highlight_how,pp=pp)
 
   #add x axis labels when no annotation is applied
-  if(is.na(highlight_ntile)) plot <- plot + ggplot2::scale_x_continuous(name=pp$cumgains$x_axis_label,
+  if(is.na(highlight_ntile)) plot <- plot + ggplot2::scale_x_continuous(name=pp$costsrevs$x_axis_label,
                                                                         breaks=seq(0,pp$scope$ntiles,pp$scope$xlabper),
                                                                         labels=seq(0,pp$scope$ntiles,pp$scope$xlabper),expand = c(0, 0.02))
 
