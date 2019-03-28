@@ -45,51 +45,45 @@
 #' \code{\link{plotting_scope}} or else meet required input format.
 #' @return List with default values for all textual elements of the plots.
 #' @examples
-#' data(iris)
-#' # add some noise to iris to prevent perfect models
-#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
-#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
-#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
-#' iris <- rbind(iris,iris_addnoise)
-#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-#' train = iris[train_index,]
-#' test = iris[-train_index,]
-#' #train models using mlr...
-#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
-#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' task = mlr::makeClassifTask(data = train, target = "Species")
-#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
-#' rf = mlr::train(lrn, task)
-#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
-#' mnl = mlr::train(lrn, task)
-#' #... or train models using caret...
-#' rf = caret::train(Species ~.,data = train, method = "rf")
-#' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
-#' #.. or train models using h2o
-#' h2o::h2o.init()
-#' h2o::h2o.no_progress()
-#' h2o_train = h2o::as.h2o(train)
-#' h2o_test = h2o::as.h2o(test)
-#' gbm <- h2o::h2o.gbm(y = "Species",
-#'                           x = setdiff(colnames(train), "Species"),
-#'                           training_frame = h2o_train,
-#'                           nfolds = 5)
-#' # preparation steps
-#' prepare_scores_and_ntiles(datasets=list("train","test"),
-#'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl"),
-#'                       model_labels = list("random forest","multinomial logit"),
-#'                       target_column="Species")
-#' head(scores_and_ntiles)
-#' aggregate_over_ntiles()
-#' plotting_scope(scope="compare_models")
-#' custom_plot_text <- customize_plot_text(plot_input=plot_input)
-#' custom_plot_text$cumlift$plottitle <- 'Cumulatieve Lift grafiek'
-#' custom_plot_text$cumlift$x_axis_label <- 'Deciel'
-#' plot_cumlift(custom_plot_text=custom_plot_text)
-#' custom_plot_text$cumlift$annotationtext <- "Door &PCTNTL met de hoogste modelkans volgens model &MDL in &DS te selecteren is deze selectie van &YVAL observaties &CUMLIFT keer beter dan een random selectie."
-#' plot_cumlift(highlight_ntile=3,custom_plot_text=custom_plot_text)
+#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' data("bank_td")
+#'
+#' # prepare data for training model for binomial target has_td and train models
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#'
+#' #train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#' # setting caret cross validation, here tuned for speed (not accuracy!)
+#' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+#' # random forest using ranger package, here tuned for speed (not accuracy!)
+#' rf = caret::train(has_td ~.,data = train, method = "ranger",trControl = fitControl,
+#'                   tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+#' # mnl model using glmnet package
+#' mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
+#'
+#' # load modelplotr
+#' library(modelplotr)
+#'
+#' # transform datasets and model objects to input for modelplotr
+#' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
+#'                                                dataset_labels = list("train data","test data"),
+#'                                                models = list("rf","mnl"),
+#'                                                model_labels = list("random forest","multinomial logit"),
+#'                                                target_column="has_td",
+#'                                                ntiles=100)
+#'
+#' # set scope for analysis (default: no comparison)
+#' plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
+#'
+#' # customize all textual elements of plots
+#' mytexts <- customize_plot_text(plot_input = plot_input)
+#' mytexts$cumresponse$plottitle <- 'Expected conversion rate for Campaign XYZ'
+#' mytexts$cumresponse$plotsubtitle <- 'proposed selection: best 15 percentiles according to our model'
+#' mytexts$cumresponse$y_axis_label <- '% Conversion'
+#' mytexts$cumresponse$x_axis_label <- 'percentiles (percentile = 1% of customers)'
+#' mytexts$cumresponse$annotationtext <- "Selecting up until the &NTL percentile with our &MDL model has an expected conversion rate of &VALUE"
+#' plot_cumresponse(data=plot_input,custom_plot_text = mytexts,highlight_ntile = 15)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}

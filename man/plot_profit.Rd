@@ -45,7 +45,51 @@ gtable, containing 6 grobs.
 }
 \description{
 Generates the Profit plot. It plots the cumulative profit up until that ntile when the model is used for campaign selection.
-It can be used to answer the following business question:
-When we apply the model and select up until ntile X, what is the expected profit of the campaign?
+It can be used to answer the following business question: \bold{\emph{When we apply the model and select up until ntile X,
+what is the expected profit of the campaign?}}
 Extra parameters needed for this plot are: fixed_costs, variable_costs_per_unit and profit_per_unit.
+}
+\examples{
+data("bank_td")
+# prepare data for training model for binomial target has_td and train models
+train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+# setting caret cross validation, here tuned for speed (not accuracy!)
+fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+# random forest using ranger package, here tuned for speed (not accuracy!)
+rf = caret::train(has_td ~.,data = train, method = "ranger",trControl = fitControl,
+                  tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+# mnl model using glmnet package
+mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
+# load modelplotr
+library(modelplotr)
+# transform datasets and model objects to input for modelplotr
+scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
+                                               dataset_labels = list("train data","test data"),
+                                               models = list("rf","mnl"),
+                                               model_labels = list("random forest","multinomial logit"),
+                                               target_column="has_td",
+                                               ntiles=100)
+# set scope for analysis (default: no comparison)
+plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope='compare_models')
+plot_profit(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
+plot_profit(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile=20)
+plot_profit(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile='max_roi')
+}
+\seealso{
+\code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+
+\code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
+transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
+a dataframe in the required format for all modelplotr plots.
+
+\code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
+aggregates the output of \code{prepare_scores_and_ntiles} to create a dataframe with aggregated actuals and predictions.
+In most cases, you do not need to use it since the \code{plotting_scope} function will call this function automatically.
+
+\url{https://github.com/modelplot/modelplotr} for details on the package
+
+\url{https://modelplot.github.io/} for our blog on the value of the model plots
 }

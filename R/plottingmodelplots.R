@@ -23,57 +23,42 @@
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return ggplot object. Cumulative gains plot.
 #' @examples
-#' data(iris)
-#' # add some noise to iris to prevent perfect models
-#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
-#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
-#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
-#' iris <- rbind(iris,iris_addnoise)
-#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-#' train = iris[train_index,]
-#' test = iris[-train_index,]
-#' #train models using mlr...
-#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
-#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' task = mlr::makeClassifTask(data = train, target = "Species")
-#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
-#' rf = mlr::train(lrn, task)
-#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
-#' mnl = mlr::train(lrn, task)
-#' #... or train models using caret...
-#' rf = caret::train(Species ~.,data = train, method = "rf")
-#' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
-#' #.. or train models using h2o
-#' h2o::h2o.init()
-#' h2o::h2o.no_progress()
-#' h2o_train = h2o::as.h2o(train)
-#' h2o_test = h2o::as.h2o(test)
-#' gbm <- h2o::h2o.gbm(y = "Species",
-#'                           x = setdiff(colnames(train), "Species"),
-#'                           training_frame = h2o_train,
-#'                           nfolds = 5)
-#' # preparation steps
-#' prepare_scores_and_ntiles(datasets=list("train","test"),
-#'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl"),
-#'                       model_labels = list("random forest","multinomial logit"),
-#'                       target_column="Species")
-#' head(scores_and_ntiles)
-#' aggregate_over_ntiles()
-#' plotting_scope(scope="compare_models")
-#' plot_cumgains()
-#' plot_cumgains(custom_line_colors=c("orange","purple"))
-#' plot_cumgains(highlight_ntile=2)
+#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' data("bank_td")
+#' # prepare data for training model for binomial target has_td and train models
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' #train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#' # setting caret cross validation, here tuned for speed (not accuracy!)
+#' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+#' # random forest using ranger package, here tuned for speed (not accuracy!)
+#' rf = caret::train(has_td ~.,data = train, method = "ranger",trControl = fitControl,
+#'                   tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+#' # mnl model using glmnet package
+#' mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
+#' # load modelplotr
+#' library(modelplotr)
+#' # transform datasets and model objects to input for modelplotr
+#' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
+#'                                                dataset_labels = list("train data","test data"),
+#'                                                models = list("rf","mnl"),
+#'                                                model_labels = list("random forest","multinomial logit"),
+#'                                                target_column="has_td",
+#'                                                ntiles=100)
+#' plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_models")
+#' plot_cumgains(data=plot_input)
+#' plot_cumgains(data=plot_input,custom_line_colors=c("orange","purple"))
+#' plot_cumgains(data=plot_input,highlight_ntile=2)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
-#' @seealso \code{\link{prepare_scores_and_ntiles}} for details on the function \code{prepare_scores_and_ntiles}
-#' that generates the required input.
-#' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
-#' generates the required input.
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
-#' filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
+#' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
+#' a dataframe in the required format for all modelplotr plots.
+#' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
+#' aggregates the output of \code{prepare_scores_and_ntiles} to create a dataframe with aggregated actuals and predictions.
+#' In most cases, you do not need to use it since the \code{plotting_scope} function will call this function automatically.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 plot_cumgains <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_text',
@@ -213,57 +198,42 @@ cat(paste0("Plot is saved as: ",filename,"\n\n"))
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return ggplot object. Lift plot.
 #' @examples
-#' data(iris)
-#' # add some noise to iris to prevent perfect models
-#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
-#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
-#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
-#' iris <- rbind(iris,iris_addnoise)
-#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-#' train = iris[train_index,]
-#' test = iris[-train_index,]
-#' #train models using mlr...
-#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
-#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' task = mlr::makeClassifTask(data = train, target = "Species")
-#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
-#' rf = mlr::train(lrn, task)
-#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
-#' mnl = mlr::train(lrn, task)
-#' #... or train models using caret...
-#' rf = caret::train(Species ~.,data = train, method = "rf")
-#' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
-#' #.. or train models using h2o
-#' h2o::h2o.init()
-#' h2o::h2o.no_progress()
-#' h2o_train = h2o::as.h2o(train)
-#' h2o_test = h2o::as.h2o(test)
-#' gbm <- h2o::h2o.gbm(y = "Species",
-#'                           x = setdiff(colnames(train), "Species"),
-#'                           training_frame = h2o_train,
-#'                           nfolds = 5)
-#' # preparation steps
-#' prepare_scores_and_ntiles(datasets=list("train","test"),
-#'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl", "gbm"),
-#'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
-#'                       target_column="Species")
-#' head(scores_and_ntiles)
-#' aggregate_over_ntiles()
-#' plotting_scope(scope="compare_datasets")
-#' plot_cumlift()
-#' plot_cumlift(custom_line_colors=c("orange","purple"))
-#' plot_cumlift(highlight_ntile=2)
+#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' data("bank_td")
+#' # prepare data for training model for binomial target has_td and train models
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' #train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#' # setting caret cross validation, here tuned for speed (not accuracy!)
+#' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+#' # random forest using ranger package, here tuned for speed (not accuracy!)
+#' rf = caret::train(has_td ~.,data = train, method = "ranger",trControl = fitControl,
+#'                   tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+#' # mnl model using glmnet package
+#' mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
+#' # load modelplotr
+#' library(modelplotr)
+#' # transform datasets and model objects to input for modelplotr
+#' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
+#'                                                dataset_labels = list("train data","test data"),
+#'                                                models = list("rf","mnl"),
+#'                                                model_labels = list("random forest","multinomial logit"),
+#'                                                target_column="has_td",
+#'                                                ntiles=100)
+#' plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_datasets")
+#' plot_cumlift(data=plot_input)
+#' plot_cumlift(data=plot_input,custom_line_colors=c("orange","purple"))
+#' plot_cumlift(data=plot_input,highlight_ntile=2)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
-#' @seealso \code{\link{prepare_scores_and_ntiles}} for details on the function \code{prepare_scores_and_ntiles}
-#' that generates the required input.
-#' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
-#' generates the required input.
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
-#' filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
+#' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
+#' a dataframe in the required format for all modelplotr plots.
+#' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
+#' aggregates the output of \code{prepare_scores_and_ntiles} to create a dataframe with aggregated actuals and predictions.
+#' In most cases, you do not need to use it since the \code{plotting_scope} function will call this function automatically.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 plot_cumlift <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_text',
@@ -381,57 +351,42 @@ plot_cumlift <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return ggplot object. Response plot.
 #' @examples
-#' data(iris)
-#' # add some noise to iris to prevent perfect models
-#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
-#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
-#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
-#' iris <- rbind(iris,iris_addnoise)
-#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-#' train = iris[train_index,]
-#' test = iris[-train_index,]
-#' #train models using mlr...
-#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
-#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' task = mlr::makeClassifTask(data = train, target = "Species")
-#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
-#' rf = mlr::train(lrn, task)
-#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
-#' mnl = mlr::train(lrn, task)
-#' #... or train models using caret...
-#' rf = caret::train(Species ~.,data = train, method = "rf")
-#' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
-#' #.. or train models using h2o
-#' h2o::h2o.init()
-#' h2o::h2o.no_progress()
-#' h2o_train = h2o::as.h2o(train)
-#' h2o_test = h2o::as.h2o(test)
-#' gbm <- h2o::h2o.gbm(y = "Species",
-#'                           x = setdiff(colnames(train), "Species"),
-#'                           training_frame = h2o_train,
-#'                           nfolds = 5)
-#' # preparation steps
-#' prepare_scores_and_ntiles(datasets=list("train","test"),
-#'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl", "gbm"),
-#'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
-#'                       target_column="Species")
-#' head(scores_and_ntiles)
-#' aggregate_over_ntiles()
-#' plotting_scope(scope="compare_targetclasses")
-#' plot_response()
-#' plot_response(custom_line_colors=RColorBrewer::brewer.pal(3,"Dark2"))
-#' plot_response(highlight_ntile=2)
+#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' data("bank_td")
+#' # prepare data for training model for binomial target has_td and train models
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' #train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#' # setting caret cross validation, here tuned for speed (not accuracy!)
+#' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+#' # random forest using ranger package, here tuned for speed (not accuracy!)
+#' rf = caret::train(has_td ~.,data = train, method = "ranger",trControl = fitControl,
+#'                   tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+#' # mnl model using glmnet package
+#' mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
+#' # load modelplotr
+#' library(modelplotr)
+#' # transform datasets and model objects to input for modelplotr
+#' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
+#'                                                dataset_labels = list("train data","test data"),
+#'                                                models = list("rf","mnl"),
+#'                                                model_labels = list("random forest","multinomial logit"),
+#'                                                target_column="has_td",
+#'                                                ntiles=100)
+#' plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
+#' plot_response(data=plot_input)
+#' plot_response(data=plot_input,custom_line_colors=RColorBrewer::brewer.pal(3,"Dark2"))
+#' plot_response(data=plot_input,highlight_ntile=2)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
-#' @seealso \code{\link{prepare_scores_and_ntiles}} for details on the function \code{prepare_scores_and_ntiles}
-#' that generates the required input.
-#' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
-#' generates the required input.
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
-#' filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
+#' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
+#' a dataframe in the required format for all modelplotr plots.
+#' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
+#' aggregates the output of \code{prepare_scores_and_ntiles} to create a dataframe with aggregated actuals and predictions.
+#' In most cases, you do not need to use it since the \code{plotting_scope} function will call this function automatically.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 plot_response <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_text',
@@ -562,57 +517,42 @@ plot_response <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return ggplot object. Cumulative Response plot.
 #' @examples
-#' data(iris)
-#' # add some noise to iris to prevent perfect models
-#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
-#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
-#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
-#' iris <- rbind(iris,iris_addnoise)
-#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-#' train = iris[train_index,]
-#' test = iris[-train_index,]
-#' #train models using mlr...
-#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
-#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' task = mlr::makeClassifTask(data = train, target = "Species")
-#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
-#' rf = mlr::train(lrn, task)
-#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
-#' mnl = mlr::train(lrn, task)
-#' #... or train models using caret...
-#' rf = caret::train(Species ~.,data = train, method = "rf")
-#' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
-#' #.. or train models using h2o
-#' h2o::h2o.init()
-#' h2o::h2o.no_progress()
-#' h2o_train = h2o::as.h2o(train)
-#' h2o_test = h2o::as.h2o(test)
-#' gbm <- h2o::h2o.gbm(y = "Species",
-#'                           x = setdiff(colnames(train), "Species"),
-#'                           training_frame = h2o_train,
-#'                           nfolds = 5)
-#' # preparation steps
-#' prepare_scores_and_ntiles(datasets=list("train","test"),
-#'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl", "gbm"),
-#'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
-#'                       target_column="Species")
-#' head(scores_and_ntiles)
-#' aggregate_over_ntiles()
-#' plotting_scope()
-#' plot_cumresponse()
-#' plot_cumresponse(custom_line_colors="pink")
-#' plot_cumresponse(highlight_ntile=3)
+#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' data("bank_td")
+#' # prepare data for training model for binomial target has_td and train models
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' #train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#' # setting caret cross validation, here tuned for speed (not accuracy!)
+#' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+#' # random forest using ranger package, here tuned for speed (not accuracy!)
+#' rf = caret::train(has_td ~.,data = train, method = "ranger",trControl = fitControl,
+#'                   tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+#' # mnl model using glmnet package
+#' mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
+#' # load modelplotr
+#' library(modelplotr)
+#' # transform datasets and model objects to input for modelplotr
+#' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
+#'                                                dataset_labels = list("train data","test data"),
+#'                                                models = list("rf","mnl"),
+#'                                                model_labels = list("random forest","multinomial logit"),
+#'                                                target_column="has_td",
+#'                                                ntiles=100)
+#' plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
+#' plot_cumresponse(data=plot_input)
+#' plot_cumresponse(data=plot_input,custom_line_colors="pink")
+#' plot_cumresponse(data=plot_input,highlight_ntile=3)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
-#' @seealso \code{\link{prepare_scores_and_ntiles}} for details on the function \code{prepare_scores_and_ntiles}
-#' that generates the required input.
-#' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
-#' generates the required input.
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
-#' filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
+#' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
+#' a dataframe in the required format for all modelplotr plots.
+#' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
+#' aggregates the output of \code{prepare_scores_and_ntiles} to create a dataframe with aggregated actuals and predictions.
+#' In most cases, you do not need to use it since the \code{plotting_scope} function will call this function automatically.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 plot_cumresponse <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_text',
@@ -738,51 +678,42 @@ plot_cumresponse <- function(data=plot_input,highlight_ntile=NA,highlight_how='p
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return gtable, containing 6 grobs.
 #' @examples
-#' data(iris)
-#' # add some noise to iris to prevent perfect models
-#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
-#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
-#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
-#' iris <- rbind(iris,iris_addnoise)
-#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-#' train = iris[train_index,]
-#' test = iris[-train_index,]
-#' #train models using mlr...
-#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
-#' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' task = mlr::makeClassifTask(data = train, target = "Species")
-#' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
-#' rf = mlr::train(lrn, task)
-#' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
-#' mnl = mlr::train(lrn, task)
-#' #... or train models using caret...
-#' rf = caret::train(Species ~.,data = train, method = "rf")
-#' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
-#' #.. or train models using h2o
-#' h2o::h2o.init()
-#' h2o::h2o.no_progress()
-#' h2o_train = h2o::as.h2o(train)
-#' h2o_test = h2o::as.h2o(test)
-#' gbm <- h2o::h2o.gbm(y = "Species",
-#'                           x = setdiff(colnames(train), "Species"),
-#'                           training_frame = h2o_train,
-#'                           nfolds = 5)
-#' # preparation steps
-#' prepare_scores_and_ntiles(datasets=list("train","test"),
-#'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl", "gbm"),
-#'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
-#'                       target_column="Species")
-#' head(scores_and_ntiles)
-#' aggregate_over_ntiles()
-#' plotting_scope()
-#' plot_cumgains()
-#' plot_cumlift()
-#' plot_response()
-#' plot_cumresponse()
-#' plot_multiplot()
+#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' data("bank_td")
+#' # prepare data for training model for binomial target has_td and train models
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' #train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#' # setting caret cross validation, here tuned for speed (not accuracy!)
+#' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+#' # random forest using ranger package, here tuned for speed (not accuracy!)
+#' rf = caret::train(has_td ~.,data = train, method = "ranger",trControl = fitControl,
+#'                   tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+#' # mnl model using glmnet package
+#' mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
+#' # load modelplotr
+#' library(modelplotr)
+#' # transform datasets and model objects to input for modelplotr
+#' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
+#'                                                dataset_labels = list("train data","test data"),
+#'                                                models = list("rf","mnl"),
+#'                                                model_labels = list("random forest","multinomial logit"),
+#'                                                target_column="has_td",
+#'                                                ntiles=100)
+#' plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
+#' plot_multiplot(data=plot_input)
 #' @export
+#' @importFrom magrittr %>%
+#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
+#' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
+#' a dataframe in the required format for all modelplotr plots.
+#' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
+#' aggregates the output of \code{prepare_scores_and_ntiles} to create a dataframe with aggregated actuals and predictions.
+#' In most cases, you do not need to use it since the \code{plotting_scope} function will call this function automatically.
+#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
+#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 plot_multiplot <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,
                      highlight_ntile = NA, custom_plot_text=NULL,...) {
 
@@ -876,9 +807,10 @@ plot_multiplot <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,c
 #' ROI plot
 #'
 #' Generates the Return on Investment plot. It plots the cumulative revenues as a percentage of investments
-#' up until that ntile when the model is used for campaign selection. It can be used to answer the following business question:
-#' When we apply the model and select up until ntile X, what is the expected % return on investment of the campaign?
-#' Extra parameters needed for this plot are: fixed_costs, variable_costs_per_unit and profit_per_unit.
+#' up until that ntile when the model is used for campaign selection. It can be used to answer the following
+#' business question: \bold{\emph{When we apply the model and select up until ntile X, what is the expected %
+#' return on investment of the campaign?}} Extra parameters needed for this plot are:
+#' fixed_costs, variable_costs_per_unit and profit_per_unit.
 #' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
 #' or else meet required input format.
 #' @param fixed_costs Numeric. Specifying the fixed costs related to a selection based on the model.
@@ -899,7 +831,46 @@ plot_multiplot <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,c
 #' @param custom_plot_text List. List with customized textual elements for plot. Create a list with defaults
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return gtable, containing 6 grobs.
+#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' @examples
+#' data("bank_td")
+#' # prepare data for training model for binomial target has_td and train models
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' #train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#' # setting caret cross validation, here tuned for speed (not accuracy!)
+#' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+#' # random forest using ranger package, here tuned for speed (not accuracy!)
+#' rf = caret::train(has_td ~.,data = train, method = "ranger",trControl = fitControl,
+#'                   tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+#' # mnl model using glmnet package
+#' mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
+#' # load modelplotr
+#' library(modelplotr)
+#' # transform datasets and model objects to input for modelplotr
+#' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
+#'                                                dataset_labels = list("train data","test data"),
+#'                                                models = list("rf","mnl"),
+#'                                                model_labels = list("random forest","multinomial logit"),
+#'                                                target_column="has_td",
+#'                                                ntiles=100)
+#' # set scope for analysis (default: no comparison)
+#' plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
+#' plot_roi(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
+#' plot_roi(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile=20)
+#' plot_roi(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile="max_profit")
 #' @export
+#' @importFrom magrittr %>%
+#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
+#' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
+#' a dataframe in the required format for all modelplotr plots.
+#' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
+#' aggregates the output of \code{prepare_scores_and_ntiles} to create a dataframe with aggregated actuals and predictions.
+#' In most cases, you do not need to use it since the \code{plotting_scope} function will call this function automatically.
+#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
+#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 plot_roi <- function(data=plot_input,highlight_ntile='max_roi',highlight_how='plot_text',
                      save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL,
                      fixed_costs,variable_costs_per_unit,profit_per_unit,...){
@@ -1051,8 +1022,8 @@ plot_roi <- function(data=plot_input,highlight_ntile='max_roi',highlight_how='pl
 #' Profit plot
 #'
 #' Generates the Profit plot. It plots the cumulative profit up until that ntile when the model is used for campaign selection.
-#' It can be used to answer the following business question:
-#' When we apply the model and select up until ntile X, what is the expected profit of the campaign?
+#' It can be used to answer the following business question: \bold{\emph{When we apply the model and select up until ntile X,
+#' what is the expected profit of the campaign?}}
 #' Extra parameters needed for this plot are: fixed_costs, variable_costs_per_unit and profit_per_unit.
 #' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
 #' or else meet required input format.
@@ -1074,16 +1045,53 @@ plot_roi <- function(data=plot_input,highlight_ntile='max_roi',highlight_how='pl
 #' @param custom_plot_text List. List with customized textual elements for plot. Create a list with defaults
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return gtable, containing 6 grobs.
+#' @examples
+#' data("bank_td")
+#' # prepare data for training model for binomial target has_td and train models
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' #train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#' # setting caret cross validation, here tuned for speed (not accuracy!)
+#' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+#' # random forest using ranger package, here tuned for speed (not accuracy!)
+#' rf = caret::train(has_td ~.,data = train, method = "ranger",trControl = fitControl,
+#'                   tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+#' # mnl model using glmnet package
+#' mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
+#' # load modelplotr
+#' library(modelplotr)
+#' # transform datasets and model objects to input for modelplotr
+#' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
+#'                                                dataset_labels = list("train data","test data"),
+#'                                                models = list("rf","mnl"),
+#'                                                model_labels = list("random forest","multinomial logit"),
+#'                                                target_column="has_td",
+#'                                                ntiles=100)
+#' # set scope for analysis (default: no comparison)
+#' plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope='compare_models')
+#' plot_profit(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
+#' plot_profit(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile=20)
+#' plot_profit(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile='max_roi')
 #' @export
+#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
+#' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
+#' a dataframe in the required format for all modelplotr plots.
+#' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
+#' aggregates the output of \code{prepare_scores_and_ntiles} to create a dataframe with aggregated actuals and predictions.
+#' In most cases, you do not need to use it since the \code{plotting_scope} function will call this function automatically.
+#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
+#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 plot_profit <- function(data=plot_input,highlight_ntile='max_profit',highlight_how='plot_text',
-                     save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL,
-                     fixed_costs,variable_costs_per_unit,profit_per_unit,...){
+                        save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL,
+                        fixed_costs,variable_costs_per_unit,profit_per_unit,...){
 
   # check if required parameters for financial plots are provided
 
   if(any(missing(fixed_costs),missing(variable_costs_per_unit),missing(profit_per_unit))) {
     stop("required parameters 'fixed_costs', 'variable_costs_per_unit' and 'profit_per_unit' are not all specified!")
-    }
+  }
 
   plot_input <- data
   custom_line_colors <- custom_line_colors
@@ -1228,8 +1236,8 @@ plot_profit <- function(data=plot_input,highlight_ntile='max_profit',highlight_h
 #' Costs & Revenues plot
 #'
 #' Generates the Costs & Revenues plot. It plots the cumulative costs and revenues up until that ntile when the model is used
-#' for campaign selection. It can be used to answer the following business question:
-#' When we apply the model and select up until ntile X, what are the expected costs and revenues of the campaign?
+#' for campaign selection. It can be used to answer the following business question: \bold{\emph{When we apply the model and
+#' select up until ntile X, what are the expected costs and revenues of the campaign?}}
 #' Extra parameters needed for this plot are: fixed_costs, variable_costs_per_unit and profit_per_unit.
 #' @param data Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
 #' or else meet required input format.
@@ -1252,10 +1260,48 @@ plot_profit <- function(data=plot_input,highlight_ntile='max_profit',highlight_h
 #' @param custom_plot_text List. List with customized textual elements for plot. Create a list with defaults
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return gtable, containing 6 grobs.
+#' @examples
+#' data("bank_td")
+#' # prepare data for training model for binomial target has_td and train models
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' #train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#' # setting caret cross validation, here tuned for speed (not accuracy!)
+#' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+#' # random forest using ranger package, here tuned for speed (not accuracy!)
+#' rf = caret::train(has_td ~.,data = train, method = "ranger",trControl = fitControl,
+#'                   tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+#' # mnl model using glmnet package
+#' mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
+#' # load modelplotr
+#' library(modelplotr)
+#' # transform datasets and model objects to input for modelplotr
+#' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
+#'                                                dataset_labels = list("train data","test data"),
+#'                                                models = list("rf","mnl"),
+#'                                                model_labels = list("random forest","multinomial logit"),
+#'                                                target_column="has_td",
+#'                                                ntiles=100)
+#' # set scope for analysis (default: no comparison)
+#' plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope='compare_models')
+#' plot_costsrevs(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
+#' plot_costsrevs(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile=20)
+#' plot_costsrevs(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile='max_roi')
+#' plot_costsrevs(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile='max_profit')
 #' @export
+#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
+#' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
+#' a dataframe in the required format for all modelplotr plots.
+#' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
+#' aggregates the output of \code{prepare_scores_and_ntiles} to create a dataframe with aggregated actuals and predictions.
+#' In most cases, you do not need to use it since the \code{plotting_scope} function will call this function automatically.
+#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
+#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 plot_costsrevs <- function(data=plot_input,highlight_ntile='max_profit',highlight_how='plot_text',
-                        save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL,
-                        fixed_costs,variable_costs_per_unit,profit_per_unit,...){
+                           save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL,
+                           fixed_costs,variable_costs_per_unit,profit_per_unit,...){
 
   if(any(missing(fixed_costs),missing(variable_costs_per_unit),missing(profit_per_unit))) {
     stop("required parameters 'fixed_costs', 'variable_costs_per_unit' and 'profit_per_unit' are not all specified!")

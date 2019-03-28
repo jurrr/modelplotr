@@ -9,7 +9,9 @@
 Plots to evaluate the business performance of predictive models in R.
 A number of widely used plots to assess the quality of a predictive model from a business perspective
 can easily be created. Using these plots, it can be shown how implementation of the model will impact
-business targets like response on a campaign or return on investment.
+business targets like response on a campaign or return on investment. It's very easy to apply modelplotr
+to predictive models that are developed in caret, mlr, h2o or keras. For other models, even those built
+outside of R, an instruction is included.
 The modelplotr package provides three categories of important functions:
 datapreparation, plot parameterization and plotting.
 }
@@ -17,28 +19,29 @@ datapreparation, plot parameterization and plotting.
 
  The datapreparation functions are:
 \describe{
-  \item{\code{\link{prepare_scores_and_ntiles}}}{a function that builds a dataframe
-  that contains actuals and predictions on dependent variable for each dataset in datasets. As inputs, it takes dataframes
-  to score and model objects created with \strong{catet},  \strong{mlr} or  \strong{H2o}.
-  To use modelplotr on top of models created otherwise, see \code{\link{aggregate_over_ntiles}}}
-  \item{\code{\link{plotting_scope}}}{a function that creates a dataframe in the required format for all
+  \item{\code{\link{prepare_scores_and_ntiles}}}{Function that builds a dataframe
+  that contains actuals and predictions on the target variable for each dataset in \code{datasets} and each model in \code{models}.
+  As inputs, it takes dataframes to score and model objects created with \strong{caret}, \strong{mlr}, \strong{h2o} or \strong{keras}.
+  To use modelplotr on top of models created otherwise, even models built outside r, see \code{\link{aggregate_over_ntiles}}}
+  \item{\code{\link{plotting_scope}}}{Function that creates a dataframe in the required format for all
   modelplotr plots, relevant to the selected scope of evaluation. Each record in this dataframe represents
   a unique combination of datasets, models, target classes and ntiles. As an input, plotting_scope can handle
   both a dataframe created with \code{aggregate_over_ntiles} as well as a dataframe created with
-  \code{prepare_scores_and_ntiles} (or created otherwise with similar layout). }
-  \item{\code{\link{aggregate_over_ntiles}}}{a function that aggregates the output of \code{prepare_scores_and_ntiles}
+  \code{prepare_scores_and_ntiles} (or created otherwise, with similar layout). }
+  \item{\code{\link{aggregate_over_ntiles}}}{Function that aggregates the output of \code{prepare_scores_and_ntiles}
   to create a dataframe with aggregated actuals and predictions. Each record in this dataframe represents
   a unique combination of datasets, models, target classes and ntiles. In most cases, you do not need to use function
-  since the \code{plotting_scope} function will call this function automatically.}}
+  since the \code{plotting_scope} function will call this function automatically. }}
 }
 
 \section{Parameterization functions}{
 
  Most parameterization functions are internal functions. However, one is available for customization:
 \describe{
-  \item{\code{\link{customize_plot_text}}}{a function that returns a list that contains all textual elements for
-  all plots that can be created with modelplotr. By changing the elements in this list - simply by overwriting values -
-  and then including this list with the \code{custom_plot_text} parameter in plot functions, plot texts can easily be customized}}
+  \item{\code{\link{customize_plot_text}}}{Function that returns a list that contains all textual elements for
+  all plots that modelplotr can create. By changing the elements in this list - simply by overwriting values -
+  and then including this list with the \code{custom_plot_text} parameter in plot functions, plot texts can easily be customized
+  to meet your (language) preferences}}
 }
 
 \section{Plotting functions}{
@@ -84,12 +87,12 @@ train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = 
 train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 
-#train models using caret... (or use mlr or H2o to train your models... )
+#train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
 # setting caret cross validation, here tuned for speed (not accuracy!)
 fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
 # random forest using ranger package, here tuned for speed (not accuracy!)
 rf = caret::train(has_td ~.,data = train, method = "ranger",trControl = fitControl,
-                 tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+                  tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
 # mnl model using glmnet package
 mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
 
@@ -98,11 +101,11 @@ library(modelplotr)
 
 # transform datasets and model objects to input for modelplotr
 scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
-                                              dataset_labels = list("train data","test data"),
-                                              models = list("rf","mnl"),
-                                              model_labels = list("random forest","multinomial logit"),
-                                              target_column="has_td",
-                                              ntiles=100)
+                                               dataset_labels = list("train data","test data"),
+                                               models = list("rf","mnl"),
+                                               model_labels = list("random forest","multinomial logit"),
+                                               target_column="has_td",
+                                               ntiles=100)
 
 # set scope for analysis (default: no comparison)
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
@@ -129,7 +132,6 @@ plot_roi(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,prof
 # changing the scope - compare target classes:
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_targetclasses")
 plot_response(data=plot_input)
-
 # HIGHLIGHTING OPTIONS
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope = 'compare_datasets',select_model_label = 'random forest')
 plot_cumgains(data=plot_input,highlight_ntile=20)

@@ -13,7 +13,7 @@ Description: Plots to evaluate the business performance of predictive models in 
     how implementation of the model will impact business targets like response on a
     campaign. Also, the under/overperformance of a model on the train data compared 
     to other datasets (test data, external validation data,...) can be visualized 
-    with a number of functions.
+    with a number of functions. 
 Depends: R (>= 3.3.0)
 License: GPL-3
 Encoding: UTF-8
@@ -34,6 +34,7 @@ Suggests:
     caret (>= 6.0),
     e1071,
     h2o,
+    keras,
     knitr,
     rmarkdown,
     testthat,

@@ -9,18 +9,18 @@ prepare_scores_and_ntiles(datasets, dataset_labels, models, model_labels,
 }
 \arguments{
 \item{datasets}{List of Strings. A list of the names of the dataframe
-objects to include in model evaluation. All dataframes need to contain
+objects to include in model evaluation. All dataframes need to contain a
 target variable and feature variables.}
 
-\item{dataset_labels}{List of Strings. A list of labels for the datasets, user.
+\item{dataset_labels}{List of Strings. A list of labels for the datasets, shown in plots.
 When dataset_labels is not specified, the names from \code{datasets} are used.}
 
-\item{models}{List of Strings. Names of the model objects containing parameters to
-apply models to data. To use this function, model objects need to be generated
-by the mlr package or by the caret package or by the h20 package.
-Modelplotr automatically detects whether the model is built using mlr or caret or h2o.}
+\item{models}{List of Strings. List of the names of the model objects, containing parameters to
+apply models to datasets. To use this function, model objects need to be generated
+by the mlr package or the caret package or the h20 package or the keras package.
+Modelplotr automatically detects whether the model is built using mlr or caret or h2o or keras.}
 
-\item{model_labels}{List of Strings. Labels for the models to use in plots.
+\item{model_labels}{List of Strings. Labels for the models, shown in plots.
 When model_labels is not specified, the names from \code{moddels} are used.}
 
 \item{target_column}{String. Name of the target variable in datasets. Target
@@ -32,59 +32,73 @@ By default, observations are grouped in 10 equally sized buckets, often referred
 }
 \value{
 Dataframe. A dataframe is built, based on the \code{datasets}
-  and \code{models} specified. It contains the dataset name, actuals on the \code{target} ,
-  the predicted probabilities for each class of the target and attribution to
-  ntiles in the dataset for each class of the target.
+  and \code{models} specified. It contains the dataset name, actuals on the \code{target_column} ,
+  the predicted probabilities for each target class (eg. unique target value) and attribution to
+  ntiles in the dataset for each target class.
 }
 \description{
 Build dataframe object that contains actuals and predictions on
-the target variable for each dataset in datasets and each model in models
+the target variable for each dataset in \code{datasets} and each model in \code{models}
 }
 \section{When you build scores_and_ntiles yourself}{
 
 To make plots with modelplotr, is not required to use this function to generate input for function \code{plotting_scope}
 You can create your own dataframe containing actuals and predictions and ntiles,
-Please do check the required input for the \code{\link{aggregate_over_ntiles}} function if you
-want to use that function to aggregate actuals and predictions
+See \code{\link{build_input_yourself}} for an example to build the required input for \code{\link{plotting_scope}}
+or \code{\link{aggregate_over_ntiles}} yourself, within r or even outside of r.
 }
 
 \examples{
-data(iris)
-# add some noise to iris to prevent perfect models
-addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
-iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
-iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
-iris <- rbind(iris,iris_addnoise)
-train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-train = iris[train_index,]
-test = iris[-train_index,]
+# load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+data("bank_td")
+
+# prepare data for training model for binomial target has_td and train models
+train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+
 #train models using mlr...
-trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-testTask <- mlr::makeClassifTask(data = test, target = "Species")
+trainTask <- mlr::makeClassifTask(data = train, target = "has_td")
+testTask <- mlr::makeClassifTask(data = test, target = "has_td")
 mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-task = mlr::makeClassifTask(data = train, target = "Species")
+task = mlr::makeClassifTask(data = train, target = "has_td")
 lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 rf = mlr::train(lrn, task)
 lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 mnl = mlr::train(lrn, task)
 #... or train models using caret...
-rf = caret::train(Species ~.,data = train, method = "rf")
-mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
-#.. or train models using h2o
+# setting caret cross validation, here tuned for speed (not accuracy!)
+fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+# random forest using ranger package, here tuned for speed (not accuracy!)
+rf = caret::train(has_td ~.,data = train, method = "ranger",trControl = fitControl,
+                  tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+# mnl model using glmnet package
+mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
+#... or train models using h2o...
 h2o::h2o.init()
 h2o::h2o.no_progress()
 h2o_train = h2o::as.h2o(train)
 h2o_test = h2o::as.h2o(test)
-gbm <- h2o::h2o.gbm(y = "Species",
-                          x = setdiff(colnames(train), "Species"),
+gbm <- h2o::h2o.gbm(y = "has_td",
+                          x = setdiff(colnames(train), "has_td"),
                           training_frame = h2o_train,
                           nfolds = 5)
+#... or train models using keras.
+x_train <- as.matrix(train[,-1]); y=train[,1]; y_train <- keras::to_categorical(as.numeric(y)-1); `\%>\%` <- magrittr::`\%>\%`
+nn <- keras::keras_model_sequential() \%>\%
+keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu',input_shape = NCOL(x_train)) \%>\%
+  keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu') \%>\%
+  keras::layer_dense(units = length(levels(train[,1])),activation='softmax')
+nn \%>\% keras::compile(optimizer = 'rmsprop',loss = 'categorical_crossentropy',metrics = c('accuracy'))
+nn \%>\% keras::fit(x_train,y_train,epochs = 20,batch_size = 1028,verbose=0)
+
 # preparation steps
 scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
                       dataset_labels = list("train data","test data"),
-                      models = list("rf","mnl", "gbm"),
-                      model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
-                      target_column="Species")
+                      models = list("rf","mnl", "gbm","nn"),
+                      model_labels = list("random forest","multinomial logit",
+                                          "gradient boosting machine","artificial neural network"),
+                      target_column="has_td")
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
 plot_cumgains(data = plot_input)
 plot_cumlift(data = plot_input)

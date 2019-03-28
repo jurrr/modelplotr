@@ -32,10 +32,10 @@ Dataframe object is returned, containing:
     dataset from ntile 1 up until ntile\cr
   cumpos\tab Integer\tab Cumulative number of cases belonging to target class in
     dataset from ntile 1 up until ntile\cr
-  cumpos\tab Integer\tab Cumulative number of cases belonging to target class in
-    dataset from ntile 1 up until ntile\cr
   cumtot\tab Integer\tab Cumulative number of cases in dataset from ntile 1
     up until ntile\cr
+  cumpct\tab Integer\tab Cumulative percentage of cases belonging to target class in
+    dataset from ntile 1 up until ntile (cumpos/cumtot)\cr
   gain\tab Decimal\tab Gains value for dataset for ntile (pos/postot)\cr
   cumgain\tab Decimal\tab Cumulative gains value for dataset for ntile
     (cumpos/postot)\cr
@@ -49,7 +49,7 @@ Dataframe object is returned, containing:
  }
 }
 \description{
-Build a dataframe with aggregated actuals and predictions .
+Build a dataframe with aggregated actuals and predictions.
 Records in this dataframe represent the unique combinations of models [m], datasets [d], targetvalues [t] and ntiles [n].
 The size of this dataframe therefore is (m*d*t*n) rows and 23 columns. \cr\cr \bold{\emph{In most cases, you do not need to use function
   since the \code{\link{plotting_scope}} function will call this function automatically.}}
@@ -74,45 +74,60 @@ In that case, make sure the input dataframe contains the folowing columns & form
   ... \tab ... \tab ... \cr
   ntl_[tvn] \tab Integer \tab Ntile based on probability according to model for target value n
  }
+See \code{\link{build_input_yourself}} for an example to build the required input yourself.
 }
 
 \examples{
-data(iris)
-# add some noise to iris to prevent perfect models
-addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
-iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
-iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
-iris <- rbind(iris,iris_addnoise)
-train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-train = iris[train_index,]
-test = iris[-train_index,]
+# load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+data("bank_td")
+
+# prepare data for training model for binomial target has_td and train models
+train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+
 #train models using mlr...
-trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-testTask <- mlr::makeClassifTask(data = test, target = "Species")
+trainTask <- mlr::makeClassifTask(data = train, target = "has_td")
+testTask <- mlr::makeClassifTask(data = test, target = "has_td")
 mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-task = mlr::makeClassifTask(data = train, target = "Species")
+task = mlr::makeClassifTask(data = train, target = "has_td")
 lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 rf = mlr::train(lrn, task)
 lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 mnl = mlr::train(lrn, task)
 #... or train models using caret...
-rf = caret::train(Species ~.,data = train, method = "rf")
-mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
-#.. or train models using h2o
+# setting caret cross validation, here tuned for speed (not accuracy!)
+fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+# random forest using ranger package, here tuned for speed (not accuracy!)
+rf = caret::train(has_td ~.,data = train, method = "ranger",trControl = fitControl,
+                  tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+# mnl model using glmnet package
+mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
+#... or train models using h2o...
 h2o::h2o.init()
 h2o::h2o.no_progress()
 h2o_train = h2o::as.h2o(train)
 h2o_test = h2o::as.h2o(test)
-gbm <- h2o::h2o.gbm(y = "Species",
-                          x = setdiff(colnames(train), "Species"),
+gbm <- h2o::h2o.gbm(y = "has_td",
+                          x = setdiff(colnames(train), "has_td"),
                           training_frame = h2o_train,
                           nfolds = 5)
+#... or train models using keras.
+x_train <- as.matrix(train[,-1]); y=train[,1]; y_train <- keras::to_categorical(as.numeric(y)-1); `\%>\%` <- magrittr::`\%>\%`
+nn <- keras::keras_model_sequential() \%>\%
+keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu',input_shape = NCOL(x_train)) \%>\%
+  keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu') \%>\%
+  keras::layer_dense(units = length(levels(train[,1])),activation='softmax')
+nn \%>\% keras::compile(optimizer = 'rmsprop',loss = 'categorical_crossentropy',metrics = c('accuracy'))
+nn \%>\% keras::fit(x_train,y_train,epochs = 20,batch_size = 1028,verbose=0)
+
 # preparation steps
 scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
                       dataset_labels = list("train data","test data"),
-                      models = list("rf","mnl", "gbm"),
-                      model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
-                      target_column="Species")
+                      models = list("rf","mnl", "gbm","nn"),
+                      model_labels = list("random forest","multinomial logit",
+                                          "gradient boosting machine","artificial neural network"),
+                      target_column="has_td")
 aggregated <- aggregate_over_ntiles(prepared_input=scores_and_ntiles)
 head(aggregated)
 plot_input <- plotting_scope(prepared_input = aggregated)
@@ -126,6 +141,8 @@ that generates the required input.
 
 \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
 filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
+
+\code{\link{build_input_yourself}} for an example to build the required input yourself.
 
 \url{https://github.com/modelplot/modelplotr} for details on the package
 

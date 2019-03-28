@@ -34,30 +34,30 @@ knitr::include_graphics("https://modelplot.github.io/img/cartoonrocplot.jpg")
 
 If your fellow business colleagues didn’t already wander away during your presentation about your fantastic predictive model, it will definitely push them over the edge when you start talking like this. Why? Because the ROC curve is not easy to quickly explain and also difficult to translate into answers on the business questions your spectators have. And these business questions were the reason you’ve built a model in the first place!
 
-What business questions? We build models for all kinds of supervised classification problems. Such as predictive models to select the best records in a dataset, which can be customers, leads, items, events... For instance: You want to know which of your active customers have the highest probability to churn; you need to select those prospects that are most likely to respond to an offer; you have to identify transactions that have a high risk to be fraudulent. During your presentation, your audience is therefore mainly focused on answering questions like Does your model enable us to our target audience? How much better are we, using your model? What will the expected response on our campaign be?
+What business questions? We build models for all kinds of supervised classification problems. Such as predictive models to select the best records in a dataset, which can be customers, leads, items, events... For instance: You want to know which of your active customers have the highest probability to churn; you need to select those prospects that are most likely to respond to an offer; you have to identify transactions that have a high risk to be fraudulent. During your presentation, your audience is therefore mainly focused on answering questions like: Does your model enable us to our target audience? How much better are we, using your model? What will the expected response on our campaign be? Modelplotr helps you answer these busines questions.
 
 During our model building efforts, we should already be focused on verifying how well the model performs. Often, we do so by training the model parameters on a selection or subset of records and test the performance on a holdout set or external validation set. We look at a set of performance measures like the ROC curve and the AUC value. These plots and statistics are very helpful to check during model building and optimization whether your model is under- or overfitting and what set of parameters performs best on test data. However, these statistics are not that valuable in assessing the business value the model you developed.
 
-One reason that the ROC curve is not that useful in explaining the business value of your model, is because it’s quite hard to explain the interpretation of ‘area under the curve’, ‘specificity’ or ‘sensitivity’ to business people. Another important reason that these statistics and plots are useless in your business meetings is that they don’t help in determining how to apply your predictive model: What percentage of records should we select based on the model? Should we select only the best 10% of cases? Or should we stop at 30%? Or go on until we have selected 70%?... This is something you want to decide together with your business colleague to best match the business plans and campaign targets they have to meet. The four plots - the cumulative gains, cumulative lift, response and cumulative response - we are about to introduce are in our view the best ones for that cause. On top of that, we introduce three plots that can help to plot the financial results of using your model in a campaign: The costs & revenues plot, the profit plot and the return on investment plot.
+One reason that the ROC curve is not that useful in explaining the business value of your model, is because it’s quite hard to explain the interpretation of ‘area under the curve’, ‘specificity’ or ‘sensitivity’ to business people. Another important reason that these statistics and plots are useless in your business meetings is that they don’t help in determining how to apply your predictive model: What percentage of records should we select based on the model? Should we select only the best 10% of cases? Or should we stop at 30%? Or go on until we have selected 70%?... This is something you want to decide together with your business colleague to best match the business plans and campaign targets they have to meet. The four plots - the cumulative gains, cumulative lift, response and cumulative response - we are about to introduce are in our view the best ones for that cause. On top of that, we also introduce three plots that enable plotting the financial impact of using your model in a campaign: The costs & revenues plot, the profit plot and the return on investment plot. 
 
 
 ## The plots in modelplotr
 
-Before getting into the details how to use modelplotr, let's first introduce the plots you can create with it. First we discuss what in all these plots is on the x axis. 
+Before getting into the details how to use modelplotr, let's first introduce the plots you can create with it in more detail. We begin by explaining what in is on the x axis all these plots. Next, we introduce the different measures that are plotted on the y axis of these plots. 
 
 ### All plots: explaining what's on the canvas
 
 Although each plot sheds light on the business value of your model from a different angle, they all use the same data:
 
 * Predicted probability for the target class
-* Equally sized groups based on this predicted probability
-* Actual number of observed target class observations in these groups
+* Equally sized groups based on this predicted probability, named ntiles
+* Actual number of observed target class observations in these groups (ntiles)
 
-It’s common practice to split the data to score into 10 equally large groups and call these groups deciles. Observations that belong to the top-10% with highest model probability in a set, are in decile 1 of that set; the next group of 10% with high model probability are decile 2 and finally the 10% observations with the lowest model probability on the target class belong to decile 10. 
+Regarding the ntiles: It’s common practice to split the data to score into 10 equally large groups and call these groups deciles. Observations that belong to the top-10% with highest model probability in a set, are in decile 1 of that set; the next group of 10% with high model probability are decile 2 and finally the 10% observations with the lowest model probability on the target class belong to decile 10. 
 
 *Notice that modelplotr does support that you specify the number of equally sized groups with the parameter ntiles. Hence, **ntiles=100** results in 100 equally sized groups with in the first group the 1% with the highest model probability and in group 100 the 1% with the lowest model probability. These groups are often referred to as percentiles; modelplotr will also label them as such. Any value between 4 and 100 can be specified for ntiles. For illustration purposes, we will use deciles, hence the default of **ntiles=10** *
 
-Each of our four plots places the deciles on the x axis and another measure on the y axis. The deciles are plotted from left to right so the observations with the highest model probability are on the left side of the plot. This results in plots like this:
+Each of the plots in modelplotr places the deciles on the x axis and another measure on the y axis. The deciles are plotted from left to right so the observations with the highest model probability are on the left side of the plot. This results in plots like this:
 
 ```{r decileplot, echo=FALSE, out.width = '100%'}
 knitr::include_graphics("https://modelplot.github.io/img/decileplot.png")
@@ -134,9 +134,9 @@ Whereas the response plot crosses the reference line, in the cumulative response
 
 ### Costs & Revenues plot
 
-The costs & revenues plot plots the cumulative revenues as a percentage of investments up until that decile when the model is used for campaign selection. It can be used to answer the following business question:
+The costs & revenues plot plots both the cumulative revenues and and the cumulative costs (investments) up until that decile when the model is used for campaign selection. It can be used to answer the following business question:
 
-> When we apply the model and select up until decile X, what is the expected % return on investment of the campaign?
+> When we apply the model and select up until decile X, what are the expected revenues and investments of the campaign?
 
 The plot includes both costs and revenues lines. The costs are the cumulative costs of selecting up until a given decile and consist of both fixed costs and variable costs. The fixed costs for campaigns often include costs to create the campaign and other costs that do not vary with the size of the campaign selection. The variable costs do depend on the selection size, resulting in a linear increasing line. The revenues take into account the expected response % - as plotted in the cumulative response plot - as well as the expected revenue per response.   
 
@@ -144,7 +144,7 @@ The plot includes both costs and revenues lines. The costs are the cumulative co
 knitr::include_graphics("https://modelplot.github.io/img/costsrevsplot.png")
 ```
 
-The campaign is profitable in the plot area where revenues exceed costs. The optimal profit might be difficult to see quickly, since the reference line is a diagonal. Therefore, to evaluate profitability, the profit plot is more suitable.  
+The campaign is profitable in the plot area where revenues exceed costs. The optimal profit might be difficult to see quickly, since the reference line is a diagonal. Therefore, to evaluate profitability, the next plot - the profit plot - is more suitable.  
 
 
 ### Profit plot
@@ -171,13 +171,13 @@ The Return on Investment plot plots the cumulative revenues as a percentage of i
 knitr::include_graphics("https://modelplot.github.io/img/roiplot.png")
 ```
 
-From this plot, the selection size with the optimal return on investment for the campaign is easily identified. Do note that the selection size to maximize the campaign profit is not necessarily the same as the selection size where the campaign ROI is maximized. It can be the case that a bigger selection results in a higher profit, however this selection needs a larger investment, impacting the ROI.   
+From this plot, the selection size with the optimal return on investment for the campaign is easily identified. Do note that the decile at which the campaign profit is maximized, is not necessarily the same as the decile where the campaign ROI is maximized. It can be the case that a bigger selection (higher decile) results in a higher profit, however this selection needs a larger investment, impacting the ROI negatively.   
 
 
 
 ## Data preparation steps
 
-To be able to use the plots presented above, you need to create a dataframe that serves as an input for all these plots. We've included three functions in modelplotr to make this input dataframe really easy and fast. Especially when you've trained your models using **caret**, **mlr** or **h2o** the process is super simple. In this case, you ony need two function calls to prepare your data for plotting. In case you use another package to train your models or when you've trained your models outside of R, you can still use modelplotr, you just need one extra step. Further on we'll guide you how to prepare the input in that case.
+To be able to use the plots presented above, you need to create a dataframe that serves as an input for all these plots. We've included three functions in modelplotr to create this input dataframe really easy and fast. Especially when you've trained your models using **caret**, **mlr**, **h2o** or **keras** the process is super simple. In this case, you ony need two function calls to prepare your data for plotting. In case you use another package to train your models or when you've trained your models outside of R, you can still use modelplotr, you just need one extra step. Further on we'll guide you how to prepare the input in that case.
 
 ### Some example data
 
@@ -190,10 +190,9 @@ data("bank_td")
 str(bank_td)
 ```
 
-A brief introduction to the data: This dataset contains 7 variables, including 2 potential target variables and 5 features to predict these targets.  The binary target is **has_td**; it indicates whether the client has subscribed for a term deposit ('term.deposit') or not ('no.term.deposit'). The multinomial target is **td_type** which has four possible values: 'no.td', 'td.type.A', 'td.type.B' and 'td.type.C'. This target is included to show that modelplotr also works on multiclass targets. The five features are a subset of all features available in the actual source, just to have some predictors available to build some models. For details on the data, see ?bank_td.
+A brief introduction to the data: This dataset contains 7 variables, including 2 potential target variables and 5 features to predict these targets.  The binary target is **has_td**; it indicates whether the client has subscribed for a term deposit ('term.deposit') or not ('no.term.deposit'). The multinomial target is **td_type** which has four possible values: 'no.td', 'td.type.A', 'td.type.B' and 'td.type.C'. This target is included to show that modelplotr also works to plot predictive models with multiclass targets. The five features are a subset of all features available in the actual source, just to have some predictors available to build some example models evaluate with modelplotr. For details on the data, see ?bank_td.
 
-
-Now, let's train some models. To illustrate that you can use models trained using caret, mlr and h2o, we'll train some models first, one for each package, and include these models in our input for the plots. This way, we can easily compare the models in the plots. Also, we use a train set and a test set for each model, enabling us to also compare between datasets. More on modelplotr's options to compare stuff (models, datasets, target classes) in the next section on **Plotting scopes**.
+Now, let's train some models. To illustrate that you can use models trained using caret, mlr, h2o and keras, we'll train some models first, one for each package, and include these models in our input for the plots. This way, we can easily compare the models in the plots. Also, we use a train set and a test set for each model, enabling us to also compare between datasets. More on modelplotr's options to compare stuff (models, datasets, target classes) in the next section on **Plotting scopes**.
 
 ```{r trainmodels, echo=TRUE}
 # prepare data for training model for binomial target has_td and train models
@@ -215,7 +214,7 @@ fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
 # mnl model using glmnet package
 mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
 
-#.. or train models using h2o
+#.. or train models using h2o...
 h2o::h2o.init()
 h2o::h2o.no_progress()
 h2o_train = h2o::as.h2o(train)
@@ -224,6 +223,16 @@ gbm <- h2o::h2o.gbm(y = "has_td",
                           x = setdiff(colnames(train), "has_td"),
                           training_frame = h2o_train,
                           nfolds = 5)
+
+#.. or train models using keras...
+x_train <- as.matrix(train[,-1]); y=train[,1]; y_train <- keras::to_categorical(as.numeric(y)-1); `%>%` <- magrittr::`%>%`
+nn <- keras::keras_model_sequential() %>%
+keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu',input_shape = NCOL(x_train)) %>%
+  keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu') %>%
+  keras::layer_dense(units = length(levels(train[,1])),activation='softmax')
+nn %>% keras::compile(optimizer = 'rmsprop',loss = 'categorical_crossentropy',metrics = c('accuracy'))
+nn %>% keras::fit(x_train,y_train,epochs = 20,batch_size = 1028,verbose=0)
+
 ```
 
 Now that we have some datasets and some trained models, we can start using modelplotr to prepare the data for plotting:
@@ -336,11 +345,12 @@ plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
 
 Since we only provided the input data and not the scope, the default scope (no comparison) is used. To adjust, specify **scope=** and/or set the other parameters to customize the models/datasets/target classes you want to include in your plots. 
 
-### When your models are not created with mlr, catet or h2o
+### Custom prepration of modelplotr input
 
-...
+Maybe you prefer to prepare the input for modelplotr differently. For instance when your models are not created with mlr, catet, h2o or keras. Or when your models are created outside of R or your already have the scored data available. In these cases, you have two options:
 
-### When you want to prepare the input for plots yourself (in R or elsewhere)
+1. prepare the input for **plotting_scope()** 
+2. prepare the input for **plotting_scope()**
 
 ...
 

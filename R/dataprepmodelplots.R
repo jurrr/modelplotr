@@ -6,18 +6,18 @@
 #' Build a dataframe containing Actuals, Probabilities and Ntiles
 #'
 #' Build dataframe object that contains actuals and predictions on
-#' the target variable for each dataset in datasets and each model in models
+#' the target variable for each dataset in \code{datasets} and each model in \code{models}
 #'
 #' @param datasets List of Strings. A list of the names of the dataframe
-#'   objects to include in model evaluation. All dataframes need to contain
+#'   objects to include in model evaluation. All dataframes need to contain a
 #'   target variable and feature variables.
-#' @param dataset_labels List of Strings. A list of labels for the datasets, user.
+#' @param dataset_labels List of Strings. A list of labels for the datasets, shown in plots.
 #'   When dataset_labels is not specified, the names from \code{datasets} are used.
-#' @param models List of Strings. Names of the model objects containing parameters to
-#'   apply models to data. To use this function, model objects need to be generated
-#'   by the mlr package or by the caret package or by the h20 package.
-#'   Modelplotr automatically detects whether the model is built using mlr or caret or h2o.
-#' @param model_labels List of Strings. Labels for the models to use in plots.
+#' @param models List of Strings. List of the names of the model objects, containing parameters to
+#'   apply models to datasets. To use this function, model objects need to be generated
+#'   by the mlr package or the caret package or the h20 package or the keras package.
+#'   Modelplotr automatically detects whether the model is built using mlr or caret or h2o or keras.
+#' @param model_labels List of Strings. Labels for the models, shown in plots.
 #'   When model_labels is not specified, the names from \code{moddels} are used.
 #' @param target_column String. Name of the target variable in datasets. Target
 #'   can be either binary or multinomial. Continuous targets are not supported.
@@ -25,15 +25,15 @@
 #'   of equally sized buckets the observations in each dataset are grouped into.
 #'   By default, observations are grouped in 10 equally sized buckets, often referred to as deciles.
 #' @return Dataframe. A dataframe is built, based on the \code{datasets}
-#'   and \code{models} specified. It contains the dataset name, actuals on the \code{target} ,
-#'   the predicted probabilities for each class of the target and attribution to
-#'   ntiles in the dataset for each class of the target.
+#'   and \code{models} specified. It contains the dataset name, actuals on the \code{target_column} ,
+#'   the predicted probabilities for each target class (eg. unique target value) and attribution to
+#'   ntiles in the dataset for each target class.
 #'
 #' @section When you build scores_and_ntiles yourself:
 #' To make plots with modelplotr, is not required to use this function to generate input for function \code{plotting_scope}
 #' You can create your own dataframe containing actuals and predictions and ntiles,
-#' Please do check the required input for the \code{\link{aggregate_over_ntiles}} function if you
-#' want to use that function to aggregate actuals and predictions
+#' See \code{\link{build_input_yourself}} for an example to build the required input for \code{\link{plotting_scope}}
+#' or \code{\link{aggregate_over_ntiles}} yourself, within r or even outside of r.
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
 #' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
@@ -44,42 +44,56 @@
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 #' @examples
-#' data(iris)
-#' # add some noise to iris to prevent perfect models
-#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
-#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
-#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
-#' iris <- rbind(iris,iris_addnoise)
-#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-#' train = iris[train_index,]
-#' test = iris[-train_index,]
+#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' data("bank_td")
+#'
+#' # prepare data for training model for binomial target has_td and train models
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#'
 #' #train models using mlr...
-#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
+#' trainTask <- mlr::makeClassifTask(data = train, target = "has_td")
+#' testTask <- mlr::makeClassifTask(data = test, target = "has_td")
 #' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' task = mlr::makeClassifTask(data = train, target = "Species")
+#' task = mlr::makeClassifTask(data = train, target = "has_td")
 #' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
 #' #... or train models using caret...
-#' rf = caret::train(Species ~.,data = train, method = "rf")
-#' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
-#' #.. or train models using h2o
+#' # setting caret cross validation, here tuned for speed (not accuracy!)
+#' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+#' # random forest using ranger package, here tuned for speed (not accuracy!)
+#' rf = caret::train(has_td ~.,data = train, method = "ranger",trControl = fitControl,
+#'                   tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+#' # mnl model using glmnet package
+#' mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
+#' #... or train models using h2o...
 #' h2o::h2o.init()
 #' h2o::h2o.no_progress()
 #' h2o_train = h2o::as.h2o(train)
 #' h2o_test = h2o::as.h2o(test)
-#' gbm <- h2o::h2o.gbm(y = "Species",
-#'                           x = setdiff(colnames(train), "Species"),
+#' gbm <- h2o::h2o.gbm(y = "has_td",
+#'                           x = setdiff(colnames(train), "has_td"),
 #'                           training_frame = h2o_train,
 #'                           nfolds = 5)
+#' #... or train models using keras.
+#' x_train <- as.matrix(train[,-1]); y=train[,1]; y_train <- keras::to_categorical(as.numeric(y)-1); `%>%` <- magrittr::`%>%`
+#' nn <- keras::keras_model_sequential() %>%
+#' keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu',input_shape = NCOL(x_train)) %>%
+#'   keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu') %>%
+#'   keras::layer_dense(units = length(levels(train[,1])),activation='softmax')
+#' nn %>% keras::compile(optimizer = 'rmsprop',loss = 'categorical_crossentropy',metrics = c('accuracy'))
+#' nn %>% keras::fit(x_train,y_train,epochs = 20,batch_size = 1028,verbose=0)
+#'
 #' # preparation steps
 #' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl", "gbm"),
-#'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
-#'                       target_column="Species")
+#'                       models = list("rf","mnl", "gbm","nn"),
+#'                       model_labels = list("random forest","multinomial logit",
+#'                                           "gradient boosting machine","artificial neural network"),
+#'                       target_column="has_td")
 #' plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
 #' plot_cumgains(data = plot_input)
 #' plot_cumlift(data = plot_input)
@@ -123,7 +137,7 @@ prepare_scores_and_ntiles <- function(datasets,
         # if(max(class(try((mlr::getTaskDesc(get(mdl))),TRUE)))== "try-error") {
         #   stop('model objects need to be generated with mlr package')}
         #
-        # 1.1. get target class prediction from model (NOT YET DYNAMIC!) and prepare
+        # 1.1. get target class prediction from model and prepare
         actuals = get(dataset) %>% dplyr::select_(y_true=target_column)
         # check if target is factor, otherwise make it a factor
         if(typeof(actuals$y_true)!='factor') actuals$y_true <- as.factor(actuals$y_true)
@@ -165,7 +179,29 @@ prepare_scores_and_ntiles <- function(datasets,
             y_values <- colnames(probabilities)
           }
         }
-        # 1.2.3. caret models
+        # 1.2.3. keras models
+        else if (max(grepl('keras',class(get(mdl)))) == 1) {
+        cat(paste0('... scoring keras model "',mdl,'" on dataset "',dataset,'".\n'))
+        if (!requireNamespace("keras", quietly = TRUE)) {
+          stop("Package \"keras\" needed for this function to work, but it's not installed. Please install it.",
+               call. = FALSE)
+        }else{
+          # for binary targets
+          if (length(levels(actuals$y_true)) == 2) {
+              varnames = setdiff(colnames(get(dataset)), target_column)
+              probabilities <- as.data.frame(predict(get(mdl),as.matrix(get(dataset)[,varnames]),verbose=0))
+              probabilities[,2] <- 1-probabilities[,1]
+              y_values <- levels(actuals$y_true)
+          }
+          # for multiclass targets
+          else {
+            varnames = setdiff(colnames(get(dataset)), target_column)
+            probabilities <- as.data.frame(predict(get(mdl),as.matrix(get(dataset)[,varnames]),verbose=0))
+            y_values <- levels(actuals$y_true)
+          }
+          }
+        }
+          # 1.2.4. caret models
         else {
           cat(paste0('... scoring caret model "',mdl,'" on dataset "',dataset,'".\n'))
           if (!requireNamespace("caret", quietly = TRUE)) {
@@ -174,31 +210,31 @@ prepare_scores_and_ntiles <- function(datasets,
           }
             probabilities <- predict(get(mdl),newdata=get(dataset),type='prob')
             y_values <- colnames(probabilities)
-          }
+        }
 
-          #name probability per target class
-          colnames(probabilities) = paste0('prob_',y_values)
-          y_probvars = colnames(probabilities)
+        #name probability per target class
+        colnames(probabilities) = paste0('prob_',y_values)
+        y_probvars = colnames(probabilities)
 
-          probabilities = cbind(model_label=unlist(model_labels[match(mdl,models)]),
-                                dataset_label=unlist(dataset_labels[match(dataset,datasets)]),
-                                actuals,
-                                probabilities)
+        probabilities = cbind(model_label=unlist(model_labels[match(mdl,models)]),
+                              dataset_label=unlist(dataset_labels[match(dataset,datasets)]),
+                              actuals,
+                              probabilities)
 
-          # 1.3. calculate ntiles per target class
-          for (i in 1:length(y_values)) {
-            #! Added small proportion to prevent equal ntile bounds
-            # and reset to 0-1 range (to prevent probs > 1.0)
-            range01 <- function(x){(x-min(x))/(max(x)-min(x))}
-            prob_plus_smallrandom = range01(probabilities[,y_probvars[i]]+
-                runif(NROW(probabilities))/1000000)
-            # determine cutoffs based on prob_plus_smallrandom
-            cutoffs = c(quantile(prob_plus_smallrandom,probs = seq(0,1,1/ntiles),
-                                 na.rm = TRUE))
-            # add ntile variable per y-class
-            probabilities[,paste0('ntl_',y_values[i])] <- (ntiles+1)-as.numeric(
-              cut(prob_plus_smallrandom,breaks=cutoffs,include.lowest = T))
-          }
+        # 1.3. calculate ntiles per target class
+        for (i in 1:length(y_values)) {
+          #! Added small proportion to prevent equal ntile bounds
+          # and reset to 0-1 range (to prevent probs > 1.0)
+          range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+          prob_plus_smallrandom = range01(probabilities[,y_probvars[i]]+
+              runif(NROW(probabilities))/1000000)
+          # determine cutoffs based on prob_plus_smallrandom
+          cutoffs = c(quantile(prob_plus_smallrandom,probs = seq(0,1,1/ntiles),
+                               na.rm = TRUE))
+          # add ntile variable per y-class
+          probabilities[,paste0('ntl_',y_values[i])] <- (ntiles+1)-as.numeric(
+            cut(prob_plus_smallrandom,breaks=cutoffs,include.lowest = T))
+        }
       } else {warning(paste0('Model object \'',mdl,'\' does not exist!'))}
     scores_and_ntiles = rbind(scores_and_ntiles,probabilities)
     }
@@ -214,7 +250,7 @@ prepare_scores_and_ntiles <- function(datasets,
 
 #' Build a dataframe with aggregated evaluation measures
 #'
-#' Build a dataframe with aggregated actuals and predictions .
+#' Build a dataframe with aggregated actuals and predictions.
 #' Records in this dataframe represent the unique combinations of models [m], datasets [d], targetvalues [t] and ntiles [n].
 #' The size of this dataframe therefore is (m*d*t*n) rows and 23 columns. \cr\cr \bold{\emph{In most cases, you do not need to use function
 #'   since the \code{\link{plotting_scope}} function will call this function automatically.}}
@@ -241,10 +277,10 @@ prepare_scores_and_ntiles <- function(datasets,
 #'     dataset from ntile 1 up until ntile\cr
 #'   cumpos\tab Integer\tab Cumulative number of cases belonging to target class in
 #'     dataset from ntile 1 up until ntile\cr
-#'   cumpos\tab Integer\tab Cumulative number of cases belonging to target class in
-#'     dataset from ntile 1 up until ntile\cr
 #'   cumtot\tab Integer\tab Cumulative number of cases in dataset from ntile 1
 #'     up until ntile\cr
+#'   cumpct\tab Integer\tab Cumulative percentage of cases belonging to target class in
+#'     dataset from ntile 1 up until ntile (cumpos/cumtot)\cr
 #'   gain\tab Decimal\tab Gains value for dataset for ntile (pos/postot)\cr
 #'   cumgain\tab Decimal\tab Cumulative gains value for dataset for ntile
 #'     (cumpos/postot)\cr
@@ -275,50 +311,66 @@ prepare_scores_and_ntiles <- function(datasets,
 #'   ... \tab ... \tab ... \cr
 #'   ntl_[tvn] \tab Integer \tab Ntile based on probability according to model for target value n
 #'  }
+#' See \code{\link{build_input_yourself}} for an example to build the required input yourself.
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
 #' @seealso \code{\link{prepare_scores_and_ntiles}} for details on the function \code{prepare_scores_and_ntiles}
 #' that generates the required input.
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
 #' filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
+#' @seealso \code{\link{build_input_yourself}} for an example to build the required input yourself.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 #' @examples
-#' data(iris)
-#' # add some noise to iris to prevent perfect models
-#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
-#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
-#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
-#' iris <- rbind(iris,iris_addnoise)
-#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-#' train = iris[train_index,]
-#' test = iris[-train_index,]
+#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' data("bank_td")
+#'
+#' # prepare data for training model for binomial target has_td and train models
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#'
 #' #train models using mlr...
-#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
+#' trainTask <- mlr::makeClassifTask(data = train, target = "has_td")
+#' testTask <- mlr::makeClassifTask(data = test, target = "has_td")
 #' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' task = mlr::makeClassifTask(data = train, target = "Species")
+#' task = mlr::makeClassifTask(data = train, target = "has_td")
 #' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
 #' #... or train models using caret...
-#' rf = caret::train(Species ~.,data = train, method = "rf")
-#' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
-#' #.. or train models using h2o
+#' # setting caret cross validation, here tuned for speed (not accuracy!)
+#' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+#' # random forest using ranger package, here tuned for speed (not accuracy!)
+#' rf = caret::train(has_td ~.,data = train, method = "ranger",trControl = fitControl,
+#'                   tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+#' # mnl model using glmnet package
+#' mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
+#' #... or train models using h2o...
 #' h2o::h2o.init()
 #' h2o::h2o.no_progress()
 #' h2o_train = h2o::as.h2o(train)
 #' h2o_test = h2o::as.h2o(test)
-#' gbm <- h2o::h2o.gbm(y = "Species",
-#'                           x = setdiff(colnames(train), "Species"),
+#' gbm <- h2o::h2o.gbm(y = "has_td",
+#'                           x = setdiff(colnames(train), "has_td"),
 #'                           training_frame = h2o_train,
 #'                           nfolds = 5)
+#' #... or train models using keras.
+#' x_train <- as.matrix(train[,-1]); y=train[,1]; y_train <- keras::to_categorical(as.numeric(y)-1); `%>%` <- magrittr::`%>%`
+#' nn <- keras::keras_model_sequential() %>%
+#' keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu',input_shape = NCOL(x_train)) %>%
+#'   keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu') %>%
+#'   keras::layer_dense(units = length(levels(train[,1])),activation='softmax')
+#' nn %>% keras::compile(optimizer = 'rmsprop',loss = 'categorical_crossentropy',metrics = c('accuracy'))
+#' nn %>% keras::fit(x_train,y_train,epochs = 20,batch_size = 1028,verbose=0)
+#'
 #' # preparation steps
 #' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl", "gbm"),
-#'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
-#'                       target_column="Species")
+#'                       models = list("rf","mnl", "gbm","nn"),
+#'                       model_labels = list("random forest","multinomial logit",
+#'                                           "gradient boosting machine","artificial neural network"),
+#'                       target_column="has_td")
 #' aggregated <- aggregate_over_ntiles(prepared_input=scores_and_ntiles)
 #' head(aggregated)
 #' plot_input <- plotting_scope(prepared_input = aggregated)
@@ -474,68 +526,77 @@ Use prepare_scores_and_deciles() or see ?aggregate_over_ntiles for details how t
 #'   ... \tab ... \tab ... \cr
 #'   ntl_[tvn] \tab Integer \tab Ntile based on probability according to model for target value n
 #'  }
+#' See \link{build_input_yourself} for an example to build the required input yourself.
 #' @return Dataframe \code{plot_input} is a subset of \code{ntiles_aggregate}.
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
 #' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
 #' generates the required input.
 #' @seealso \code{\link{prepare_scores_and_ntiles}} for details on the function \code{prepare_scores_and_ntiles}
 #' that generates the required input.
+#' @seealso \code{\link{build_input_yourself}} for an example to build the required input yourself.
 #' filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 #' @examples
-#' data(iris)
-#' # add some noise to iris to prevent perfect models
-#' addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
-#' iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
-#' iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
-#' iris <- rbind(iris,iris_addnoise)
-#' train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-#' train = iris[train_index,]
-#' test = iris[-train_index,]
+#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' data("bank_td")
+#'
+#' # prepare data for training model for binomial target has_td and train models
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#'
 #' #train models using mlr...
-#' trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-#' testTask <- mlr::makeClassifTask(data = test, target = "Species")
+#' trainTask <- mlr::makeClassifTask(data = train, target = "has_td")
+#' testTask <- mlr::makeClassifTask(data = test, target = "has_td")
 #' mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-#' task = mlr::makeClassifTask(data = train, target = "Species")
+#' task = mlr::makeClassifTask(data = train, target = "has_td")
 #' lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 #' rf = mlr::train(lrn, task)
 #' lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 #' mnl = mlr::train(lrn, task)
 #' #... or train models using caret...
-#' rf = caret::train(Species ~.,data = train, method = "rf")
-#' mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
-#' #.. or train models using h2o
+#' # setting caret cross validation, here tuned for speed (not accuracy!)
+#' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+#' # random forest using ranger package, here tuned for speed (not accuracy!)
+#' rf = caret::train(has_td ~.,data = train, method = "ranger",trControl = fitControl,
+#'                   tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+#' # mnl model using glmnet package
+#' mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
+#' #... or train models using h2o...
 #' h2o::h2o.init()
 #' h2o::h2o.no_progress()
 #' h2o_train = h2o::as.h2o(train)
 #' h2o_test = h2o::as.h2o(test)
-#' gbm <- h2o::h2o.gbm(y = "Species",
-#'                           x = setdiff(colnames(train), "Species"),
+#' gbm <- h2o::h2o.gbm(y = "has_td",
+#'                           x = setdiff(colnames(train), "has_td"),
 #'                           training_frame = h2o_train,
 #'                           nfolds = 5)
+#' #... or train models using keras.
+#' x_train <- as.matrix(train[,-1]); y=train[,1]; y_train <- keras::to_categorical(as.numeric(y)-1); `%>%` <- magrittr::`%>%`
+#' nn <- keras::keras_model_sequential() %>%
+#' keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu',input_shape = NCOL(x_train)) %>%
+#'   keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu') %>%
+#'   keras::layer_dense(units = length(levels(train[,1])),activation='softmax')
+#' nn %>% keras::compile(optimizer = 'rmsprop',loss = 'categorical_crossentropy',metrics = c('accuracy'))
+#' nn %>% keras::fit(x_train,y_train,epochs = 20,batch_size = 1028,verbose=0)
+#'
 #' # preparation steps
-#' prepare_scores_and_ntiles(datasets=list("train","test"),
+#' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
 #'                       dataset_labels = list("train data","test data"),
-#'                       models = list("rf","mnl", "gbm"),
-#'                       model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
-#'                       target_column="Species")
-#' head(scores_and_ntiles)
-#' aggregate_over_ntiles()
-#' plotting_scope()
-#' # various plotting examples with different plotting scopes
-#' plot_cumgains()
-#' plot_cumgains(highlight_ntile=2)
-#' plotting_scope(scope="compare_models")
-#' plot_cumlift()
-#' plot_cumlift(highlight_ntile=2,highlight_how="plot")
-#' plotting_scope(scope="compare_targetclasses")
-#' plot_response()
-#' plot_response(custom_line_colors = c('green','orange','darkblue'))
-#' plotting_scope(scope="compare_datasets")
-#' plot_cumresponse()
-#' plot_cumresponse(highlight_ntile=2,highlight_how="text")
-#' plot_multiplot()
+#'                       models = list("rf","mnl", "gbm","nn"),
+#'                       model_labels = list("random forest","multinomial logit",
+#'                                           "gradient boosting machine","artificial neural network"),
+#'                       target_column="has_td")
+#' plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
+#' plot_cumgains(data = plot_input)
+#' plot_cumlift(data = plot_input)
+#' plot_response(data = plot_input)
+#' plot_cumresponse(data = plot_input)
+#' plot_multiplot(data = plot_input)
+#' plot_costsrevs(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
+#' plot_profit(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
+#' plot_roi(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
 #' @export
 #' @importFrom magrittr %>%
 plotting_scope <- function(prepared_input,
@@ -668,3 +729,92 @@ Single evaluation line will be plotted: Target value "',
   return(plot_input)
 }
 
+
+#' Example: build required input from a custom model
+#'
+#' It's very easy to apply modelplotr
+#' to predictive models that are developed in caret, mlr, h2o or keras. For other models, even those built
+#' outside of R, it only takes a bit more work. Below the required format and an example is included.
+#'
+#' @section When you build input for plotting_scope() yourself:
+#' To make plots with modelplotr, is not required to use the function prepare_scores_and_ntiles to generate the required input data.
+#' You can create your own dataframe containing actuals and probabilities and ntiles (1st ntile = (1/#ntiles) percent
+#' with highest model probability, last ntile = (1/#ntiles) percent with lowest probability according to model) ,
+#' In that case, make sure the input dataframe contains the folowing columns & formats:
+#' \tabular{lll}{
+#'   \bold{column} \tab \bold{type} \tab \bold{definition} \cr
+#'   model_label \tab Factor \tab Name of the model object \cr
+#'   dataset_label \tab Factor \tab Datasets to include in the plot as factor levels\cr
+#'   y_true \tab Factor \tab Target with actual values \cr
+#'   prob_[tv1] \tab Decimal \tab Probability according to model for target value 1 \cr
+#'   prob_[tv2] \tab Decimal \tab Probability according to model for target value 2 \cr
+#'   ... \tab ... \tab ... \cr
+#'   prob_[tvn] \tab Decimal \tab Probability according to model for target value n \cr
+#'   ntl_[tv1] \tab Integer \tab Ntile based on probability according to model for target value 1 \cr
+#'   ntl_[tv2] \tab Integerl \tab Ntile based on probability according to model for target value 2 \cr
+#'   ... \tab ... \tab ... \cr
+#'   ntl_[tvn] \tab Integer \tab Ntile based on probability according to model for target value n
+#'  }
+#' @examples
+#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' data("bank_td")
+#' library(dplyr)
+#' # prepare data for training model for binomial target has_td and train models
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#'
+#' #train logistic regression model with stats package
+#' glm.model <- glm(has_td ~.,family=binomial(link='logit'),data=train)
+#' #score model
+#' prob_no.term.deposit <- predict(glm.model,newdata=train,type='response')
+#' prob_term.deposit <- 1-prob_no.term.deposit
+#' #set number of ntiles
+#' ntiles = 10
+#' # determine cutoffs
+#' cutoffs = c(quantile(prob_term.deposit,probs = seq(0,1,1/ntiles),na.rm = TRUE))
+#' #calculate ntile values
+#' ntl_term.deposit <- (ntiles+1)-as.numeric(cut(prob_term.deposit,breaks=cutoffs,include.lowest = T))
+#' ntl_no.term.deposit <- (ntiles+1)-ntl_term.deposit
+#' # create scored data frame
+#' scores_and_ntiles <- train %>%
+#'     select(has_td) %>%
+#'     mutate(model_label=factor('logistic regression'),
+#'            dataset_label=factor('train data'),
+#'            y_true=factor(has_td),
+#'            prob_term.deposit = prob_term.deposit,
+#'            prob_no.term.deposit = prob_no.term.deposit,
+#'            ntl_term.deposit = ntl_term.deposit,
+#'            ntl_no.term.deposit = ntl_no.term.deposit) %>%
+#'     select(-has_td)
+#'
+#' # add test data
+#' #score model on test data
+#' prob_no.term.deposit <- predict(glm.model,newdata=test,type='response')
+#' prob_term.deposit <- 1-prob_no.term.deposit
+#' #set number of ntiles
+#' ntiles = 10
+#' # determine cutoffs
+#' cutoffs = c(quantile(prob_term.deposit,probs = seq(0,1,1/ntiles),na.rm = TRUE))
+#' #calculate ntile values
+#' ntl_term.deposit <- (ntiles+1)-as.numeric(cut(prob_term.deposit,breaks=cutoffs,include.lowest = T))
+#' ntl_no.term.deposit <- (ntiles+1)-ntl_term.deposit
+#' scores_and_ntiles <- scores_and_ntiles %>%
+#'   rbind(
+#'    test %>%
+#'     select(has_td) %>%
+#'     mutate(model_label=factor('logistic regression'),
+#'            dataset_label=factor('test data'),
+#'            y_true=factor(has_td),
+#'            prob_term.deposit = prob_term.deposit,
+#'            prob_no.term.deposit = prob_no.term.deposit,
+#'            ntl_term.deposit = ntl_term.deposit,
+#'            ntl_no.term.deposit = ntl_no.term.deposit) %>%
+#'     select(-has_td)
+#'     )
+#'
+#' plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope='compare_datasets')
+#' plot_cumgains()
+#'
+#' @name build_input_yourself
+NULL
