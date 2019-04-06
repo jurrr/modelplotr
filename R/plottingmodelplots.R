@@ -1,3 +1,10 @@
+
+utils::globalVariables(c("ntile","scope","pct","legend","refline","dataset_label","pcttot","plotvalue",
+                         "cumtot","variable_costs","cumpos","revenues","investments","profit","tottot","variable_costs_tot",
+                         "postot","revenues_tot","investments_tot","profit_tot","model_label","roi","max_profit",
+                         "max_roi","roi_ref","plotvalue","cumgain","profit","cumlift","cumpct",".","target_class",
+                         "gain_opt","gain_ref","cumlift_ref","text","target_class","n"))
+
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 #### plot_cumgains()                   ####
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##

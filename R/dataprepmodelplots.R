@@ -385,6 +385,7 @@ prepare_scores_and_ntiles <- function(datasets,
 #' }
 #' @export
 #' @importFrom magrittr %>%
+#' @importFrom rlang .data
 aggregate_over_ntiles <- function(prepared_input){
 
   # check if input is dataframe
@@ -437,26 +438,26 @@ Use prepare_scores_and_deciles() or see ?aggregate_over_ntiles for details how t
     eval_t_add = prepared_input %>%
       dplyr::mutate("target_class"=val,"ntile"=get(paste0("ntl_",val))) %>%
       dplyr::group_by_("model_label","dataset_label","target_class","ntile") %>%
-      dplyr::summarize(neg=sum(y_true!=target_class),
-                pos=sum(y_true==target_class),
-                tot=n(),
-                pct=1.0*sum(y_true==target_class)/n()) %>%
+      dplyr::summarize(neg=sum(.data$y_true!=.data$target_class),
+                pos=sum(.data$y_true==.data$target_class),
+                tot=dplyr::n(),
+                pct=1.0*sum(.data$y_true==.data$target_class)/dplyr::n()) %>%
       dplyr::group_by_("model_label","dataset_label","target_class") %>%
-      dplyr::mutate(negtot=sum(neg),
-             postot=sum(pos),
-             tottot=sum(tot),
-             pcttot=1.0*sum(pos)/sum(tot)) %>%
+      dplyr::mutate(negtot=sum(.data$neg),
+             postot=sum(.data$pos),
+             tottot=sum(.data$tot),
+             pcttot=1.0*sum(.data$pos)/sum(.data$tot)) %>%
       dplyr::group_by_("model_label","dataset_label","target_class","negtot","postot","tottot","pcttot") %>%
-      dplyr::mutate(cumneg=cumsum(neg),
-             cumpos=cumsum(pos),
-             cumtot=cumsum(tot),
-             cumpct=1.0*cumsum(pos)/cumsum(tot),
-             gain=pos/postot,
-             cumgain=cumsum(pos)/postot,
-             gain_ref=ntile/ntiles,
-             gain_opt=ifelse(cumtot/postot>1,1,cumtot/postot),
-             lift=pct/pcttot,
-             cumlift=1.0*cumsum(pos)/cumsum(tot)/pcttot,
+      dplyr::mutate(cumneg=cumsum(.data$neg),
+             cumpos=cumsum(.data$pos),
+             cumtot=cumsum(.data$tot),
+             cumpct=1.0*cumsum(.data$pos)/cumsum(.data$tot),
+             gain=.data$pos/.data$postot,
+             cumgain=cumsum(.data$pos)/.data$postot,
+             gain_ref=.data$ntile/ntiles,
+             gain_opt=ifelse(.data$cumtot/.data$postot>1,1,.data$cumtot/.data$postot),
+             lift=.data$pct/.data$pcttot,
+             cumlift=1.0*cumsum(.data$pos)/cumsum(.data$tot)/.data$pcttot,
              cumlift_ref = 1) %>%
       as.data.frame()
 

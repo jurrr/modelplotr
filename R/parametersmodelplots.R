@@ -398,6 +398,8 @@ setplotparams <- function(plot_input,plottype,custom_line_colors,plot_text) {
 #### annotate_plot()              ####
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
+utils::globalVariables(c("plot_input_prepared"))
+
 #highlight_ntile='max'
 annotate_plot <- function(plot=plot,highlight_input=plot_input_prepared,
                           highlight_ntile=highlight_ntile,highlight_how=highlight_how,pp=pp){
@@ -506,7 +508,7 @@ annotate_plot <- function(plot=plot,highlight_input=plot_input_prepared,
                     PCTNTL=sprintf("%1.0f%%",100*highlight_ntile_num/pp$scope$ntiles),
                     MDL=model_label,
                     DS=dataset_label,
-                    YVAL=target_class,
+                    YVAL=.data$target_class,
                     VALUE=eval(parse(text=paste0(pp$scope$annolabelfmt,"(plotvalue)"))),
                     # replace the placeholders for values in the annotation text per plot type
                     annotationtext =
@@ -520,7 +522,7 @@ annotate_plot <- function(plot=plot,highlight_input=plot_input_prepared,
     if(highlight_how %in% c('text','plot_text')){
       # create annotation text element to add to grob
       annotextplot <- ggplot2::ggplot(annovalues,
-                                      ggplot2::aes(label = annotationtext, xmin = xmin, xmax = xmax, ymin = ymin,ymax = ymax,color=legend)) +
+                                      ggplot2::aes(label = .data$annotationtext, xmin = .data$xmin, xmax = .data$xmax, ymin = .data$ymin,ymax = .data$ymax,color=.data$legend)) +
         ggplot2::geom_rect(fill=NA,color=NA) +
         ggplot2::scale_color_manual(values=pp$scope$levelcols)+
         ggfittext::geom_fit_text(place = "center",grow = TRUE,reflow = FALSE) +
