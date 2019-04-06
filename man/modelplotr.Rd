@@ -79,15 +79,15 @@ datapreparation, plot parameterization and plotting.
 }
 
 \examples{
-# load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+# load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 data("bank_td")
 
 # prepare data for training model for binomial target has_td and train models
-train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 
-#train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#train models using caret... (or use mlr or H2o or keras ... see ?prepare_scores_and_ntiles)
 # setting caret cross validation, here tuned for speed (not accuracy!)
 fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
 # random forest using ranger package, here tuned for speed (not accuracy!)
@@ -101,11 +101,11 @@ library(modelplotr)
 
 # transform datasets and model objects to input for modelplotr
 scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
-                                               dataset_labels = list("train data","test data"),
-                                               models = list("rf","mnl"),
-                                               model_labels = list("random forest","multinomial logit"),
-                                               target_column="has_td",
-                                               ntiles=100)
+                         dataset_labels = list("train data","test data"),
+                         models = list("rf","mnl"),
+                         model_labels = list("random forest","multinomial logit"),
+                         target_column="has_td",
+                         ntiles=100)
 
 # set scope for analysis (default: no comparison)
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
@@ -118,9 +118,9 @@ plot_response(data=plot_input)
 plot_cumresponse(data=plot_input)
 plot_multiplot(data=plot_input)
 # financial plots - these need some financial parameters
-plot_costsrevs(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
-plot_profit(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
-plot_roi(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
+plot_costsrevs(data=plot_input,fixed_costs=15000,variable_costs_per_unit=10,profit_per_unit=50)
+plot_profit(data=plot_input,fixed_costs=15000,variable_costs_per_unit=10,profit_per_unit=50)
+plot_roi(data=plot_input,fixed_costs=15000,variable_costs_per_unit=10,profit_per_unit=50)
 
 # CHANGING THE SCOPE OF ANALYSIS
 # changing the scope - compare models:
@@ -128,17 +128,19 @@ plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_m
 plot_cumgains(data=plot_input)
 # changing the scope - compare datasets:
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_datasets")
-plot_roi(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
+plot_roi(data = plot_input,fixed_costs=15000,variable_costs_per_unit=10,profit_per_unit=50)
 # changing the scope - compare target classes:
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_targetclasses")
 plot_response(data=plot_input)
 # HIGHLIGHTING OPTIONS
-plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope = 'compare_datasets',select_model_label = 'random forest')
+plot_input <- plotting_scope(prepared_input = scores_and_ntiles,
+                             scope = 'compare_datasets',select_model_label = 'random forest')
 plot_cumgains(data=plot_input,highlight_ntile=20)
 plot_cumlift(data=plot_input,highlight_ntile=20,highlight_how = 'plot')
 plot_response(data=plot_input,highlight_ntile=20,highlight_how = 'text')
 plot_cumresponse(data=plot_input,highlight_ntile=20,highlight_how = 'plot_text')
-plot_costsrevs(data=plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile='max_roi')
+plot_costsrevs(data=plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,
+               profit_per_unit = 50,highlight_ntile='max_roi')
 plot_profit(data=plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
 plot_roi(data=plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
 
@@ -153,9 +155,9 @@ mytexts$cumresponse$plottitle <- 'Expected conversion rate for Campaign XYZ'
 mytexts$cumresponse$plotsubtitle <- 'proposed selection: best 15 percentiles according to our model'
 mytexts$cumresponse$y_axis_label <- '\% Conversion'
 mytexts$cumresponse$x_axis_label <- 'percentiles (percentile = 1\% of customers)'
-mytexts$cumresponse$annotationtext <- "Selecting up until the &NTL percentile with our &MDL model has an expected conversion rate of &VALUE"
+mytexts$cumresponse$annotationtext <-
+"Selecting up until the &NTL percentile with model &MDL has an expected conversion rate of &VALUE"
 plot_cumresponse(data=plot_input,custom_plot_text = mytexts,highlight_ntile = 15)
-
 }
 \seealso{
 \url{https://github.com/modelplot/modelplotr} for details on the package

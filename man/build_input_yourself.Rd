@@ -5,8 +5,9 @@
 \title{Example: build required input from a custom model}
 \description{
 It's very easy to apply modelplotr
-to predictive models that are developed in caret, mlr, h2o or keras. For other models, even those built
-outside of R, it only takes a bit more work. Below the required format and an example is included.
+to predictive models that are developed in caret, mlr, h2o or keras. However, also for models that are developed differently,
+even those built outside of R, it only takes a bit more work to use modelplotr on top of these models.
+In this section we introduce the required format and an example.
 }
 \section{When you build input for plotting_scope() yourself}{
 
@@ -31,25 +32,25 @@ In that case, make sure the input dataframe contains the folowing columns & form
 }
 
 \examples{
-# load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+# load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 data("bank_td")
 library(dplyr)
 # prepare data for training model for binomial target has_td and train models
-train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 
 #train logistic regression model with stats package
 glm.model <- glm(has_td ~.,family=binomial(link='logit'),data=train)
 #score model
-prob_no.term.deposit <- predict(glm.model,newdata=train,type='response')
+prob_no.term.deposit <- stats::predict(glm.model,newdata=train,type='response')
 prob_term.deposit <- 1-prob_no.term.deposit
 #set number of ntiles
 ntiles = 10
 # determine cutoffs
-cutoffs = c(quantile(prob_term.deposit,probs = seq(0,1,1/ntiles),na.rm = TRUE))
+cutoffs = c(stats::quantile(prob_term.deposit,probs = seq(0,1,1/ntiles),na.rm = TRUE))
 #calculate ntile values
-ntl_term.deposit <- (ntiles+1)-as.numeric(cut(prob_term.deposit,breaks=cutoffs,include.lowest = T))
+ntl_term.deposit <- (ntiles+1)-as.numeric(cut(prob_term.deposit,breaks=cutoffs,include.lowest=TRUE))
 ntl_no.term.deposit <- (ntiles+1)-ntl_term.deposit
 # create scored data frame
 scores_and_ntiles <- train \%>\%
@@ -65,14 +66,14 @@ scores_and_ntiles <- train \%>\%
 
 # add test data
 #score model on test data
-prob_no.term.deposit <- predict(glm.model,newdata=test,type='response')
+prob_no.term.deposit <- stats::predict(glm.model,newdata=test,type='response')
 prob_term.deposit <- 1-prob_no.term.deposit
 #set number of ntiles
 ntiles = 10
 # determine cutoffs
-cutoffs = c(quantile(prob_term.deposit,probs = seq(0,1,1/ntiles),na.rm = TRUE))
+cutoffs = c(stats::quantile(prob_term.deposit,probs = seq(0,1,1/ntiles),na.rm = TRUE))
 #calculate ntile values
-ntl_term.deposit <- (ntiles+1)-as.numeric(cut(prob_term.deposit,breaks=cutoffs,include.lowest = T))
+ntl_term.deposit <- (ntiles+1)-as.numeric(cut(prob_term.deposit,breaks=cutoffs,include.lowest=TRUE))
 ntl_no.term.deposit <- (ntiles+1)-ntl_term.deposit
 scores_and_ntiles <- scores_and_ntiles \%>\%
   rbind(

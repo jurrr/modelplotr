@@ -23,13 +23,13 @@
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return ggplot object. Cumulative gains plot.
 #' @examples
-#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' # load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 #' data("bank_td")
 #' # prepare data for training model for binomial target has_td and train models
-#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 #' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 #' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
-#' #train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#' #train models using caret... (or use mlr or H2o or keras ... see ?prepare_scores_and_ntiles)
 #' # setting caret cross validation, here tuned for speed (not accuracy!)
 #' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
 #' # random forest using ranger package, here tuned for speed (not accuracy!)
@@ -41,11 +41,11 @@
 #' library(modelplotr)
 #' # transform datasets and model objects to input for modelplotr
 #' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
-#'                                                dataset_labels = list("train data","test data"),
-#'                                                models = list("rf","mnl"),
-#'                                                model_labels = list("random forest","multinomial logit"),
-#'                                                target_column="has_td",
-#'                                                ntiles=100)
+#'                          dataset_labels = list("train data","test data"),
+#'                          models = list("rf","mnl"),
+#'                          model_labels = list("random forest","multinomial logit"),
+#'                          target_column="has_td",
+#'                          ntiles=100)
 #' plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_models")
 #' plot_cumgains(data=plot_input)
 #' plot_cumgains(data=plot_input,custom_line_colors=c("orange","purple"))
@@ -62,7 +62,7 @@
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 plot_cumgains <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_text',
-                          save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL,...) {
+                          save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL) {
 
   # check if highlight_decile is used instead of highlight_ntile
   if ('highlight_decile' %in% names(match.call())) {
@@ -171,8 +171,6 @@ cat(paste0("Plot is saved as: ",filename,"\n\n"))
 
 
 
-
-
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 #### plot_cumlift()                       ####
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
@@ -198,13 +196,13 @@ cat(paste0("Plot is saved as: ",filename,"\n\n"))
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return ggplot object. Lift plot.
 #' @examples
-#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' # load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 #' data("bank_td")
 #' # prepare data for training model for binomial target has_td and train models
-#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 #' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 #' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
-#' #train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#' #train models using caret... (or use mlr or H2o or keras ... see ?prepare_scores_and_ntiles)
 #' # setting caret cross validation, here tuned for speed (not accuracy!)
 #' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
 #' # random forest using ranger package, here tuned for speed (not accuracy!)
@@ -216,11 +214,11 @@ cat(paste0("Plot is saved as: ",filename,"\n\n"))
 #' library(modelplotr)
 #' # transform datasets and model objects to input for modelplotr
 #' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
-#'                                                dataset_labels = list("train data","test data"),
-#'                                                models = list("rf","mnl"),
-#'                                                model_labels = list("random forest","multinomial logit"),
-#'                                                target_column="has_td",
-#'                                                ntiles=100)
+#'                          dataset_labels = list("train data","test data"),
+#'                          models = list("rf","mnl"),
+#'                          model_labels = list("random forest","multinomial logit"),
+#'                          target_column="has_td",
+#'                          ntiles=100)
 #' plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_datasets")
 #' plot_cumlift(data=plot_input)
 #' plot_cumlift(data=plot_input,custom_line_colors=c("orange","purple"))
@@ -237,7 +235,7 @@ cat(paste0("Plot is saved as: ",filename,"\n\n"))
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 plot_cumlift <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_text',
-                         save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL,...) {
+                         save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL) {
 
   if ('highlight_decile' %in% names(match.call())) {
     warning("parameter highlight_decile is depreciated and replaced by highlight_ntile.")
@@ -351,13 +349,13 @@ plot_cumlift <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return ggplot object. Response plot.
 #' @examples
-#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' # load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 #' data("bank_td")
 #' # prepare data for training model for binomial target has_td and train models
-#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 #' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 #' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
-#' #train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#' #train models using caret... (or use mlr or H2o or keras ... see ?prepare_scores_and_ntiles)
 #' # setting caret cross validation, here tuned for speed (not accuracy!)
 #' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
 #' # random forest using ranger package, here tuned for speed (not accuracy!)
@@ -369,11 +367,11 @@ plot_cumlift <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_
 #' library(modelplotr)
 #' # transform datasets and model objects to input for modelplotr
 #' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
-#'                                                dataset_labels = list("train data","test data"),
-#'                                                models = list("rf","mnl"),
-#'                                                model_labels = list("random forest","multinomial logit"),
-#'                                                target_column="has_td",
-#'                                                ntiles=100)
+#'                          dataset_labels = list("train data","test data"),
+#'                          models = list("rf","mnl"),
+#'                          model_labels = list("random forest","multinomial logit"),
+#'                          target_column="has_td",
+#'                          ntiles=100)
 #' plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
 #' plot_response(data=plot_input)
 #' plot_response(data=plot_input,custom_line_colors=RColorBrewer::brewer.pal(3,"Dark2"))
@@ -390,7 +388,7 @@ plot_cumlift <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 plot_response <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_text',
-                          save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL,...) {
+                          save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL) {
 
   if ('highlight_decile' %in% names(match.call())) {
     warning("parameter highlight_decile is depreciated and replaced by highlight_ntile.")
@@ -517,13 +515,13 @@ plot_response <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return ggplot object. Cumulative Response plot.
 #' @examples
-#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' # load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 #' data("bank_td")
 #' # prepare data for training model for binomial target has_td and train models
-#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 #' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 #' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
-#' #train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#' #train models using caret... (or use mlr or H2o or keras ... see ?prepare_scores_and_ntiles)
 #' # setting caret cross validation, here tuned for speed (not accuracy!)
 #' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
 #' # random forest using ranger package, here tuned for speed (not accuracy!)
@@ -535,11 +533,11 @@ plot_response <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot
 #' library(modelplotr)
 #' # transform datasets and model objects to input for modelplotr
 #' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
-#'                                                dataset_labels = list("train data","test data"),
-#'                                                models = list("rf","mnl"),
-#'                                                model_labels = list("random forest","multinomial logit"),
-#'                                                target_column="has_td",
-#'                                                ntiles=100)
+#'                          dataset_labels = list("train data","test data"),
+#'                          models = list("rf","mnl"),
+#'                          model_labels = list("random forest","multinomial logit"),
+#'                          target_column="has_td",
+#'                          ntiles=100)
 #' plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
 #' plot_cumresponse(data=plot_input)
 #' plot_cumresponse(data=plot_input,custom_line_colors="pink")
@@ -556,7 +554,7 @@ plot_response <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 plot_cumresponse <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_text',
-                             save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL,...) {
+                             save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL) {
 
   if ('highlight_decile' %in% names(match.call())) {
     warning("parameter highlight_decile is depreciated and replaced by highlight_ntile.")
@@ -678,13 +676,13 @@ plot_cumresponse <- function(data=plot_input,highlight_ntile=NA,highlight_how='p
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return gtable, containing 6 grobs.
 #' @examples
-#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' # load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 #' data("bank_td")
 #' # prepare data for training model for binomial target has_td and train models
-#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 #' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 #' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
-#' #train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#' #train models using caret... (or use mlr or H2o or keras ... see ?prepare_scores_and_ntiles)
 #' # setting caret cross validation, here tuned for speed (not accuracy!)
 #' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
 #' # random forest using ranger package, here tuned for speed (not accuracy!)
@@ -696,11 +694,11 @@ plot_cumresponse <- function(data=plot_input,highlight_ntile=NA,highlight_how='p
 #' library(modelplotr)
 #' # transform datasets and model objects to input for modelplotr
 #' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
-#'                                                dataset_labels = list("train data","test data"),
-#'                                                models = list("rf","mnl"),
-#'                                                model_labels = list("random forest","multinomial logit"),
-#'                                                target_column="has_td",
-#'                                                ntiles=100)
+#'                          dataset_labels = list("train data","test data"),
+#'                          models = list("rf","mnl"),
+#'                          model_labels = list("random forest","multinomial logit"),
+#'                          target_column="has_td",
+#'                          ntiles=100)
 #' plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
 #' plot_multiplot(data=plot_input)
 #' @export
@@ -715,7 +713,7 @@ plot_cumresponse <- function(data=plot_input,highlight_ntile=NA,highlight_how='p
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 plot_multiplot <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,
-                     highlight_ntile = NA, custom_plot_text=NULL,...) {
+                     highlight_ntile = NA, custom_plot_text=NULL) {
 
   # check if required parameters for financial plots are provided
 
@@ -831,14 +829,14 @@ plot_multiplot <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,c
 #' @param custom_plot_text List. List with customized textual elements for plot. Create a list with defaults
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return gtable, containing 6 grobs.
-#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' # load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 #' @examples
 #' data("bank_td")
 #' # prepare data for training model for binomial target has_td and train models
-#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 #' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 #' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
-#' #train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#' #train models using caret... (or use mlr or H2o or keras ... see ?prepare_scores_and_ntiles)
 #' # setting caret cross validation, here tuned for speed (not accuracy!)
 #' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
 #' # random forest using ranger package, here tuned for speed (not accuracy!)
@@ -850,16 +848,18 @@ plot_multiplot <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,c
 #' library(modelplotr)
 #' # transform datasets and model objects to input for modelplotr
 #' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
-#'                                                dataset_labels = list("train data","test data"),
-#'                                                models = list("rf","mnl"),
-#'                                                model_labels = list("random forest","multinomial logit"),
-#'                                                target_column="has_td",
-#'                                                ntiles=100)
+#'                          dataset_labels = list("train data","test data"),
+#'                          models = list("rf","mnl"),
+#'                          model_labels = list("random forest","multinomial logit"),
+#'                          target_column="has_td",
+#'                          ntiles=100)
 #' # set scope for analysis (default: no comparison)
 #' plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
-#' plot_roi(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
-#' plot_roi(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile=20)
-#' plot_roi(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile="max_profit")
+#' plot_roi(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50)
+#' plot_roi(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50,
+#'          highlight_ntile=20)
+#' plot_roi(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50,
+#'          highlight_ntile="max_profit")
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
@@ -873,7 +873,7 @@ plot_multiplot <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,c
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 plot_roi <- function(data=plot_input,highlight_ntile='max_roi',highlight_how='plot_text',
                      save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL,
-                     fixed_costs,variable_costs_per_unit,profit_per_unit,...){
+                     fixed_costs,variable_costs_per_unit,profit_per_unit){
 
   # check if required parameters for financial plots are provided
 
@@ -1048,10 +1048,10 @@ plot_roi <- function(data=plot_input,highlight_ntile='max_roi',highlight_how='pl
 #' @examples
 #' data("bank_td")
 #' # prepare data for training model for binomial target has_td and train models
-#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 #' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 #' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
-#' #train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#' #train models using caret... (or use mlr or H2o or keras ... see ?prepare_scores_and_ntiles)
 #' # setting caret cross validation, here tuned for speed (not accuracy!)
 #' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
 #' # random forest using ranger package, here tuned for speed (not accuracy!)
@@ -1063,16 +1063,18 @@ plot_roi <- function(data=plot_input,highlight_ntile='max_roi',highlight_how='pl
 #' library(modelplotr)
 #' # transform datasets and model objects to input for modelplotr
 #' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
-#'                                                dataset_labels = list("train data","test data"),
-#'                                                models = list("rf","mnl"),
-#'                                                model_labels = list("random forest","multinomial logit"),
-#'                                                target_column="has_td",
-#'                                                ntiles=100)
+#'                          dataset_labels = list("train data","test data"),
+#'                          models = list("rf","mnl"),
+#'                          model_labels = list("random forest","multinomial logit"),
+#'                          target_column="has_td",
+#'                          ntiles=100)
 #' # set scope for analysis (default: no comparison)
 #' plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope='compare_models')
-#' plot_profit(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
-#' plot_profit(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile=20)
-#' plot_profit(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile='max_roi')
+#' plot_profit(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50)
+#' plot_profit(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50,
+#'             highlight_ntile=20)
+#' plot_profit(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50,
+#'             highlight_ntile='max_roi')
 #' @export
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
@@ -1085,7 +1087,7 @@ plot_roi <- function(data=plot_input,highlight_ntile='max_roi',highlight_how='pl
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 plot_profit <- function(data=plot_input,highlight_ntile='max_profit',highlight_how='plot_text',
                         save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL,
-                        fixed_costs,variable_costs_per_unit,profit_per_unit,...){
+                        fixed_costs,variable_costs_per_unit,profit_per_unit){
 
   # check if required parameters for financial plots are provided
 
@@ -1177,7 +1179,7 @@ plot_profit <- function(data=plot_input,highlight_ntile='max_profit',highlight_h
     ggplot2::scale_color_manual(values=pp$profit$linecols)+
     ggplot2::scale_size_manual(values=pp$profit$linesizes)+
     ggplot2::scale_alpha_manual(values=pp$profit$alphas)+
-    ggplot2::scale_y_continuous(name=pp$profit$y_axis_label,labels = scales::dollar_format(prefix = "€"), expand = c(0, 0.5)) +
+    ggplot2::scale_y_continuous(name=pp$profit$y_axis_label,labels = scales::dollar_format(prefix = "\u20ac", suffix = ""), expand = c(0, 0.5)) +
     ggplot2::expand_limits(y=0) +
     ggplot2::labs(title=pp$profit$plottitle,subtitle=pp$profit$plotsubtitle) +
     ggplot2::theme_minimal() +
@@ -1263,10 +1265,10 @@ plot_profit <- function(data=plot_input,highlight_ntile='max_profit',highlight_h
 #' @examples
 #' data("bank_td")
 #' # prepare data for training model for binomial target has_td and train models
-#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 #' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 #' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
-#' #train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#' #train models using caret... (or use mlr or H2o or keras ... see ?prepare_scores_and_ntiles)
 #' # setting caret cross validation, here tuned for speed (not accuracy!)
 #' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
 #' # random forest using ranger package, here tuned for speed (not accuracy!)
@@ -1278,17 +1280,20 @@ plot_profit <- function(data=plot_input,highlight_ntile='max_profit',highlight_h
 #' library(modelplotr)
 #' # transform datasets and model objects to input for modelplotr
 #' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
-#'                                                dataset_labels = list("train data","test data"),
-#'                                                models = list("rf","mnl"),
-#'                                                model_labels = list("random forest","multinomial logit"),
-#'                                                target_column="has_td",
-#'                                                ntiles=100)
+#'                          dataset_labels = list("train data","test data"),
+#'                          models = list("rf","mnl"),
+#'                          model_labels = list("random forest","multinomial logit"),
+#'                          target_column="has_td",
+#'                          ntiles=100)
 #' # set scope for analysis (default: no comparison)
 #' plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope='compare_models')
-#' plot_costsrevs(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
-#' plot_costsrevs(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile=20)
-#' plot_costsrevs(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile='max_roi')
-#' plot_costsrevs(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile='max_profit')
+#' plot_costsrevs(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50)
+#' plot_costsrevs(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50,
+#'                highlight_ntile=20)
+#' plot_costsrevs(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50,
+#'                highlight_ntile='max_roi')
+#' plot_costsrevs(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50,
+#'                highlight_ntile='max_profit')
 #' @export
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
@@ -1301,7 +1306,7 @@ plot_profit <- function(data=plot_input,highlight_ntile='max_profit',highlight_h
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 plot_costsrevs <- function(data=plot_input,highlight_ntile='max_profit',highlight_how='plot_text',
                            save_fig=FALSE,save_fig_filename=NA,custom_line_colors=NA,custom_plot_text=NULL,
-                           fixed_costs,variable_costs_per_unit,profit_per_unit,...){
+                           fixed_costs,variable_costs_per_unit,profit_per_unit){
 
   if(any(missing(fixed_costs),missing(variable_costs_per_unit),missing(profit_per_unit))) {
     stop("required parameters 'fixed_costs', 'variable_costs_per_unit' and 'profit_per_unit' are not all specified!")
@@ -1389,7 +1394,7 @@ plot_costsrevs <- function(data=plot_input,highlight_ntile='max_profit',highligh
     ggplot2::scale_color_manual(values=pp$costsrevs$linecols)+
     ggplot2::scale_size_manual(values=pp$costsrevs$linesizes)+
     ggplot2::scale_alpha_manual(values=pp$costsrevs$alphas)+
-    ggplot2::scale_y_continuous(name=pp$costsrevs$y_axis_label,labels = scales::dollar_format(prefix = "€"), expand = c(0, 0.5)) +
+    ggplot2::scale_y_continuous(name=pp$costsrevs$y_axis_label,labels = scales::dollar_format(prefix = "\u20ac", suffix = ""), expand = c(0, 0.5)) +
     ggplot2::expand_limits(y=0) +
     ggplot2::labs(title=pp$costsrevs$plottitle,subtitle=pp$costsrevs$plotsubtitle) +
     ggplot2::theme_minimal() +

@@ -49,11 +49,12 @@ or \code{\link{aggregate_over_ntiles}} yourself, within r or even outside of r.
 }
 
 \examples{
-# load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+\dontrun{
+# load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 data("bank_td")
 
 # prepare data for training model for binomial target has_td and train models
-train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 
@@ -84,12 +85,14 @@ gbm <- h2o::h2o.gbm(y = "has_td",
                           training_frame = h2o_train,
                           nfolds = 5)
 #... or train models using keras.
-x_train <- as.matrix(train[,-1]); y=train[,1]; y_train <- keras::to_categorical(as.numeric(y)-1); `\%>\%` <- magrittr::`\%>\%`
+x_train <- as.matrix(train[,-1]); y=train[,1]; y_train <- keras::to_categorical(as.numeric(y)-1);
+`\%>\%` <- magrittr::`\%>\%`
 nn <- keras::keras_model_sequential() \%>\%
-keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu',input_shape = NCOL(x_train)) \%>\%
+keras::layer_dense(units = 16,kernel_initializer = "uniform",activation = 'relu',
+                   input_shape = NCOL(x_train))\%>\%
   keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu') \%>\%
   keras::layer_dense(units = length(levels(train[,1])),activation='softmax')
-nn \%>\% keras::compile(optimizer = 'rmsprop',loss = 'categorical_crossentropy',metrics = c('accuracy'))
+nn \%>\% keras::compile(optimizer='rmsprop',loss='categorical_crossentropy',metrics=c('accuracy'))
 nn \%>\% keras::fit(x_train,y_train,epochs = 20,batch_size = 1028,verbose=0)
 
 # preparation steps
@@ -105,9 +108,10 @@ plot_cumlift(data = plot_input)
 plot_response(data = plot_input)
 plot_cumresponse(data = plot_input)
 plot_multiplot(data = plot_input)
-plot_costsrevs(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
-plot_profit(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
-plot_roi(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
+plot_costsrevs(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+plot_profit(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+plot_roi(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+}
 }
 \seealso{
 \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}

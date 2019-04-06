@@ -38,5 +38,12 @@ Suggests:
     knitr,
     rmarkdown,
     testthat,
-    xgboost
+    xgboost,
+    dplyr,
+    scales,
+    stringr,
+    kableExtra,
+    lattice,
+    ranger,
+    glmnet
 VignetteBuilder: knitr

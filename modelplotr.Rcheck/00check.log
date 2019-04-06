@@ -1,0 +1,9 @@
+* using log directory 'C:/TEMP/modelplotr/modelplotr.Rcheck'
+* using R version 3.5.2 (2018-12-20)
+* using platform: x86_64-w64-mingw32 (64-bit)
+* using session charset: ISO8859-1
+* checking for file 'modelplotr/DESCRIPTION' ... ERROR
+Required fields missing or empty:
+  'Author' 'Maintainer'
+* DONE
+Status: 1 ERROR

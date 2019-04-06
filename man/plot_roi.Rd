@@ -8,7 +8,7 @@ plot_roi(data = plot_input, highlight_ntile = "max_roi",
   highlight_how = "plot_text", save_fig = FALSE,
   save_fig_filename = NA, custom_line_colors = NA,
   custom_plot_text = NULL, fixed_costs, variable_costs_per_unit,
-  profit_per_unit, ...)
+  profit_per_unit)
 }
 \arguments{
 \item{data}{Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
@@ -42,7 +42,7 @@ These costs vary with selection size (ntiles).}
 }
 \value{
 gtable, containing 6 grobs.
-# load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+# load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 }
 \description{
 Generates the Return on Investment plot. It plots the cumulative revenues as a percentage of investments
@@ -54,10 +54,10 @@ fixed_costs, variable_costs_per_unit and profit_per_unit.
 \examples{
 data("bank_td")
 # prepare data for training model for binomial target has_td and train models
-train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
-#train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#train models using caret... (or use mlr or H2o or keras ... see ?prepare_scores_and_ntiles)
 # setting caret cross validation, here tuned for speed (not accuracy!)
 fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
 # random forest using ranger package, here tuned for speed (not accuracy!)
@@ -69,16 +69,18 @@ mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitCont
 library(modelplotr)
 # transform datasets and model objects to input for modelplotr
 scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
-                                               dataset_labels = list("train data","test data"),
-                                               models = list("rf","mnl"),
-                                               model_labels = list("random forest","multinomial logit"),
-                                               target_column="has_td",
-                                               ntiles=100)
+                         dataset_labels = list("train data","test data"),
+                         models = list("rf","mnl"),
+                         model_labels = list("random forest","multinomial logit"),
+                         target_column="has_td",
+                         ntiles=100)
 # set scope for analysis (default: no comparison)
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
-plot_roi(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
-plot_roi(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile=20)
-plot_roi(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile="max_profit")
+plot_roi(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50)
+plot_roi(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50,
+         highlight_ntile=20)
+plot_roi(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50,
+         highlight_ntile="max_profit")
 }
 \seealso{
 \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}

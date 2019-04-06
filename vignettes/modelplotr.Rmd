@@ -194,9 +194,9 @@ A brief introduction to the data: This dataset contains 7 variables, including 2
 
 Now, let's train some models. To illustrate that you can use models trained using caret, mlr, h2o and keras, we'll train some models first, one for each package, and include these models in our input for the plots. This way, we can easily compare the models in the plots. Also, we use a train set and a test set for each model, enabling us to also compare between datasets. More on modelplotr's options to compare stuff (models, datasets, target classes) in the next section on **Plotting scopes**.
 
-```{r trainmodels, echo=TRUE}
+```{r trainmodels, echo=TRUE, eval=FALSE}
 # prepare data for training model for binomial target has_td and train models
-train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+train_index =  base::sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 
@@ -243,7 +243,7 @@ This function builds a dataframe object that contains actuals and predictions on
 
 The function prepare_scores_and_ntiles() has 6 parameters, of which 3 are required:
 
-```{r psn_params, echo=FALSE}
+```{r psn_params, echo=FALSE, eval=FALSE}
 # prepare data
 text_tbl <- data.frame(
   Parameter = c('datasets *','dataset_labels' , 'models *','model_labels','target_column *','ntiles'),
@@ -258,8 +258,8 @@ text_tbl <- data.frame(
 )
 
 kable(text_tbl) %>%
-  kable_styling(full_width = T,font_size = 10) %>%
-  row_spec(c(1,3,5),italic = T)
+  kableExtra::kable_styling(full_width = T,font_size = 10) %>%
+  kableExtra::row_spec(c(1,3,5),italic = T)
   
 
 ```
@@ -267,7 +267,7 @@ kable(text_tbl) %>%
 	
 
 
-```{r prepdata, echo=TRUE}
+```{r prepdata, echo=TRUE, eval=FALSE}
 # prepare data
 scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
                       dataset_labels = list("train data","test data"),
@@ -279,11 +279,11 @@ scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
 ```
 This is what the dataframe looks like (first 5 rows):
 
-```{r df_sd,echo=FALSE}
+```{r df_sd,echo=FALSE, eval=FALSE}
 scores_and_ntiles %>%
   head(5)%>%
   kable(row.names = FALSE) %>%
-  kable_styling(font_size = 10,full_width = F,position="left")
+  kableExtra::kable_styling(font_size = 10,full_width = FALSE,position="left")
 ```
 
 ### plotting_scope()
@@ -308,8 +308,8 @@ text_tbl <- data.frame(
 )
 
 kable(text_tbl) %>%
-  kable_styling(full_width = T,font_size = 10) %>%
-  row_spec(1,italic = T)
+  kableExtra::kable_styling(full_width = T,font_size = 10) %>%
+  kableExtra::row_spec(1,italic = T)
   
 
 ```
@@ -331,15 +331,15 @@ text_tbl <- data.frame(
 )
 
 kable(text_tbl) %>%
-  kable_styling(full_width = T,font_size = 10) %>%
-  row_spec(c(1),italic = T)
+  kableExtra::kable_styling(full_width = T,font_size = 10) %>%
+  kableExtra::row_spec(c(1),italic = T)
   
 
 ```
 
 Now, let's use plotting_scope to generate the input for all plots:
 
-```{r pi,echo=TRUE}
+```{r pi,echo=TRUE, eval=FALSE}
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
 ```
 
@@ -347,19 +347,73 @@ Since we only provided the input data and not the scope, the default scope (no c
 
 ### Custom prepration of modelplotr input
 
-Maybe you prefer to prepare the input for modelplotr differently. For instance when your models are not created with mlr, catet, h2o or keras. Or when your models are created outside of R or your already have the scored data available. In these cases, you have two options:
+Maybe you prefer to prepare the input for modelplotr differently. For instance when your models are not created with mlr, catet, h2o or keras. Or when your models are created outside of R or your already have the scored data available. In these cases, you have two extra options to prepare the input for **plotting_scope**, as visualised below:
 
-1. prepare the input for **plotting_scope()** 
-2. prepare the input for **plotting_scope()**
+```{r modelplotr_process, echo=FALSE, out.width = '100%'}
+knitr::include_graphics("https://modelplot.github.io/img/modelplotr_process.png")
+```
 
-...
+#### Option 2: Prepare input for aggregate_over_ntiles()
+
+With option 2, you prepare  your own dataframe containing actuals and probabilities and ntiles (1st ntile = (1/#ntiles) percent with highest model probability, last ntile = (1/#ntiles) percent with lowest probability according to model) , In that case, make sure the input dataframe contains the folowing columns & formats:
+
+
+```{r custinput_2, echo=FALSE, out.width = '100%'}
+# prepare data
+text_tbl <- data.frame(
+  column = c('model_label','dataset_label','y_true','prob_[tv1]','prob_[tv2]','...',
+             'prob_[tvn]','ntl_[tv1]','ntl_[tv2]','...','ntl_[tvn]'),
+  type = c('Factor','Factor','Factor','Decimal','Decimal','...','Decimal','Integer','Integerl','...','Integer'),
+definition = c('Name of the model object','Datasets to include in the plot as factor levels','Target with actual values',
+'Probability according to model for target value 1','Probability according to model for target value 2','...',
+'Probability according to model for target value n','Ntile based on probability according to model for target value 1',
+'Ntile based on probability according to model for target value 2','...','Ntile based on probability according to model for target value n')
+)
+
+kable(text_tbl) %>%
+  kableExtra::kable_styling(font_size = 10,full_width = FALSE,position="left") %>%
+#  kable_styling(full_width = T,font_size = 10) %>%
+  kableExtra::row_spec(c(1),italic = T)
+  
+
+```
+
+Once you have this data frame prepared, you can use it as an input for **plotting_scope()**, as it aggregates the input automatically.  If you prefer, you can aggregate it first yourself using **aggregate_over_ntiles()**.  
+
+#### Option 3: Prepare input for plotting_scope()
+
+A third option is to build an aggregated data frame yourself as an input for **plotting_scope()**. This does require some extra preparation that is not needed when using option 2, but this can be the better option when you don't want to move around actual and predicted scores on individual cases, due to size or maybe privacy/confidentiality. In this case, make sure the data frame you create, exactly matches the definitions below:
+
+```{r custinput_3, echo=FALSE, out.width = '100%'}
+# prepare data
+text_tbl <- data.frame(
+  column = c('model_label','dataset_label','target_class','ntile','neg','pos','tot','pct','negtot','postot','tottot','pcttot',
+'cumneg','cumpos','cumtot','cumpct','gain','cumgain','gain_ref','gain_opt','lift','cumlift','cumlift_ref'),
+  type = c('String','Factor','String or Integer','Integer','Integer','Integer','Integer','Decimal','Integer','Integer','Integer',
+'Decimal','Integer','Integer','Integer','Integer','Decimal','Decimal','Decimal','Decimal','Decimal','Decimal','Decimal'),
+definition = c('Name of the model object','Datasets to include in the plot as factor levels','Target classes to include in the plot','Ntile groups based on model probability for target class','Number of cases not belonging to target class in dataset in ntile','Number of cases belonging to target class in dataset in ntile','Total number of cases in dataset in ntile',
+'Percentage of cases in dataset in ntile that belongs to target class (pos/tot)','Total number of cases not belonging to target class in dataset','Total number of cases belonging to target class in dataset','Total number of cases in dataset',
+'Percentage of cases in dataset that belongs to target class (postot / tottot)','Cumulative number of cases not belonging to target class in dataset from ntile 1 up until ntile','Cumulative number of cases belonging to target class in dataset from ntile 1 up until ntile','Cumulative number of cases in dataset from ntile 1 up until ntile','Cumulative percentage of cases belonging to target class in dataset from ntile 1 up until ntile (cumpos/cumtot)','Gains value for dataset for ntile (pos/postot)',
+'Cumulative gains value for dataset for ntile (cumpos/postot)','Lower reference for gains value for dataset for ntile (ntile/#ntiles)','Upper reference for gains value for dataset for ntile','Lift value for dataset for ntile (pct/pcttot)',
+'Cumulative lift value for dataset for ntile ((cumpos/cumtot)/pcttot)','Reference value for Cumulative lift value (constant: 1)')
+)
+
+kable(text_tbl) %>%
+  #kable_styling(full_width = T,font_size = 10) %>%
+  kableExtra::kable_styling(font_size = 10,full_width = FALSE,position="left") %>%
+  kableExtra::row_spec(c(1),italic = T)
+  
+
+```
+
+Once you have this data frame prepared, you can use it as an input for **plotting_scope()**.  
 
 
 ## Plotting and highlighting
 
 Now that we have data that are well prepared for all plots, plotting is quite easy:
 
-```{r plot_cg,echo=TRUE, fig.width=7.2,fig.height=5}
+```{r plot_cg,echo=TRUE, fig.width=7.2,fig.height=5, eval=FALSE}
 plot_cumgains(data = plot_input)
 ```
 
@@ -377,18 +431,25 @@ text_tbl <- data.frame(
 )
 
 kable(text_tbl) %>%
-  kable_styling(full_width = T,font_size = 10) %>%
-  row_spec(c(1),italic = T)
+  kableExtra::kable_styling(full_width = T,font_size = 10) %>%
+  kableExtra::row_spec(c(1),italic = T)
   
 
 ```
 
 With these extra parameters, all three financial plots van be plotted, eg:  
-```{r plot_roi,echo=TRUE, fig.width=7.2,fig.height=5}
+```{r plot_roi,echo=TRUE, fig.width=7.2,fig.height=5, eval=FALSE}
 plot_roi(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
 ```
 
 By default, in the ROI plot the ntile is highlighted where return on investment is highest. In the profit plot and costs & revenues plot, the ntile where the profit is highest is highlighted by default. This can be changed, see the section on highlighting or ?plot_roi / ?plot_profit / ?plot_costsrevs for details.
+
+The cumulative lift plot, cumulative gains plot, response plot and cumulative response plot can be combined on one canvas:
+
+```{r plot_multi,echo=TRUE, fig.width=7.2,fig.height=5, eval=FALSE}
+plot_multiplot(data = plot_input)
+```
+
 
 The look and feel of plots can be customized in a number of ways. In the next sections all customizations are presented. 
 
@@ -396,7 +457,7 @@ The look and feel of plots can be customized in a number of ways. In the next se
 
 To highlight a specific decile (or ntile), this can be done with the parameter **highlight_ntile=**.
 
-```{r plot_cgh,echo=TRUE, fig.width=7.2,fig.height=5}
+```{r plot_cgh,echo=TRUE, fig.width=7.2,fig.height=5, eval=FALSE}
 plot_cumgains(data = plot_input,highlight_ntile = 20)
 ```
 
@@ -404,7 +465,7 @@ For financial plots (plot_costsrevs, plot_profit and plot_roi), the highlighing 
 
 With parameter **highlight_how** you can specify How to annotate the plot. Possible values: "plot_text","plot", "text". Default is "plot_text", both highlighting the ntile and value on the plot as well as in text below the plot. "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen ntile. "text" adds text below the plot explaining the plot at chosen ntile but does not highlight the plot.
 
-```{r plot_crhh,echo=TRUE, fig.width=7.2,fig.height=5}
+```{r plot_crhh,echo=TRUE, fig.width=7.2,fig.height=5, eval=FALSE}
 plot_cumresponse(data = plot_input,highlight_ntile = 20,highlight_how = 'plot')
 ```
 
@@ -413,7 +474,7 @@ plot_cumresponse(data = plot_input,highlight_ntile = 20,highlight_how = 'plot')
 
 All textual elements in the plots can be customized. To achieve this, first you have to create a list object with all default values for all textual elements. Modelplotr has a special function to build this list. Once the list is created, you can easily explore the defaults for all plots and change them to your will. 
 
-```{r customtext,echo=TRUE}
+```{r customtext,echo=TRUE, eval=FALSE}
 my_text <- customize_plot_text(plot_input=plot_input)
 
 #explore default values for response plot:
@@ -433,7 +494,7 @@ As you can see, in the annotationtext you can take advantage of some placeholder
 
 Now, you can include the altered list in your plot function to use the custom plot element texts:
 
-```{r plotcustomtext,echo=TRUE, fig.width=7.2,fig.height=5}
+```{r plotcustomtext,echo=TRUE, fig.width=7.2,fig.height=5, eval=FALSE}
 plot_response(data = plot_input,highlight_ntile = 20,custom_plot_text = my_text)
 ```
 
@@ -443,7 +504,7 @@ plot_response(data = plot_input,highlight_ntile = 20,custom_plot_text = my_text)
 
 The colors of the value lines in all plots can be changed setting the parameter **custom_line_colors=** to a vector of strings, specifying colors for the lines in the plot. Both color names and color codes and RColorbrewer palet can be used. The vector is automatically cropped / expanded to match the required length. When not specified, colors from the RColorBrewer palet "Set1" are used.
 
-```{r plotcustomcolor,echo=TRUE, fig.width=7.2,fig.height=5}
+```{r plotcustomcolor,echo=TRUE, fig.width=7.2,fig.height=5, eval=FALSE}
 # set scope to compare models, to have several lines in the plots
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope = 'compare_models')
 
@@ -460,7 +521,7 @@ plot_cumlift(data = plot_input,custom_line_colors = c('darkgreen','deepskyblue2'
 
 Saving plots can be done by setting the parameter **save_fig = TRUE** and/or by providing a filename for the plot (**save_fig_filename = **). The plot name can include the path to the location where to save the plot (eg. 'C://TEMP//myplotname.png'). When no (location and) file name is specified, the plot is saved to the working directory with the plot type as its name.  
 
-```{r saveplot,echo=TRUE,eval=FALSE, fig.width=7.2,fig.height=5}
+```{r saveplot,echo=TRUE,eval=FALSE, fig.width=7.2,fig.height=5, eval=FALSE}
 
 # save plot with defaults
 plot_cumgains(data = plot_input,save_fig = TRUE)
@@ -475,11 +536,6 @@ plot_cumresponse(data = plot_input,save_fig_filename = 'D:\\')
 plot_cumresponse(data = plot_input,save_fig_filename = 'D:\\plot123.png')
 
 ```
-
-
-### Multiple plots on one canvas
-
-...
 
 
 

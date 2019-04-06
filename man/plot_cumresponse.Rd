@@ -7,7 +7,7 @@
 plot_cumresponse(data = plot_input, highlight_ntile = NA,
   highlight_how = "plot_text", save_fig = FALSE,
   save_fig_filename = NA, custom_line_colors = NA,
-  custom_plot_text = NULL, ...)
+  custom_plot_text = NULL)
 }
 \arguments{
 \item{data}{Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
@@ -41,13 +41,13 @@ When we apply the model and select up until ntile X, what is the expected percen
 target class observations in the selection?
 }
 \examples{
-# load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+# load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 data("bank_td")
 # prepare data for training model for binomial target has_td and train models
-train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
-#train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#train models using caret... (or use mlr or H2o or keras ... see ?prepare_scores_and_ntiles)
 # setting caret cross validation, here tuned for speed (not accuracy!)
 fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
 # random forest using ranger package, here tuned for speed (not accuracy!)
@@ -59,11 +59,11 @@ mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitCont
 library(modelplotr)
 # transform datasets and model objects to input for modelplotr
 scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
-                                               dataset_labels = list("train data","test data"),
-                                               models = list("rf","mnl"),
-                                               model_labels = list("random forest","multinomial logit"),
-                                               target_column="has_td",
-                                               ntiles=100)
+                         dataset_labels = list("train data","test data"),
+                         models = list("rf","mnl"),
+                         model_labels = list("random forest","multinomial logit"),
+                         target_column="has_td",
+                         ntiles=100)
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
 plot_cumresponse(data=plot_input)
 plot_cumresponse(data=plot_input,custom_line_colors="pink")

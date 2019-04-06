@@ -54,15 +54,15 @@ in &DS te selecteren is deze selectie van &YVAL observaties &CUMLIFT keer beter 
 }
 
 \examples{
-# load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+# load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 data("bank_td")
 
 # prepare data for training model for binomial target has_td and train models
-train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 
-#train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#train models using caret... (or use mlr or H2o or keras ... see ?prepare_scores_and_ntiles)
 # setting caret cross validation, here tuned for speed (not accuracy!)
 fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
 # random forest using ranger package, here tuned for speed (not accuracy!)
@@ -76,11 +76,11 @@ library(modelplotr)
 
 # transform datasets and model objects to input for modelplotr
 scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
-                                               dataset_labels = list("train data","test data"),
-                                               models = list("rf","mnl"),
-                                               model_labels = list("random forest","multinomial logit"),
-                                               target_column="has_td",
-                                               ntiles=100)
+                         dataset_labels = list("train data","test data"),
+                         models = list("rf","mnl"),
+                         model_labels = list("random forest","multinomial logit"),
+                         target_column="has_td",
+                         ntiles=100)
 
 # set scope for analysis (default: no comparison)
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
@@ -91,7 +91,8 @@ mytexts$cumresponse$plottitle <- 'Expected conversion rate for Campaign XYZ'
 mytexts$cumresponse$plotsubtitle <- 'proposed selection: best 15 percentiles according to our model'
 mytexts$cumresponse$y_axis_label <- '\% Conversion'
 mytexts$cumresponse$x_axis_label <- 'percentiles (percentile = 1\% of customers)'
-mytexts$cumresponse$annotationtext <- "Selecting up until the &NTL percentile with our &MDL model has an expected conversion rate of &VALUE"
+mytexts$cumresponse$annotationtext <-
+  "Selecting up until the &NTL percentile with model &MDL has an expected conversion rate of &VALUE"
 plot_cumresponse(data=plot_input,custom_plot_text = mytexts,highlight_ntile = 15)
 }
 \seealso{

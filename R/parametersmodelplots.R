@@ -45,15 +45,15 @@
 #' \code{\link{plotting_scope}} or else meet required input format.
 #' @return List with default values for all textual elements of the plots.
 #' @examples
-#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' # load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 #' data("bank_td")
 #'
 #' # prepare data for training model for binomial target has_td and train models
-#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 #' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 #' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 #'
-#' #train models using caret... (or use mlr or H2o or keras to train your models... see ?prepare_scores_and_ntiles)
+#' #train models using caret... (or use mlr or H2o or keras ... see ?prepare_scores_and_ntiles)
 #' # setting caret cross validation, here tuned for speed (not accuracy!)
 #' fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
 #' # random forest using ranger package, here tuned for speed (not accuracy!)
@@ -67,11 +67,11 @@
 #'
 #' # transform datasets and model objects to input for modelplotr
 #' scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
-#'                                                dataset_labels = list("train data","test data"),
-#'                                                models = list("rf","mnl"),
-#'                                                model_labels = list("random forest","multinomial logit"),
-#'                                                target_column="has_td",
-#'                                                ntiles=100)
+#'                          dataset_labels = list("train data","test data"),
+#'                          models = list("rf","mnl"),
+#'                          model_labels = list("random forest","multinomial logit"),
+#'                          target_column="has_td",
+#'                          ntiles=100)
 #'
 #' # set scope for analysis (default: no comparison)
 #' plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
@@ -82,7 +82,8 @@
 #' mytexts$cumresponse$plotsubtitle <- 'proposed selection: best 15 percentiles according to our model'
 #' mytexts$cumresponse$y_axis_label <- '% Conversion'
 #' mytexts$cumresponse$x_axis_label <- 'percentiles (percentile = 1% of customers)'
-#' mytexts$cumresponse$annotationtext <- "Selecting up until the &NTL percentile with our &MDL model has an expected conversion rate of &VALUE"
+#' mytexts$cumresponse$annotationtext <-
+#'   "Selecting up until the &NTL percentile with model &MDL has an expected conversion rate of &VALUE"
 #' plot_cumresponse(data=plot_input,custom_plot_text = mytexts,highlight_ntile = 15)
 #' @export
 #' @importFrom magrittr %>%
@@ -347,7 +348,7 @@ setplotparams <- function(plot_input,plottype,custom_line_colors,plot_text) {
   pp$profit$alphas <- c(rep(1,pp$scope$nlevels),1,rep(1,pp$profit$nreflevels))
   pp$profit$linecols <- c(pp$scope$levelcols,'gray',pp$profit$reflevelcols)
   pp$profit$linesizes <- c(rep(1,pp$scope$nlevels),0.8,rep(1.2,pp$profit$nreflevels))
-  pp$profit$annolabelfmt <- 'scales::dollar_format(prefix = "€")'
+  pp$profit$annolabelfmt <- 'scales::dollar_format(prefix = "\u20ac", suffix = "")' #euro symbol
 
   # ROI
   if (pp$scope$scope=='compare_models') {
@@ -386,7 +387,7 @@ setplotparams <- function(plot_input,plottype,custom_line_colors,plot_text) {
   pp$costsrevs$alphas <- c(rep(1,pp$scope$nlevels),rep(1,pp$roi$nreflevels))
   pp$costsrevs$linecols <- c(pp$scope$levelcols,pp$costsrevs$reflevelcols)
   pp$costsrevs$linesizes <- c(rep(1,pp$scope$nlevels),rep(1,pp$costsrevs$nreflevels))
-  pp$costsrevs$annolabelfmt <- 'scales::dollar_format(prefix = "€")'
+  pp$costsrevs$annolabelfmt <- 'scales::dollar_format(prefix = "\u20ac", suffix = "")' #euro symbol
 
   pp$scope$annolabelfmt = get('annolabelfmt',get(pp$scope$plottype,pp))
 
@@ -424,22 +425,22 @@ annotate_plot <- function(plot=plot,highlight_input=plot_input_prepared,
         dplyr::filter(refline == 0 & max_profit == 1) %>%
         dplyr::top_n(1,wt = plotvalue)  %>%
         dplyr::ungroup()
-      highlight_ntile_num = highlight_input$ntile
+      highlight_ntile_num = highlight_input %>% dplyr::distinct(ntile) %>% dplyr::pull() # lowest ntile with max profit when multiple lines are plotted
     } else if(highlight_ntile == 'max_roi'){
         highlight_input = highlight_input %>% dplyr::group_by(legend) %>%
           dplyr::filter(refline == 0 & max_roi == 1) %>%
           dplyr::top_n(1,wt = plotvalue)  %>%
           dplyr::ungroup()
-        highlight_ntile_num = highlight_input$ntile
-      } else {
+        highlight_ntile_num = highlight_input %>% dplyr::distinct(ntile) %>% dplyr::pull() # lowest ntile with max profit when multiple lines are plotted
+    } else {
       highlight_input = highlight_input %>% dplyr::filter(ntile==highlight_ntile & refline==0)
       highlight_ntile_num = highlight_ntile
     }
 
     if(highlight_how %in% c('plot','plot_text')){
       # check ggplot version (clip=off is available in version 3.0 and later)
-      if(packageVersion("ggplot2") < 3.0) {
-        warning(paste0('You are using ggplot2 version ',packageVersion("ggplot2"),'. ggplot2 >= 3.0.0 is required for nicer annotated plots!'))
+      if(utils::packageVersion("ggplot2") < 3.0) {
+        warning(paste0('You are using ggplot2 version ',utils::packageVersion("ggplot2"),'. ggplot2 >= 3.0.0 is required for nicer annotated plots!'))
       }
 
       # add highlighting
@@ -489,7 +490,7 @@ annotate_plot <- function(plot=plot,highlight_input=plot_input_prepared,
                               vjust=0.2,fontface = "bold",alpha=0.8,show.legend = FALSE)
       }
       # make sure value labels for annotated points to X axis aren't clipped
-      if(packageVersion("ggplot2") >= 3.0) plot <- plot + ggplot2::coord_cartesian(clip = 'off' )
+      if(utils::packageVersion("ggplot2") >= 3.0) plot <- plot + ggplot2::coord_cartesian(clip = 'off' )
     }
 
     # annotation text

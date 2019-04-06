@@ -44,11 +44,12 @@
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 #' @examples
-#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' \dontrun{
+#' # load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 #' data("bank_td")
 #'
 #' # prepare data for training model for binomial target has_td and train models
-#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 #' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 #' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 #'
@@ -79,12 +80,14 @@
 #'                           training_frame = h2o_train,
 #'                           nfolds = 5)
 #' #... or train models using keras.
-#' x_train <- as.matrix(train[,-1]); y=train[,1]; y_train <- keras::to_categorical(as.numeric(y)-1); `%>%` <- magrittr::`%>%`
+#' x_train <- as.matrix(train[,-1]); y=train[,1]; y_train <- keras::to_categorical(as.numeric(y)-1);
+#' `%>%` <- magrittr::`%>%`
 #' nn <- keras::keras_model_sequential() %>%
-#' keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu',input_shape = NCOL(x_train)) %>%
+#' keras::layer_dense(units = 16,kernel_initializer = "uniform",activation = 'relu',
+#'                    input_shape = NCOL(x_train))%>%
 #'   keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu') %>%
 #'   keras::layer_dense(units = length(levels(train[,1])),activation='softmax')
-#' nn %>% keras::compile(optimizer = 'rmsprop',loss = 'categorical_crossentropy',metrics = c('accuracy'))
+#' nn %>% keras::compile(optimizer='rmsprop',loss='categorical_crossentropy',metrics=c('accuracy'))
 #' nn %>% keras::fit(x_train,y_train,epochs = 20,batch_size = 1028,verbose=0)
 #'
 #' # preparation steps
@@ -100,9 +103,10 @@
 #' plot_response(data = plot_input)
 #' plot_cumresponse(data = plot_input)
 #' plot_multiplot(data = plot_input)
-#' plot_costsrevs(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
-#' plot_profit(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
-#' plot_roi(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
+#' plot_costsrevs(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+#' plot_profit(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+#' plot_roi(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+#' }
 #' @export
 #' @importFrom magrittr %>%
 prepare_scores_and_ntiles <- function(datasets,
@@ -156,12 +160,12 @@ prepare_scores_and_ntiles <- function(datasets,
           # for binary targets
           if (!is.na(mlr::getTaskDesc(get(mdl))$positive)) {
               y_values <- c(mlr::getTaskDesc(get(mdl))$positive,mlr::getTaskDesc(get(mdl))$negative)
-              prob_pos <- mlr::getPredictionProbabilities(predict(get(mdl),newdata=get(dataset)))
+              prob_pos <- mlr::getPredictionProbabilities(stats::predict(get(mdl),newdata=get(dataset)))
               probabilities <- data.frame(pos=prob_pos,neg=1-prob_pos)
           }
           # for multiclass targets
           else {
-            probabilities <- as.data.frame(mlr::getPredictionProbabilities(predict(get(mdl),newdata=get(dataset))))
+            probabilities <- as.data.frame(mlr::getPredictionProbabilities(stats::predict(get(mdl),newdata=get(dataset))))
             y_values <- colnames(probabilities)
           }
         # 1.2.2. h2o models
@@ -189,14 +193,14 @@ prepare_scores_and_ntiles <- function(datasets,
           # for binary targets
           if (length(levels(actuals$y_true)) == 2) {
               varnames = setdiff(colnames(get(dataset)), target_column)
-              probabilities <- as.data.frame(predict(get(mdl),as.matrix(get(dataset)[,varnames]),verbose=0))
+              probabilities <- as.data.frame(stats::predict(get(mdl),as.matrix(get(dataset)[,varnames]),verbose=0))
               probabilities[,2] <- 1-probabilities[,1]
               y_values <- levels(actuals$y_true)
           }
           # for multiclass targets
           else {
             varnames = setdiff(colnames(get(dataset)), target_column)
-            probabilities <- as.data.frame(predict(get(mdl),as.matrix(get(dataset)[,varnames]),verbose=0))
+            probabilities <- as.data.frame(stats::predict(get(mdl),as.matrix(get(dataset)[,varnames]),verbose=0))
             y_values <- levels(actuals$y_true)
           }
           }
@@ -208,7 +212,7 @@ prepare_scores_and_ntiles <- function(datasets,
             stop("Package \"caret\" needed for this function to work, but it's not installed. Please install it.",
               call. = FALSE)
           }
-            probabilities <- predict(get(mdl),newdata=get(dataset),type='prob')
+            probabilities <- stats::predict(get(mdl),newdata=get(dataset),type='prob')
             y_values <- colnames(probabilities)
         }
 
@@ -227,13 +231,13 @@ prepare_scores_and_ntiles <- function(datasets,
           # and reset to 0-1 range (to prevent probs > 1.0)
           range01 <- function(x){(x-min(x))/(max(x)-min(x))}
           prob_plus_smallrandom = range01(probabilities[,y_probvars[i]]+
-              runif(NROW(probabilities))/1000000)
+              stats::runif(NROW(probabilities))/1000000)
           # determine cutoffs based on prob_plus_smallrandom
-          cutoffs = c(quantile(prob_plus_smallrandom,probs = seq(0,1,1/ntiles),
+          cutoffs = c(stats::quantile(prob_plus_smallrandom,probs = seq(0,1,1/ntiles),
                                na.rm = TRUE))
           # add ntile variable per y-class
           probabilities[,paste0('ntl_',y_values[i])] <- (ntiles+1)-as.numeric(
-            cut(prob_plus_smallrandom,breaks=cutoffs,include.lowest = T))
+            cut(prob_plus_smallrandom,breaks=cutoffs,include.lowest = TRUE))
         }
       } else {warning(paste0('Model object \'',mdl,'\' does not exist!'))}
     scores_and_ntiles = rbind(scores_and_ntiles,probabilities)
@@ -321,11 +325,12 @@ prepare_scores_and_ntiles <- function(datasets,
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 #' @examples
-#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' \dontrun{
+#' # load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 #' data("bank_td")
 #'
 #' # prepare data for training model for binomial target has_td and train models
-#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 #' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 #' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 #'
@@ -356,12 +361,14 @@ prepare_scores_and_ntiles <- function(datasets,
 #'                           training_frame = h2o_train,
 #'                           nfolds = 5)
 #' #... or train models using keras.
-#' x_train <- as.matrix(train[,-1]); y=train[,1]; y_train <- keras::to_categorical(as.numeric(y)-1); `%>%` <- magrittr::`%>%`
+#' x_train <- as.matrix(train[,-1]); y=train[,1]; y_train <- keras::to_categorical(as.numeric(y)-1);
+#' `%>%` <- magrittr::`%>%`
 #' nn <- keras::keras_model_sequential() %>%
-#' keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu',input_shape = NCOL(x_train)) %>%
+#' keras::layer_dense(units = 16,kernel_initializer = "uniform",activation = 'relu',
+#'                    input_shape = NCOL(x_train))%>%
 #'   keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu') %>%
 #'   keras::layer_dense(units = length(levels(train[,1])),activation='softmax')
-#' nn %>% keras::compile(optimizer = 'rmsprop',loss = 'categorical_crossentropy',metrics = c('accuracy'))
+#' nn %>% keras::compile(optimizer='rmsprop',loss='categorical_crossentropy',metrics=c('accuracy'))
 #' nn %>% keras::fit(x_train,y_train,epochs = 20,batch_size = 1028,verbose=0)
 #'
 #' # preparation steps
@@ -375,6 +382,7 @@ prepare_scores_and_ntiles <- function(datasets,
 #' head(aggregated)
 #' plot_input <- plotting_scope(prepared_input = aggregated)
 #' head(plot_input)
+#' }
 #' @export
 #' @importFrom magrittr %>%
 aggregate_over_ntiles <- function(prepared_input){
@@ -402,7 +410,7 @@ Use prepare_scores_and_deciles() or see ?aggregate_over_ntiles for details how t
 
   for (val in yvals) {
 
-    eval_t_zero = scores_and_ntiles %>%
+    eval_t_zero = prepared_input %>%
       dplyr::mutate("target_class"=val,"ntile"=0) %>%
       dplyr::group_by_("model_label","dataset_label","target_class","ntile") %>%
       dplyr::summarize(neg=0,
@@ -426,7 +434,7 @@ Use prepare_scores_and_deciles() or see ?aggregate_over_ntiles for details how t
                 cumlift_ref = 1) %>%
       as.data.frame()
     ifelse(ntiles_aggregate$cumtot/ntiles_aggregate$postot>1,1,ntiles_aggregate$cumtot/ntiles_aggregate$postot)
-    eval_t_add = scores_and_ntiles %>%
+    eval_t_add = prepared_input %>%
       dplyr::mutate("target_class"=val,"ntile"=get(paste0("ntl_",val))) %>%
       dplyr::group_by_("model_label","dataset_label","target_class","ntile") %>%
       dplyr::summarize(neg=sum(y_true!=target_class),
@@ -538,11 +546,12 @@ Use prepare_scores_and_deciles() or see ?aggregate_over_ntiles for details how t
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 #' @examples
-#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' \dontrun{
+#' # load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 #' data("bank_td")
 #'
 #' # prepare data for training model for binomial target has_td and train models
-#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 #' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 #' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 #'
@@ -573,12 +582,14 @@ Use prepare_scores_and_deciles() or see ?aggregate_over_ntiles for details how t
 #'                           training_frame = h2o_train,
 #'                           nfolds = 5)
 #' #... or train models using keras.
-#' x_train <- as.matrix(train[,-1]); y=train[,1]; y_train <- keras::to_categorical(as.numeric(y)-1); `%>%` <- magrittr::`%>%`
+#' x_train <- as.matrix(train[,-1]); y=train[,1]; y_train <- keras::to_categorical(as.numeric(y)-1)
+#' `%>%` <- magrittr::`%>%`
 #' nn <- keras::keras_model_sequential() %>%
-#' keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu',input_shape = NCOL(x_train)) %>%
-#'   keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu') %>%
-#'   keras::layer_dense(units = length(levels(train[,1])),activation='softmax')
-#' nn %>% keras::compile(optimizer = 'rmsprop',loss = 'categorical_crossentropy',metrics = c('accuracy'))
+#' keras::layer_dense(units = 16,kernel_initializer = "uniform",activation = 'relu',
+#'                    input_shape = NCOL(x_train))%>%
+#'   keras::layer_dense(units=16,kernel_initializer="uniform",activation='relu') %>%
+#'   keras::layer_dense(units=length(levels(train[,1])),activation='softmax')
+#' nn %>% keras::compile(optimizer='rmsprop',loss='categorical_crossentropy',metrics=c('accuracy'))
 #' nn %>% keras::fit(x_train,y_train,epochs = 20,batch_size = 1028,verbose=0)
 #'
 #' # preparation steps
@@ -594,9 +605,10 @@ Use prepare_scores_and_deciles() or see ?aggregate_over_ntiles for details how t
 #' plot_response(data = plot_input)
 #' plot_cumresponse(data = plot_input)
 #' plot_multiplot(data = plot_input)
-#' plot_costsrevs(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
-#' plot_profit(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
-#' plot_roi(data = plot_input,fixed_costs = 1000,variable_costs_per_unit = 10,profit_per_unit = 50)
+#' plot_costsrevs(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+#' plot_profit(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+#' plot_roi(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+#' }
 #' @export
 #' @importFrom magrittr %>%
 plotting_scope <- function(prepared_input,
@@ -679,7 +691,7 @@ Use prepare_scores_and_deciles() or see ?aggregate_over_ntiles for details how t
   no_targetvalue_selected <- is.na(as.list(select_targetclass)[1])
   #`%>%` <- magrittr::`%>%`
   smallest <- prepared_input%>%dplyr::select(target_class,postot)%>%
-      dplyr::group_by(target_class)%>%dplyr::summarize(n=min(postot,na.rm = T))%>%
+      dplyr::group_by(target_class)%>%dplyr::summarize(n=min(postot,na.rm = TRUE))%>%
       dplyr::arrange(n)%>%dplyr::top_n(n=1, -n)%>%dplyr::slice(1)%>%dplyr::select(target_class)%>%as.character()
   if (scope=="compare_targetclasses") {
     if (no_targetvalue_selected) select_targetclass <- as.list(targetvalues) else select_targetclass = select_targetclass
@@ -733,8 +745,9 @@ Single evaluation line will be plotted: Target value "',
 #' Example: build required input from a custom model
 #'
 #' It's very easy to apply modelplotr
-#' to predictive models that are developed in caret, mlr, h2o or keras. For other models, even those built
-#' outside of R, it only takes a bit more work. Below the required format and an example is included.
+#' to predictive models that are developed in caret, mlr, h2o or keras. However, also for models that are developed differently,
+#' even those built outside of R, it only takes a bit more work to use modelplotr on top of these models.
+#' In this section we introduce the required format and an example.
 #'
 #' @section When you build input for plotting_scope() yourself:
 #' To make plots with modelplotr, is not required to use the function prepare_scores_and_ntiles to generate the required input data.
@@ -756,25 +769,25 @@ Single evaluation line will be plotted: Target value "',
 #'   ntl_[tvn] \tab Integer \tab Ntile based on probability according to model for target value n
 #'  }
 #' @examples
-#' # load example data (Bank clients that have/have not subscribed a term deposit - see ?bank_td for details)
+#' # load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 #' data("bank_td")
 #' library(dplyr)
 #' # prepare data for training model for binomial target has_td and train models
-#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = F)
+#' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 #' train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 #' test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
 #'
 #' #train logistic regression model with stats package
 #' glm.model <- glm(has_td ~.,family=binomial(link='logit'),data=train)
 #' #score model
-#' prob_no.term.deposit <- predict(glm.model,newdata=train,type='response')
+#' prob_no.term.deposit <- stats::predict(glm.model,newdata=train,type='response')
 #' prob_term.deposit <- 1-prob_no.term.deposit
 #' #set number of ntiles
 #' ntiles = 10
 #' # determine cutoffs
-#' cutoffs = c(quantile(prob_term.deposit,probs = seq(0,1,1/ntiles),na.rm = TRUE))
+#' cutoffs = c(stats::quantile(prob_term.deposit,probs = seq(0,1,1/ntiles),na.rm = TRUE))
 #' #calculate ntile values
-#' ntl_term.deposit <- (ntiles+1)-as.numeric(cut(prob_term.deposit,breaks=cutoffs,include.lowest = T))
+#' ntl_term.deposit <- (ntiles+1)-as.numeric(cut(prob_term.deposit,breaks=cutoffs,include.lowest=TRUE))
 #' ntl_no.term.deposit <- (ntiles+1)-ntl_term.deposit
 #' # create scored data frame
 #' scores_and_ntiles <- train %>%
@@ -790,14 +803,14 @@ Single evaluation line will be plotted: Target value "',
 #'
 #' # add test data
 #' #score model on test data
-#' prob_no.term.deposit <- predict(glm.model,newdata=test,type='response')
+#' prob_no.term.deposit <- stats::predict(glm.model,newdata=test,type='response')
 #' prob_term.deposit <- 1-prob_no.term.deposit
 #' #set number of ntiles
 #' ntiles = 10
 #' # determine cutoffs
-#' cutoffs = c(quantile(prob_term.deposit,probs = seq(0,1,1/ntiles),na.rm = TRUE))
+#' cutoffs = c(stats::quantile(prob_term.deposit,probs = seq(0,1,1/ntiles),na.rm = TRUE))
 #' #calculate ntile values
-#' ntl_term.deposit <- (ntiles+1)-as.numeric(cut(prob_term.deposit,breaks=cutoffs,include.lowest = T))
+#' ntl_term.deposit <- (ntiles+1)-as.numeric(cut(prob_term.deposit,breaks=cutoffs,include.lowest=TRUE))
 #' ntl_no.term.deposit <- (ntiles+1)-ntl_term.deposit
 #' scores_and_ntiles <- scores_and_ntiles %>%
 #'   rbind(

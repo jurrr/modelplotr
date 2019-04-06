@@ -4,8 +4,10 @@
 #'
 #' @format A data frame with 41118 rows and 6 variables:
 #' \describe{
-#'   \item{y}{has the client subscribed a term deposit? Values: "term deposit", "no".
-#'   This variable is used as the target variable in examples for the modelplotr package.}
+#'   \item{has_td}{has the client subscribed a term deposit? Values: "term deposit", "no".
+#'   This variable is used as the binary target variable in examples for the modelplotr package.}
+#'   \item{td_type}{what type of term deposit did the client subscribe? Values: "no.td", "td.type.A", "td.type.B", "td.type.C".
+#'   This variable is used as the multinomial target variable in examples for the modelplotr package.}
 #'   \item{duration}{last contact duration, in seconds (numeric)}
 #'   \item{campaign}{number of contacts performed during this campaign and for this client}
 #'   \item{pdays}{number of days that passed by after the client was last contacted from a previous campaign}
@@ -24,7 +26,7 @@
 # csvname = 'bank-additional/bank-additional-full.csv'
 # temp <- tempfile()
 # download.file(zipname,temp, mode="wb")
-# bank <- read.table(unzip(temp,csvname),sep=";", stringsAsFactors=FALSE,header = T)
+# bank <- read.table(unzip(temp,csvname),sep=";", stringsAsFactors=FALSE,header = TRUE)
 # unlink(temp)
 #
 # summary(bank)
@@ -45,5 +47,5 @@
 #   select(has_td,td_type,duration,campaign,pdays,previous,euribor3m)
 #
 # bank_td <- bank
-# devtools::use_data(bank_td,overwrite = T)
+# devtools::use_data(bank_td,overwrite = TRUE)
 
