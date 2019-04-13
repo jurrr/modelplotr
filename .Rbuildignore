@@ -1,5 +1,6 @@
 ^Meta$
 ^doc$
 ^README\.Rmd$
+^NEWS\.Rmd$
 ^.*\.Rproj$
 ^\.Rproj\.user$

@@ -1,0 +1,24 @@
+---
+title: "NEWS-modelplotr"
+output: github_document
+---
+
+<!-- NEWS.md is generated from NEWS.Rmd. Please edit that file -->
+
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "NEWS-"
+)
+```
+
+```{r, echo = FALSE}
+cat(paste0("Last Update: ",Sys.time()))
+```
+
+
+## v1.0.0
+2019-04-13
+* Initial CRAN release.

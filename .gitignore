@@ -5,13 +5,5 @@ inst/doc
 .Rhistory
 .RData
 .Ruserdata
-ALL.png
-Cumulative lift.png
-comparing_datasets_all_plots.png
-mnl.RDS
-v2.png
-xgb.RDS
-xgb3.RDS
-xgboost.model
-bank_voorbeeld.R
-iris_voorbeeld.R
+^NEWS.Rmd
+^README.Rmd
