@@ -2,6 +2,7 @@
 ^doc$
 ^README\.Rmd$
 ^NEWS\.Rmd$
+^cran-comments.Rmd$
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^CRAN-RELEASE$

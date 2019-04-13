@@ -213,8 +213,11 @@ rf = mlr::train(lrn, task)
 fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
 # mnl model using glmnet package
 mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
+```
 
-#.. or train models using h2o...
+Modelplotr can be used with models built with h2o and keras just as easily. Want to see this in action? Run the code below and add these models to the function **prepare_scores_and_ntiles()** in the next step.
+``` {r h2o_keras, echo=TRUE, eval=FALSE}
+#.. or train models using h2o... [NOT RUN]
 h2o::h2o.init()
 h2o::h2o.no_progress()
 h2o_train = h2o::as.h2o(train)
@@ -224,7 +227,7 @@ gbm <- h2o::h2o.gbm(y = "has_td",
                           training_frame = h2o_train,
                           nfolds = 5)
 
-#.. or train models using keras...
+#.. or train models using keras...  [NOT RUN]
 x_train <- as.matrix(train[,-1]); y=train[,1]; y_train <- keras::to_categorical(as.numeric(y)-1); `%>%` <- magrittr::`%>%`
 nn <- keras::keras_model_sequential() %>%
 keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu',input_shape = NCOL(x_train)) %>%
@@ -268,12 +271,13 @@ kable(text_tbl) %>%
 Now, let's use the *scores_and_ntiles()* function on our models to evaluate the business performance on both the train and the test data:
 
 ```{r prepdata, echo=TRUE}
-# prepare data
+
+# prepare data (for h2o/keras: add "gbm" and "nn" to models and nice labels to model_labels params)
+
 scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
                       dataset_labels = list("train data","test data"),
-                      models = list("rf","mnl", "gbm", "nn"),
-                      model_labels = list("random forest","multinomial logit", 
-                                          "gradient boosting machine","artificial neural network"),
+                      models = list("rf","mnl"),  
+                      model_labels = list("random forest","multinomial logit"), 
                       target_column="has_td",
                       ntiles = 100)
 
@@ -438,9 +442,8 @@ The cumulative lift plot, cumulative gains plot, response plot and cumulative re
 # prepare data
 scores_and_ntiles2 <- prepare_scores_and_ntiles(datasets=list("train","test"),
                       dataset_labels = list("train data","test data"),
-                      models = list("rf","mnl", "gbm", "nn"),
-                      model_labels = list("random forest","multinomial logit", 
-                                          "gradient boosting machine","artificial neural network"),
+                      models = list("rf","mnl"),
+                      model_labels = list("random forest","multinomial logit"),
                       target_column="has_td",
                       ntiles = 10)
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles2)
@@ -555,10 +558,10 @@ The colors of the value lines in all plots can be changed setting the parameter 
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope = 'compare_models')
 
 #customize plot line colors with RColorbrewer 
-plot_cumgains(data = plot_input,custom_line_colors = RColorBrewer::brewer.pal(4,'Accent'))
+plot_cumgains(data = plot_input,custom_line_colors = RColorBrewer::brewer.pal(2,'Accent'))
 
 #customize plot line colors with color names / hexadecimal codes 
-plot_cumlift(data = plot_input,custom_line_colors = c('darkgreen','deepskyblue2','#FF0000','orange'))
+plot_cumlift(data = plot_input,custom_line_colors = c('deepskyblue2','#FF0000'))
 
 ```
 

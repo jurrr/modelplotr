@@ -7,3 +7,4 @@ inst/doc
 .Ruserdata
 ^NEWS.Rmd
 ^README.Rmd
+^cran-comments.Rmd
