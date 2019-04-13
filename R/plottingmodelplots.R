@@ -736,22 +736,22 @@ plot_multiplot <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,c
   pp <- setplotparams(plot_input = plot_input,plottype = "multiplot",custom_line_colors=custom_line_colors,plot_text=plot_text)
 
   # make plot_cumgains without subtitle
-  cumgainsplot <- plot_cumgains(custom_line_colors=custom_line_colors,highlight_ntile = highlight_ntile,highlight_how = 'plot') +
+  cumgainsplot <- plot_cumgains(plot_input,custom_line_colors=custom_line_colors,highlight_ntile = highlight_ntile,highlight_how = 'plot') +
     ggplot2::labs(title=pp$cumgains$plottitle,subtitle=NA) +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),
       plot.subtitle = ggplot2::element_blank(),axis.title.x = ggplot2::element_blank(),axis.line.x=ggplot2::element_line(),axis.line.y=ggplot2::element_line())
   # make plot_cumlift without subtitle
-  cumliftplot <- plot_cumlift(custom_line_colors=custom_line_colors,highlight_ntile = highlight_ntile,highlight_how = 'plot') +
+  cumliftplot <- plot_cumlift(plot_input,custom_line_colors=custom_line_colors,highlight_ntile = highlight_ntile,highlight_how = 'plot') +
     ggplot2::labs(title=pp$cumlift$plottitle,subtitle=NA) +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),
       plot.subtitle = ggplot2::element_blank(),axis.title.x = ggplot2::element_blank(),axis.line.x=ggplot2::element_line(),axis.line.y=ggplot2::element_line())
   # make plot_response without subtitle
-  responseplot <- plot_response(custom_line_colors=custom_line_colors,highlight_ntile = highlight_ntile,highlight_how = 'plot') +
+  responseplot <- plot_response(plot_input,custom_line_colors=custom_line_colors,highlight_ntile = highlight_ntile,highlight_how = 'plot') +
     ggplot2::labs(title=pp$response$plottitle,subtitle=NA) +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),
       plot.subtitle = ggplot2::element_blank(),axis.line.x=ggplot2::element_line(),axis.line.y=ggplot2::element_line())
   # make plot_cumresponse without subtitle
-  cumresponseplot <- plot_cumresponse(custom_line_colors=custom_line_colors,highlight_ntile = highlight_ntile,highlight_how = 'plot')+
+  cumresponseplot <- plot_cumresponse(plot_input,custom_line_colors=custom_line_colors,highlight_ntile = highlight_ntile,highlight_how = 'plot')+
     ggplot2::labs(title=pp$cumresponse$plottitle,subtitle=NA) +
     ggplot2::theme(plot.title = ggplot2::element_text(size = 12, face="bold",hjust = 0.5),
       plot.subtitle = ggplot2::element_blank(),axis.line.x=ggplot2::element_line(),axis.line.y=ggplot2::element_line())

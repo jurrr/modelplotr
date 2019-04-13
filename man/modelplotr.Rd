@@ -160,6 +160,8 @@ mytexts$cumresponse$annotationtext <-
 plot_cumresponse(data=plot_input,custom_plot_text = mytexts,highlight_ntile = 15)
 }
 \seealso{
+\code{vignette('modelplotr')}
+
 \url{https://github.com/modelplot/modelplotr} for details on the package
 
 \url{https://modelplot.github.io/} for our blog posts on using modelplotr

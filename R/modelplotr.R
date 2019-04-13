@@ -72,6 +72,7 @@
 #'     investment of the campaign?}}}
 #'     }
 #'
+#' @seealso \code{vignette('modelplotr')}
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog posts on using modelplotr
 #' @examples

@@ -1,5 +1,5 @@
 ---
-title: "modelplotr"
+title: "modelplotr: Plots to evaluate the business value of predictive models"
 author: "Jurriaan Nagelkerke"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
@@ -21,7 +21,7 @@ library(kableExtra)
 
 > Why ROC curves are a bad idea to explain your model to business people
 
-The modelplotr package makes it easy to create a number of valuable evaluation plots to assess the business value of a predictive model. Using these plots, it can be shown how implementation of the model will impact business targets like response or earnings on a campaign. 
+The modelplotr package makes it easy to create a number of valuable evaluation plots to assess the business value of a predictive model. Using these plots, it can be shown how implementation of the model will impact business targets like response or return on investment of a campaign. 
 
 
 ## Why use modelplotr
@@ -34,11 +34,11 @@ knitr::include_graphics("https://modelplot.github.io/img/cartoonrocplot.jpg")
 
 If your fellow business colleagues didn’t already wander away during your presentation about your fantastic predictive model, it will definitely push them over the edge when you start talking like this. Why? Because the ROC curve is not easy to quickly explain and also difficult to translate into answers on the business questions your spectators have. And these business questions were the reason you’ve built a model in the first place!
 
-What business questions? We build models for all kinds of supervised classification problems. Such as predictive models to select the best records in a dataset, which can be customers, leads, items, events... For instance: You want to know which of your active customers have the highest probability to churn; you need to select those prospects that are most likely to respond to an offer; you have to identify transactions that have a high risk to be fraudulent. During your presentation, your audience is therefore mainly focused on answering questions like: Does your model enable us to our target audience? How much better are we, using your model? What will the expected response on our campaign be? Modelplotr helps you answer these busines questions.
+What business questions? We build models for all kinds of supervised classification problems. Such as predictive models to select the best records in a dataset, which can be customers, leads, items, events... For instance: You want to know which of your active customers have the highest probability to churn; you need to select those prospects that are most likely to respond to an offer; you have to identify transactions that have a high risk to be fraudulent. During your presentation, your audience is therefore mainly focused on answering questions like: Does your model enable us to select our target audience? How much better will we be doing, using your model? What will the expected response on our campaign be? What is the optimal selection size? Modelplotr helps you answer these busines questions.
 
-During our model building efforts, we should already be focused on verifying how well the model performs. Often, we do so by training the model parameters on a selection or subset of records and test the performance on a holdout set or external validation set. We look at a set of performance measures like the ROC curve and the AUC value. These plots and statistics are very helpful to check during model building and optimization whether your model is under- or overfitting and what set of parameters performs best on test data. However, these statistics are not that valuable in assessing the business value the model you developed.
+During our model building efforts, we should already be focused on verifying how well the model performs. Often, we do so by training the model parameters on a selection or subset of records and test the performance on a holdout set or external validation set. We look at a set of performance measures like the ROC curve and the AUC value. These plots and statistics are very helpful to check during model building and model optimization whether your model is under- or overfitting and what set of parameters performs best on test data. However, these statistics are not that valuable in assessing the *business value* the model you developed.
 
-One reason that the ROC curve is not that useful in explaining the business value of your model, is because it’s quite hard to explain the interpretation of ‘area under the curve’, ‘specificity’ or ‘sensitivity’ to business people. Another important reason that these statistics and plots are useless in your business meetings is that they don’t help in determining how to apply your predictive model: What percentage of records should we select based on the model? Should we select only the best 10% of cases? Or should we stop at 30%? Or go on until we have selected 70%?... This is something you want to decide together with your business colleague to best match the business plans and campaign targets they have to meet. The four plots - the cumulative gains, cumulative lift, response and cumulative response - we are about to introduce are in our view the best ones for that cause. On top of that, we also introduce three plots that enable plotting the financial impact of using your model in a campaign: The costs & revenues plot, the profit plot and the return on investment plot. 
+One reason that the ROC curve is not that useful in explaining the business value of your model, is because it’s quite hard to explain the interpretation of ‘area under the curve’, ‘specificity’ or ‘sensitivity’ to business people. Another important reason that these statistics and plots are useless in your business meetings is that they don’t help in determining how to apply your predictive model: What percentage of records should we select based on the model? Should we select only the best 10% of cases? Or should we stop at 30%? Or go on until we have selected 70%?... This is something you want to decide together with your business colleague to best match the business plans and campaign targets they have to meet. The four plots - the cumulative gains, cumulative lift, response and cumulative response - we are about to introduce are in our view the best ones for that cause. On top of that, we also introduce three plots that enable plotting the financial impact of using your model in a campaign: The costs & revenues plot, the profit plot and the return on investment plot. In the end, talking about financial consequences of implementing a is often the most effective when discussing the value of your model with business colleagues.   
 
 
 ## The plots in modelplotr
@@ -55,7 +55,7 @@ Although each plot sheds light on the business value of your model from a differ
 
 Regarding the ntiles: It’s common practice to split the data to score into 10 equally large groups and call these groups deciles. Observations that belong to the top-10% with highest model probability in a set, are in decile 1 of that set; the next group of 10% with high model probability are decile 2 and finally the 10% observations with the lowest model probability on the target class belong to decile 10. 
 
-*Notice that modelplotr does support that you specify the number of equally sized groups with the parameter ntiles. Hence, **ntiles=100** results in 100 equally sized groups with in the first group the 1% with the highest model probability and in group 100 the 1% with the lowest model probability. These groups are often referred to as percentiles; modelplotr will also label them as such. Any value between 4 and 100 can be specified for ntiles. For illustration purposes, we will use deciles, hence the default of **ntiles=10** *
+*Notice that modelplotr does support that you specify the number of equally sized groups with the parameter **ntiles**. Hence, **ntiles=100** results in 100 equally sized groups with in the first group the 1% with the highest model probability and in group 100 the 1% with the lowest model probability. These groups are often referred to as percentiles; modelplotr will also label them as such. Any value between 4 and 100 can be specified for **ntiles**. For illustration purposes, we will use deciles, hence the default of **ntiles=10** *
 
 Each of the plots in modelplotr places the deciles on the x axis and another measure on the y axis. The deciles are plotted from left to right so the observations with the highest model probability are on the left side of the plot. This results in plots like this:
 
@@ -194,7 +194,7 @@ A brief introduction to the data: This dataset contains 7 variables, including 2
 
 Now, let's train some models. To illustrate that you can use models trained using caret, mlr, h2o and keras, we'll train some models first, one for each package, and include these models in our input for the plots. This way, we can easily compare the models in the plots. Also, we use a train set and a test set for each model, enabling us to also compare between datasets. More on modelplotr's options to compare stuff (models, datasets, target classes) in the next section on **Plotting scopes**.
 
-```{r trainmodels, echo=TRUE, eval=FALSE}
+```{r trainmodels, echo=TRUE}
 # prepare data for training model for binomial target has_td and train models
 train_index =  base::sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
 train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
@@ -243,7 +243,7 @@ This function builds a dataframe object that contains actuals and predictions on
 
 The function prepare_scores_and_ntiles() has 6 parameters, of which 3 are required:
 
-```{r psn_params, echo=FALSE, eval=FALSE}
+```{r psn_params, echo=FALSE}
 # prepare data
 text_tbl <- data.frame(
   Parameter = c('datasets *','dataset_labels' , 'models *','model_labels','target_column *','ntiles'),
@@ -265,21 +265,23 @@ kable(text_tbl) %>%
 ```
 
 	
+Now, let's use the *scores_and_ntiles()* function on our models to evaluate the business performance on both the train and the test data:
 
-
-```{r prepdata, echo=TRUE, eval=FALSE}
+```{r prepdata, echo=TRUE}
 # prepare data
 scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
                       dataset_labels = list("train data","test data"),
-                      models = list("rf","mnl", "gbm"),
-                      model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
+                      models = list("rf","mnl", "gbm", "nn"),
+                      model_labels = list("random forest","multinomial logit", 
+                                          "gradient boosting machine","artificial neural network"),
                       target_column="has_td",
                       ntiles = 100)
 
 ```
-This is what the dataframe looks like (first 5 rows):
 
-```{r df_sd,echo=FALSE, eval=FALSE}
+This is what the resulting dataframe looks like (first 5 rows):
+
+```{r df_sd,echo=FALSE}
 scores_and_ntiles %>%
   head(5)%>%
   kable(row.names = FALSE) %>%
@@ -290,8 +292,7 @@ scores_and_ntiles %>%
 
 This function builds a dataframe in the required format for all modelplotr plots, relevant to the selected scope of evaluation. Each record in this dataframe represents a unique combination of datasets, models, target classes and ntiles. 
 
-As an input, plotting_scope can handle a dataframe created with prepare_scores_and_ntiles (see above)  or created otherwise with similar layout. Also, you can provide a dataframe created with aggregate_over_ntiles(). See the section below for more info on the function aggregate_over_ntiles.  
-
+As an input, plotting_scope can handle a dataframe created with prepare_scores_and_ntiles (see above) or created otherwise with similar layout. Also, you can provide a dataframe created with aggregate_over_ntiles(). See the section below for more info on the function aggregate_over_ntiles.  
 
 Aside from the input, the most important parameter is **scope=**. There are four perspectives you can take to plot with modelplotr:
 
@@ -316,7 +317,7 @@ kable(text_tbl) %>%
 
 Other parameters let you select a subset of models/datasets/target classes you want to include in your plot, see ?plotting_scope for details.
 
-```{r ps_params, echo=FALSE,eval=FALSE}
+```{r ps_params, echo=FALSE}
 # prepare data
 text_tbl <- data.frame(
   Parameter = c('prepared_input *','scope' , 'select_model_label','select_dataset_label','select_targetclass','select_smallest_targetclass'),
@@ -339,7 +340,8 @@ kable(text_tbl) %>%
 
 Now, let's use plotting_scope to generate the input for all plots:
 
-```{r pi,echo=TRUE, eval=FALSE}
+```{r pi,echo=TRUE}
+#generate input data frame for all plots in modelplotr
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
 ```
 
@@ -409,17 +411,54 @@ kable(text_tbl) %>%
 Once you have this data frame prepared, you can use it as an input for **plotting_scope()**.  
 
 
-## Plotting and highlighting
+## Plotting 
 
-Now that we have data that are well prepared for all plots, plotting is quite easy:
+Now that we have data that are well prepared for all plots, plotting is quite easy. For instance, the cumulative gains plot:
 
-```{r plot_cg,echo=TRUE, fig.width=7.2,fig.height=5, eval=FALSE}
+```{r plot_cg,echo=TRUE, fig.width=7.2,fig.height=5}
 plot_cumgains(data = plot_input)
 ```
 
+Creating the other non-financial plots is just as easy:
+
+```{r plot_cl_r_cr,echo=TRUE, fig.width=7.2,fig.height=5,eval=FALSE}
+#Cumulative lift
+plot_cumlift(data = plot_input)
+
+#Response plot
+plot_response(data = plot_input)
+
+#Cumulative response plot
+plot_cumresponse(data = plot_input)
+```
+
+The cumulative lift plot, cumulative gains plot, response plot and cumulative response plot can be combined on one canvas:
+
+```{r decrease_ntile, echo=FALSE}
+# prepare data
+scores_and_ntiles2 <- prepare_scores_and_ntiles(datasets=list("train","test"),
+                      dataset_labels = list("train data","test data"),
+                      models = list("rf","mnl", "gbm", "nn"),
+                      model_labels = list("random forest","multinomial logit", 
+                                          "gradient boosting machine","artificial neural network"),
+                      target_column="has_td",
+                      ntiles = 10)
+plot_input <- plotting_scope(prepared_input = scores_and_ntiles2)
+```
+
+```{r plot_multi,echo=TRUE, fig.width=7.2,fig.height=5}
+plot_multiplot(data = plot_input)
+```
+
+```{r increase_ntile, echo=FALSE}
+plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
+```
+
+There is a lot you can customize for the plots in modelplotr: all textual elements, line colors, highlighting and annotating the plots at a specific ntile. All these options are discussed further on. 
+
 For financial plots, three extra parameters need to be provided:
 - 
-```{r fin_params, echo=FALSE,eval=FALSE}
+```{r fin_params, echo=FALSE}
 # prepare data
 text_tbl <- data.frame(
   Parameter = c('fixed_costs','variable_costs_per_unit','profit_per_unit'),
@@ -437,19 +476,26 @@ kable(text_tbl) %>%
 
 ```
 
-With these extra parameters, all three financial plots van be plotted, eg:  
-```{r plot_roi,echo=TRUE, fig.width=7.2,fig.height=5, eval=FALSE}
+With these extra parameters, all three financial plots can be plotted, for instance the ROI plot:  
+```{r plot_roi,echo=TRUE, fig.width=7.2,fig.height=5}
 plot_roi(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
 ```
 
-By default, in the ROI plot the ntile is highlighted where return on investment is highest. In the profit plot and costs & revenues plot, the ntile where the profit is highest is highlighted by default. This can be changed, see the section on highlighting or ?plot_roi / ?plot_profit / ?plot_costsrevs for details.
+By default, in the ROI plot the ntile is highlighted where return on investment is highest. In the profit plot and costs & revenues plot, the ntile where the profit is highest is highlighted by default. This can be changed, see the section on highlighting or ?plot_roi / ?plot_profit / ?plot_costsrevs for details. As an example:
 
-The cumulative lift plot, cumulative gains plot, response plot and cumulative response plot can be combined on one canvas:
+```{r plot_costrev_profit,echo=TRUE, fig.width=7.2,fig.height=5}
 
-```{r plot_multi,echo=TRUE, fig.width=7.2,fig.height=5, eval=FALSE}
-plot_multiplot(data = plot_input)
+#Costs & Revenues plot, highlighted at max roi instead of max profit
+plot_costsrevs(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile = "max_roi")
+
+#Profit plot , highlighted at custom ntile instead of at max profit
+plot_profit(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile = 5)
+
 ```
 
+
+
+## Highlighting and customizing plots
 
 The look and feel of plots can be customized in a number of ways. In the next sections all customizations are presented. 
 
@@ -457,7 +503,7 @@ The look and feel of plots can be customized in a number of ways. In the next se
 
 To highlight a specific decile (or ntile), this can be done with the parameter **highlight_ntile=**.
 
-```{r plot_cgh,echo=TRUE, fig.width=7.2,fig.height=5, eval=FALSE}
+```{r plot_cgh,echo=TRUE, fig.width=7.2,fig.height=5}
 plot_cumgains(data = plot_input,highlight_ntile = 20)
 ```
 
@@ -465,7 +511,7 @@ For financial plots (plot_costsrevs, plot_profit and plot_roi), the highlighing 
 
 With parameter **highlight_how** you can specify How to annotate the plot. Possible values: "plot_text","plot", "text". Default is "plot_text", both highlighting the ntile and value on the plot as well as in text below the plot. "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen ntile. "text" adds text below the plot explaining the plot at chosen ntile but does not highlight the plot.
 
-```{r plot_crhh,echo=TRUE, fig.width=7.2,fig.height=5, eval=FALSE}
+```{r plot_crhh,echo=TRUE, fig.width=7.2,fig.height=5}
 plot_cumresponse(data = plot_input,highlight_ntile = 20,highlight_how = 'plot')
 ```
 
@@ -474,18 +520,18 @@ plot_cumresponse(data = plot_input,highlight_ntile = 20,highlight_how = 'plot')
 
 All textual elements in the plots can be customized. To achieve this, first you have to create a list object with all default values for all textual elements. Modelplotr has a special function to build this list. Once the list is created, you can easily explore the defaults for all plots and change them to your will. 
 
-```{r customtext,echo=TRUE, eval=FALSE}
+```{r customtext,echo=TRUE}
 my_text <- customize_plot_text(plot_input=plot_input)
 
-#explore default values for response plot:
-my_text$response
+#explore default values for the cumulative response plot:
+my_text$cumresponse
 
 #translate to Dutch
-my_text$response$plottitle <- 'Respons grafiek'
-my_text$response$x_axis_label <- 'percentiel'
-my_text$response$y_axis_label <- '% respons'
-my_text$response$response_refline_label <- 'totale respons'
-my_text$response$annotationtext <- "Door percentiel &NTL te selecteren volgens model &MDL in dataset &DS is het %% &YVAL gevallen in de selectie &VALUE."
+my_text$cumresponse$plottitle <- 'Cumulatieve Respons grafiek'
+my_text$cumresponse$x_axis_label <- 'percentiel'
+my_text$cumresponse$y_axis_label <- '% respons (cumulatief)'
+my_text$cumresponse$response_refline_label <- 'respons in totale dataset'
+my_text$cumresponse$annotationtext <- "Selecteren we percentiel 1 t/m &NTL volgens model &MDL in dataset &DS dan is het %% &YVAL gevallen in de selectie &VALUE."
 
 
 ```
@@ -494,8 +540,8 @@ As you can see, in the annotationtext you can take advantage of some placeholder
 
 Now, you can include the altered list in your plot function to use the custom plot element texts:
 
-```{r plotcustomtext,echo=TRUE, fig.width=7.2,fig.height=5, eval=FALSE}
-plot_response(data = plot_input,highlight_ntile = 20,custom_plot_text = my_text)
+```{r plotcustomtext,echo=TRUE, fig.width=7.2,fig.height=5}
+plot_cumresponse(data = plot_input,highlight_ntile = 20,custom_plot_text = my_text)
 ```
 
 
@@ -504,7 +550,7 @@ plot_response(data = plot_input,highlight_ntile = 20,custom_plot_text = my_text)
 
 The colors of the value lines in all plots can be changed setting the parameter **custom_line_colors=** to a vector of strings, specifying colors for the lines in the plot. Both color names and color codes and RColorbrewer palet can be used. The vector is automatically cropped / expanded to match the required length. When not specified, colors from the RColorBrewer palet "Set1" are used.
 
-```{r plotcustomcolor,echo=TRUE, fig.width=7.2,fig.height=5, eval=FALSE}
+```{r plotcustomcolor,echo=TRUE, fig.width=7.2,fig.height=5}
 # set scope to compare models, to have several lines in the plots
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope = 'compare_models')
 
@@ -512,7 +558,7 @@ plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope = 'compare
 plot_cumgains(data = plot_input,custom_line_colors = RColorBrewer::brewer.pal(4,'Accent'))
 
 #customize plot line colors with color names / hexadecimal codes 
-plot_cumlift(data = plot_input,custom_line_colors = c('darkgreen','deepskyblue2','#FF0000'))
+plot_cumlift(data = plot_input,custom_line_colors = c('darkgreen','deepskyblue2','#FF0000','orange'))
 
 ```
 
@@ -521,7 +567,7 @@ plot_cumlift(data = plot_input,custom_line_colors = c('darkgreen','deepskyblue2'
 
 Saving plots can be done by setting the parameter **save_fig = TRUE** and/or by providing a filename for the plot (**save_fig_filename = **). The plot name can include the path to the location where to save the plot (eg. 'C://TEMP//myplotname.png'). When no (location and) file name is specified, the plot is saved to the working directory with the plot type as its name.  
 
-```{r saveplot,echo=TRUE,eval=FALSE, fig.width=7.2,fig.height=5, eval=FALSE}
+```{r saveplot,echo=TRUE,eval=FALSE, fig.width=7.2,fig.height=5}
 
 # save plot with defaults
 plot_cumgains(data = plot_input,save_fig = TRUE)
@@ -538,4 +584,37 @@ plot_cumresponse(data = plot_input,save_fig_filename = 'D:\\plot123.png')
 ```
 
 
+### modelplotr & Multinomial targets 
+
+Modelplotr can also be used for a multinomial target. To illustrate this, let's build a model on the multinomial target in the data and plot the cumulative response chart. All functionality is the same, see above for details how to customize the plots.
+
+```{r multinom, echo=TRUE, fig.width=7.2,fig.height=5}
+
+# prepare data for training model for multinomial target td_type and train models
+train_index =  base::sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
+train = bank_td[train_index,c('td_type','duration','campaign','pdays','previous','euribor3m')]
+test = bank_td[-train_index,c('td_type','duration','campaign','pdays','previous','euribor3m')]
+
+# train a model
+# setting caret cross validation, here tuned for speed (not accuracy!)
+fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+# mnl model using glmnet package
+mnl = caret::train(td_type ~.,data = train, method = "glmnet",trControl = fitControl)
+
+# prepare data
+scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
+                      dataset_labels = list("train data","test data"),
+                      models = list("mnl"),
+                      model_labels = list("multinomial logit"),
+                      target_column="td_type",
+                      ntiles = 100)
+
+#generate input data frame for all plots, set scope at comparing target classes, leave out the 'no.td' class
+plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope = 'compare_targetclasses',
+                             select_targetclass = c('td.type.A','td.type.B','td.type.C' ))
+
+#plot 
+plot_cumresponse(data = plot_input)
+
+```
 

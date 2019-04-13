@@ -14,7 +14,7 @@ Description: Plots to evaluate the business performance of predictive models in 
     campaign. Also, the under/overperformance of a model on the train data compared 
     to other datasets (test data, external validation data,...) can be visualized 
     with a number of functions. 
-Depends: R (>= 3.3.0)
+Depends: R (>= 3.1.0)
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
@@ -23,16 +23,17 @@ Imports:
     grid (>= 3.5.0),
     gridExtra (>= 2.3.0),
     magrittr (>= 1.5.0),
-    tidyverse (>= 1.2.1),
+    dplyr (>= 0.7.7),
     RColorBrewer (>= 1.1.2),
-    randomForest (>= 4.6.14),
-    nnet(>= 7.3-12),
     ggfittext (>= 0.6.0),
-    rlang
+    scales (>= 1.0.0),
+    rlang (>= 0.3.1)
 RoxygenNote: 6.1.1
 Suggests: 
     mlr (>= 2.12.1),
     caret (>= 6.0),
+    randomForest (>= 4.6.14),
+    nnet(>= 7.3-12),
     e1071,
     h2o,
     keras,
@@ -40,8 +41,6 @@ Suggests:
     rmarkdown,
     testthat,
     xgboost,
-    dplyr,
-    scales,
     stringr,
     kableExtra,
     lattice,
