@@ -5,6 +5,7 @@ Version: 1.0.0
 Authors@R: c(
     person("Jurriaan","Nagelkerke",email="jurriaan.nagelkerke@gmail.com",role=c("aut","cre")), 
     person("Pieter","Marcus",email="pieter.marcus@persgroep.net",role="aut"))
+Author: Jurriaan Nagelkerke and Pieter Marcus    
 URL: https://github.com/jurrr/modelplotr
 BugReports: https://github.com/jurrr/modelplotr/issues
 Description: Plots to evaluate the business performance of predictive models in R.
