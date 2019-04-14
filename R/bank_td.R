@@ -2,7 +2,7 @@
 #'
 #' A dataset containing some customer characteristics for clients of a bank that have/have not subscribed a term deposit.
 #'
-#' @format A data frame with 41118 rows and 6 variables:
+#' @format A data frame with 2000 rows and 6 variables:
 #' \describe{
 #'   \item{has_td}{has the client subscribed a term deposit? Values: "term deposit", "no".
 #'   This variable is used as the binary target variable in examples for the modelplotr package.}
@@ -30,7 +30,7 @@
 # unlink(temp)
 #
 # summary(bank)
-# bank <- bank[,c('y','duration','campaign','pdays','previous','euribor3m')]
+# bank <- bank %>% select('y','duration','campaign','pdays','previous','euribor3m') %>% sample_n(2000)
 #
 # # definition of y_cat, created to show modelplotr for multinomial targets
 # bank <- bank %>%
@@ -47,5 +47,5 @@
 #   select(has_td,td_type,duration,campaign,pdays,previous,euribor3m)
 #
 # bank_td <- bank
-# devtools::use_data(bank_td,overwrite = TRUE)
+# usethis::use_data(bank_td,overwrite = TRUE)
 

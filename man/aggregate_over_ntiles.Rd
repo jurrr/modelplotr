@@ -140,6 +140,8 @@ head(plot_input)
 \seealso{
 \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
 
+\code{vignette('modelplotr')}
+
 \code{\link{prepare_scores_and_ntiles}} for details on the function \code{prepare_scores_and_ntiles}
 that generates the required input.
 

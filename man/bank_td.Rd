@@ -4,7 +4,7 @@
 \name{bank_td}
 \alias{bank_td}
 \title{Bank clients that have/have not subscribed a term deposit.}
-\format{A data frame with 41118 rows and 6 variables:
+\format{A data frame with 2000 rows and 6 variables:
 \describe{
   \item{has_td}{has the client subscribed a term deposit? Values: "term deposit", "no".
   This variable is used as the binary target variable in examples for the modelplotr package.}

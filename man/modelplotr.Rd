@@ -79,6 +79,7 @@ datapreparation, plot parameterization and plotting.
 }
 
 \examples{
+\dontrun{
 # load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 data("bank_td")
 
@@ -118,9 +119,9 @@ plot_response(data=plot_input)
 plot_cumresponse(data=plot_input)
 plot_multiplot(data=plot_input)
 # financial plots - these need some financial parameters
-plot_costsrevs(data=plot_input,fixed_costs=15000,variable_costs_per_unit=10,profit_per_unit=50)
-plot_profit(data=plot_input,fixed_costs=15000,variable_costs_per_unit=10,profit_per_unit=50)
-plot_roi(data=plot_input,fixed_costs=15000,variable_costs_per_unit=10,profit_per_unit=50)
+plot_costsrevs(data=plot_input,fixed_costs=1500,variable_costs_per_unit=10,profit_per_unit=50)
+plot_profit(data=plot_input,fixed_costs=1500,variable_costs_per_unit=10,profit_per_unit=50)
+plot_roi(data=plot_input,fixed_costs=1500,variable_costs_per_unit=10,profit_per_unit=50)
 
 # CHANGING THE SCOPE OF ANALYSIS
 # changing the scope - compare models:
@@ -128,7 +129,7 @@ plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_m
 plot_cumgains(data=plot_input)
 # changing the scope - compare datasets:
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_datasets")
-plot_roi(data = plot_input,fixed_costs=15000,variable_costs_per_unit=10,profit_per_unit=50)
+plot_roi(data = plot_input,fixed_costs=1500,variable_costs_per_unit=10,profit_per_unit=50)
 # changing the scope - compare target classes:
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_targetclasses")
 plot_response(data=plot_input)
@@ -139,10 +140,10 @@ plot_cumgains(data=plot_input,highlight_ntile=20)
 plot_cumlift(data=plot_input,highlight_ntile=20,highlight_how = 'plot')
 plot_response(data=plot_input,highlight_ntile=20,highlight_how = 'text')
 plot_cumresponse(data=plot_input,highlight_ntile=20,highlight_how = 'plot_text')
-plot_costsrevs(data=plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,
+plot_costsrevs(data=plot_input,fixed_costs = 1500,variable_costs_per_unit = 10,
                profit_per_unit = 50,highlight_ntile='max_roi')
-plot_profit(data=plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
-plot_roi(data=plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
+plot_profit(data=plot_input,fixed_costs = 1500,variable_costs_per_unit = 10,profit_per_unit = 50)
+plot_roi(data=plot_input,fixed_costs = 1500,variable_costs_per_unit = 10,profit_per_unit = 50)
 
 # OTHER PLOT CUSTOMIZATIONS
 # customize line colors
@@ -158,6 +159,7 @@ mytexts$cumresponse$x_axis_label <- 'percentiles (percentile = 1\% of customers)
 mytexts$cumresponse$annotationtext <-
 "Selecting up until the &NTL percentile with model &MDL has an expected conversion rate of &VALUE"
 plot_cumresponse(data=plot_input,custom_plot_text = mytexts,highlight_ntile = 15)
+}
 }
 \seealso{
 \code{vignette('modelplotr')}

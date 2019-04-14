@@ -56,10 +56,11 @@ utils::globalVariables(c("ntile","scope","pct","legend","refline","dataset_label
 #' plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_models")
 #' plot_cumgains(data=plot_input)
 #' plot_cumgains(data=plot_input,custom_line_colors=c("orange","purple"))
-#' plot_cumgains(data=plot_input,highlight_ntile=2)
+#' plot_cumgains(data=plot_input,highlight_ntile=20)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{vignette('modelplotr')}
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
 #' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
 #' a dataframe in the required format for all modelplotr plots.
@@ -233,6 +234,7 @@ cat(paste0("Plot is saved as: ",filename,"\n\n"))
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{vignette('modelplotr')}
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
 #' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
 #' a dataframe in the required format for all modelplotr plots.
@@ -386,6 +388,7 @@ plot_cumlift <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{vignette('modelplotr')}
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
 #' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
 #' a dataframe in the required format for all modelplotr plots.
@@ -544,14 +547,15 @@ plot_response <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot
 #'                          models = list("rf","mnl"),
 #'                          model_labels = list("random forest","multinomial logit"),
 #'                          target_column="has_td",
-#'                          ntiles=100)
+#'                          ntiles=20)
 #' plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
 #' plot_cumresponse(data=plot_input)
 #' plot_cumresponse(data=plot_input,custom_line_colors="pink")
-#' plot_cumresponse(data=plot_input,highlight_ntile=3)
+#' plot_cumresponse(data=plot_input,highlight_ntile=5)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{vignette('modelplotr')}
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
 #' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
 #' a dataframe in the required format for all modelplotr plots.
@@ -705,12 +709,14 @@ plot_cumresponse <- function(data=plot_input,highlight_ntile=NA,highlight_how='p
 #'                          models = list("rf","mnl"),
 #'                          model_labels = list("random forest","multinomial logit"),
 #'                          target_column="has_td",
-#'                          ntiles=100)
+#'                          ntiles=10)
 #' plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
 #' plot_multiplot(data=plot_input)
+#' plot_multiplot(data=plot_input,highlight_ntile = 2)
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{vignette('modelplotr')}
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
 #' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
 #' a dataframe in the required format for all modelplotr plots.
@@ -838,6 +844,7 @@ plot_multiplot <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,c
 #' @return gtable, containing 6 grobs.
 #' # load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 #' @examples
+#' # load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 #' data("bank_td")
 #' # prepare data for training model for binomial target has_td and train models
 #' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
@@ -862,14 +869,15 @@ plot_multiplot <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,c
 #'                          ntiles=100)
 #' # set scope for analysis (default: no comparison)
 #' plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
-#' plot_roi(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50)
-#' plot_roi(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50,
+#' plot_roi(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50)
+#' plot_roi(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50,
 #'          highlight_ntile=20)
-#' plot_roi(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50,
+#' plot_roi(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50,
 #'          highlight_ntile="max_profit")
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{vignette('modelplotr')}
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
 #' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
 #' a dataframe in the required format for all modelplotr plots.
@@ -925,8 +933,10 @@ plot_roi <- function(data=plot_input,highlight_ntile='max_roi',highlight_how='pl
                                              profit_tot = revenues_tot-investments_tot,
                                              roi_ref = profit_tot/investments_tot) %>%
     dplyr::group_by(model_label,dataset_label,target_class) %>%
-    dplyr::mutate(max_profit = dplyr::case_when(profit == max(profit) ~ 1, TRUE ~0),
-                  max_roi = dplyr::case_when(roi == max(roi) ~ 1, TRUE ~0)) %>%
+    dplyr::mutate(rn_profit = dplyr::row_number(-profit),
+                  rn_roi = dplyr::row_number(-roi),
+                  max_profit = dplyr::case_when(rn_profit == 1  ~ 1, TRUE ~0),
+                  max_roi = dplyr::case_when(rn_roi == 1 ~ 1, TRUE ~0)) %>%
     dplyr::ungroup()
 
   # rearrange plot_input
@@ -1053,6 +1063,7 @@ plot_roi <- function(data=plot_input,highlight_ntile='max_roi',highlight_how='pl
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return gtable, containing 6 grobs.
 #' @examples
+#' # load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 #' data("bank_td")
 #' # prepare data for training model for binomial target has_td and train models
 #' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
@@ -1077,13 +1088,14 @@ plot_roi <- function(data=plot_input,highlight_ntile='max_roi',highlight_how='pl
 #'                          ntiles=100)
 #' # set scope for analysis (default: no comparison)
 #' plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope='compare_models')
-#' plot_profit(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50)
-#' plot_profit(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50,
+#' plot_profit(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50)
+#' plot_profit(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50,
 #'             highlight_ntile=20)
-#' plot_profit(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50,
+#' plot_profit(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50,
 #'             highlight_ntile='max_roi')
 #' @export
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{vignette('modelplotr')}
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
 #' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
 #' a dataframe in the required format for all modelplotr plots.
@@ -1139,8 +1151,10 @@ plot_profit <- function(data=plot_input,highlight_ntile='max_profit',highlight_h
                                              profit_tot = revenues_tot-investments_tot,
                                              roi_ref = profit_tot/investments_tot) %>%
     dplyr::group_by(model_label,dataset_label,target_class) %>%
-    dplyr::mutate(max_profit = dplyr::case_when(profit == max(profit) ~ 1, TRUE ~0),
-                  max_roi = dplyr::case_when(roi == max(roi) ~ 1, TRUE ~0)) %>%
+    dplyr::mutate(rn_profit = dplyr::row_number(-profit),
+                  rn_roi = dplyr::row_number(-roi),
+                  max_profit = dplyr::case_when(rn_profit == 1  ~ 1, TRUE ~0),
+                  max_roi = dplyr::case_when(rn_roi == 1 ~ 1, TRUE ~0)) %>%
     dplyr::ungroup()
 
 
@@ -1270,6 +1284,7 @@ plot_profit <- function(data=plot_input,highlight_ntile='max_profit',highlight_h
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return gtable, containing 6 grobs.
 #' @examples
+#' # load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 #' data("bank_td")
 #' # prepare data for training model for binomial target has_td and train models
 #' train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
@@ -1294,15 +1309,16 @@ plot_profit <- function(data=plot_input,highlight_ntile='max_profit',highlight_h
 #'                          ntiles=100)
 #' # set scope for analysis (default: no comparison)
 #' plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope='compare_models')
-#' plot_costsrevs(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50)
-#' plot_costsrevs(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50,
+#' plot_costsrevs(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50)
+#' plot_costsrevs(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50,
 #'                highlight_ntile=20)
-#' plot_costsrevs(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50,
+#' plot_costsrevs(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50,
 #'                highlight_ntile='max_roi')
-#' plot_costsrevs(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50,
+#' plot_costsrevs(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50,
 #'                highlight_ntile='max_profit')
 #' @export
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{vignette('modelplotr')}
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
 #' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
 #' a dataframe in the required format for all modelplotr plots.
@@ -1357,8 +1373,10 @@ plot_costsrevs <- function(data=plot_input,highlight_ntile='max_profit',highligh
                                              profit_tot = revenues_tot-investments_tot,
                                              roi_ref = profit_tot/investments_tot) %>%
     dplyr::group_by(model_label,dataset_label,target_class) %>%
-    dplyr::mutate(max_profit = dplyr::case_when(profit == max(profit) ~ 1, TRUE ~0),
-                  max_roi = dplyr::case_when(roi == max(roi) ~ 1, TRUE ~0)) %>%
+    dplyr::mutate(rn_profit = dplyr::row_number(-profit),
+                  rn_roi = dplyr::row_number(-roi),
+                  max_profit = dplyr::case_when(rn_profit == 1  ~ 1, TRUE ~0),
+                  max_roi = dplyr::case_when(rn_roi == 1 ~ 1, TRUE ~0)) %>%
     dplyr::ungroup()
 
   # rearrange plot_input

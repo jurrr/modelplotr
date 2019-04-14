@@ -481,7 +481,7 @@ kable(text_tbl) %>%
 
 With these extra parameters, all three financial plots can be plotted, for instance the ROI plot:  
 ```{r plot_roi,echo=TRUE, fig.width=7.2,fig.height=5}
-plot_roi(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50)
+plot_roi(data = plot_input,fixed_costs = 1500,variable_costs_per_unit = 10,profit_per_unit = 50)
 ```
 
 By default, in the ROI plot the ntile is highlighted where return on investment is highest. In the profit plot and costs & revenues plot, the ntile where the profit is highest is highlighted by default. This can be changed, see the section on highlighting or ?plot_roi / ?plot_profit / ?plot_costsrevs for details. As an example:
@@ -489,10 +489,10 @@ By default, in the ROI plot the ntile is highlighted where return on investment 
 ```{r plot_costrev_profit,echo=TRUE, fig.width=7.2,fig.height=5}
 
 #Costs & Revenues plot, highlighted at max roi instead of max profit
-plot_costsrevs(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile = "max_roi")
+plot_costsrevs(data = plot_input,fixed_costs = 1500,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile = "max_roi")
 
 #Profit plot , highlighted at custom ntile instead of at max profit
-plot_profit(data = plot_input,fixed_costs = 15000,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile = 5)
+plot_profit(data = plot_input,fixed_costs = 1500,variable_costs_per_unit = 10,profit_per_unit = 50,highlight_ntile = 5)
 
 ```
 

@@ -11,7 +11,7 @@ Description: Plots to evaluate the business performance of predictive models in 
     A number of widely used plots to assess the quality of a predictive model from 
     a business perspective can easily be created. Using these plots, it can be shown
     how implementation of the model will impact business targets like response on a
-    campaign. Also, the under/overperformance of a model on the train data compared 
+    campaign. Also, the under/over-performance of a model on the train data compared 
     to other datasets (test data, external validation data,...) can be visualized 
     with a number of functions. 
 Depends: R (>= 3.1.0)

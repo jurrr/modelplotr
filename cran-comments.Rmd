@@ -10,6 +10,7 @@ output: github_document
 
 - removed authors from DESCRIPTION (Authors@R remains)
 - removed Tensorflow dependency in Vignette example
+- downsized examples / dontrun examples with expected long runtime
 
 
 ## R CMD check results

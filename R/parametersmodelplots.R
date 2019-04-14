@@ -88,6 +88,7 @@
 #' @export
 #' @importFrom magrittr %>%
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{vignette('modelplotr')}
 #' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
 #' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
 customize_plot_text <- function(plot_input=plot_input){

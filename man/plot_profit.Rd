@@ -50,6 +50,7 @@ what is the expected profit of the campaign?}}
 Extra parameters needed for this plot are: fixed_costs, variable_costs_per_unit and profit_per_unit.
 }
 \examples{
+# load example data (Bank clients with/without a term deposit - see ?bank_td for details)
 data("bank_td")
 # prepare data for training model for binomial target has_td and train models
 train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
@@ -74,14 +75,16 @@ scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
                          ntiles=100)
 # set scope for analysis (default: no comparison)
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope='compare_models')
-plot_profit(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50)
-plot_profit(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50,
+plot_profit(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50)
+plot_profit(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50,
             highlight_ntile=20)
-plot_profit(data=plot_input,fixed_costs=15000,variable_costs_per_unit= 10,profit_per_unit=50,
+plot_profit(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50,
             highlight_ntile='max_roi')
 }
 \seealso{
 \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+
+\code{vignette('modelplotr')}
 
 \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
 transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to

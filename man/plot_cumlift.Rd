@@ -71,6 +71,8 @@ plot_cumlift(data=plot_input,highlight_ntile=2)
 \seealso{
 \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
 
+\code{vignette('modelplotr')}
+
 \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
 transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
 a dataframe in the required format for all modelplotr plots.

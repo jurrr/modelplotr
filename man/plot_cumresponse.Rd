@@ -63,14 +63,16 @@ scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
                          models = list("rf","mnl"),
                          model_labels = list("random forest","multinomial logit"),
                          target_column="has_td",
-                         ntiles=100)
+                         ntiles=20)
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
 plot_cumresponse(data=plot_input)
 plot_cumresponse(data=plot_input,custom_line_colors="pink")
-plot_cumresponse(data=plot_input,highlight_ntile=3)
+plot_cumresponse(data=plot_input,highlight_ntile=5)
 }
 \seealso{
 \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+
+\code{vignette('modelplotr')}
 
 \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
 transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to

@@ -98,6 +98,8 @@ plot_cumresponse(data=plot_input,custom_plot_text = mytexts,highlight_ntile = 15
 \seealso{
 \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
 
+\code{vignette('modelplotr')}
+
 \url{https://github.com/modelplot/modelplotr} for details on the package
 
 \url{https://modelplot.github.io/} for our blog on the value of the model plots

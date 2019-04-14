@@ -35,6 +35,7 @@
 #' See \code{\link{build_input_yourself}} for an example to build the required input for \code{\link{plotting_scope}}
 #' or \code{\link{aggregate_over_ntiles}} yourself, within r or even outside of r.
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{vignette('modelplotr')}
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
 #' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
 #' a dataframe in the required format for all modelplotr plots.
@@ -103,9 +104,9 @@
 #' plot_response(data = plot_input)
 #' plot_cumresponse(data = plot_input)
 #' plot_multiplot(data = plot_input)
-#' plot_costsrevs(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
-#' plot_profit(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
-#' plot_roi(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+#' plot_costsrevs(data=plot_input,fixed_costs=1500,variable_costs_per_unit=10,profit_per_unit=50)
+#' plot_profit(data=plot_input,fixed_costs=1500,variable_costs_per_unit=10,profit_per_unit=50)
+#' plot_roi(data=plot_input,fixed_costs=1500,variable_costs_per_unit=10,profit_per_unit=50)
 #' }
 #' @export
 #' @importFrom magrittr %>%
@@ -317,6 +318,7 @@ prepare_scores_and_ntiles <- function(datasets,
 #'  }
 #' See \code{\link{build_input_yourself}} for an example to build the required input yourself.
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{vignette('modelplotr')}
 #' @seealso \code{\link{prepare_scores_and_ntiles}} for details on the function \code{prepare_scores_and_ntiles}
 #' that generates the required input.
 #' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
@@ -538,6 +540,7 @@ Use prepare_scores_and_deciles() or see ?aggregate_over_ntiles for details how t
 #' See \link{build_input_yourself} for an example to build the required input yourself.
 #' @return Dataframe \code{plot_input} is a subset of \code{ntiles_aggregate}.
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{vignette('modelplotr')}
 #' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
 #' generates the required input.
 #' @seealso \code{\link{prepare_scores_and_ntiles}} for details on the function \code{prepare_scores_and_ntiles}
@@ -606,9 +609,9 @@ Use prepare_scores_and_deciles() or see ?aggregate_over_ntiles for details how t
 #' plot_response(data = plot_input)
 #' plot_cumresponse(data = plot_input)
 #' plot_multiplot(data = plot_input)
-#' plot_costsrevs(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
-#' plot_profit(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
-#' plot_roi(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+#' plot_costsrevs(data=plot_input,fixed_costs=1500,variable_costs_per_unit=10,profit_per_unit=50)
+#' plot_profit(data=plot_input,fixed_costs=1500,variable_costs_per_unit=10,profit_per_unit=50)
+#' plot_roi(data=plot_input,fixed_costs=1500,variable_costs_per_unit=10,profit_per_unit=50)
 #' }
 #' @export
 #' @importFrom magrittr %>%

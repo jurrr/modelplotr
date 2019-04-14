@@ -66,10 +66,12 @@ scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
 plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope="compare_models")
 plot_cumgains(data=plot_input)
 plot_cumgains(data=plot_input,custom_line_colors=c("orange","purple"))
-plot_cumgains(data=plot_input,highlight_ntile=2)
+plot_cumgains(data=plot_input,highlight_ntile=20)
 }
 \seealso{
 \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+
+\code{vignette('modelplotr')}
 
 \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
 transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
