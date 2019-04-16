@@ -9,16 +9,15 @@ URL: https://github.com/jurrr/modelplotr
 BugReports: https://github.com/jurrr/modelplotr/issues
 Description: Plots to assess the quality of predictive models from a business perspective. 
     Using these plots, it can be shown how implementation of the model will impact business 
-    targets like response on a campaign. Different scopes can be selected: compare models, compare 
-    datasets or compare target class values and various plot customization and highlighting options 
-    are avaiable.
+    targets like response on a campaign or return on investment. Different scopes can be selected: 
+    compare models, compare datasets or compare target class values and various plot customization 
+    and highlighting options are available.
 Depends: R (>= 3.1.0)
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Imports:
     ggplot2 (>= 2.2.1),
-    grid (>= 3.5.0),
     gridExtra (>= 2.3.0),
     magrittr (>= 1.5.0),
     dplyr (>= 0.7.7),
