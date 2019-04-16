@@ -212,7 +212,7 @@ customize_plot_text <- function(plot_input=plot_input){
 
 
 
-  cat('List with default values for all textual plot elements is created.
+  message('List with default values for all textual plot elements is created.
       To customize titles, axis labels and annotation text, modify specific list elements.
       E.g, when List is named \'mylist\', to change the lift plot title to \'Cumulatieve Lift grafiek\', use:
       mylist$cumlift$title <- \'Cumulatieve Lift grafiek\'
@@ -250,12 +250,12 @@ setplotparams <- function(plot_input,plottype,custom_line_colors,plot_text) {
   } else if(length(custom_line_colors)==pp$scope$nlevels) {
     pp$scope$levelcols <- custom_line_colors
   } else if (length(custom_line_colors)<pp$scope$nlevels) {
-    cat('specified custom_line_colors vector smaller than required length!
+    message('specified custom_line_colors vector smaller than required length!
         It is extended with extra colors to match required length\n')
     lencustcols <- length(custom_line_colors)
     pp$scope$levelcols <- c(custom_line_colors,pp$scope$randcols[which(!pp$scope$randcols %in% custom_line_colors)][1:(pp$scope$nlevels-lencustcols)])
   } else if (length(custom_line_colors)>pp$scope$nlevels) {
-    cat('specified custom_line_colors vector greater than required length!
+    message('specified custom_line_colors vector greater than required length!
         It is cropped to match required length\n')
     pp$scope$levelcols <- custom_line_colors[1:pp$scope$nlevels]
   } else {
@@ -414,7 +414,7 @@ annotate_plot <- function(plot=plot,highlight_input=plot_input_prepared,
                   or use highlight_ntile='max_profit' or highlight_ntile='max_roi' for maximum value highlighting"))
     }
     if(!highlight_how %in% c('plot','text','plot_text')){
-      cat("no valid value for highlight_how specified; default value (plot_text) is chosen
+      message("no valid value for highlight_how specified; default value (plot_text) is chosen
           -> choose 'plot_text' to highlight both the plot and add explanatory text below the plot
           -> choose 'plot' to only highlight both the plot - no explanatory text is added below the plot
           -> choose 'text' to only add explanatory text below the plot - the chosen ntile is not highlighted in the plot \n")
@@ -443,7 +443,8 @@ annotate_plot <- function(plot=plot,highlight_input=plot_input_prepared,
     if(highlight_how %in% c('plot','plot_text')){
       # check ggplot version (clip=off is available in version 3.0 and later)
       if(utils::packageVersion("ggplot2") < 3.0) {
-        warning(paste0('You are using ggplot2 version ',utils::packageVersion("ggplot2"),'. ggplot2 >= 3.0.0 is required for nicer annotated plots!'))
+        warning(paste0('You are using ggplot2 version ',utils::packageVersion("ggplot2"),'. ggplot2 >= 3.0.0 is required for nicer annotated plots!'),
+                call. = FALSE)
       }
 
       # add highlighting
@@ -517,7 +518,7 @@ annotate_plot <- function(plot=plot,highlight_input=plot_input_prepared,
                       paste(substr(unlist(stringr:: str_extract_all(pp$scope$annotationtext,'&[A-Z]+')),2,100),
                       collapse = ', '),')'))))
 
-    cat(paste(' ',paste0('Plot annotation for plot: ',pp$scope$plottitle),
+    message(paste(' ',paste0('Plot annotation for plot: ',pp$scope$plottitle),
               paste(paste0('- ',annovalues$annotationtext), collapse = '\n'),' ',' ', sep = '\n'))
 
     if(highlight_how %in% c('text','plot_text')){

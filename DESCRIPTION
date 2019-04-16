@@ -7,13 +7,11 @@ Authors@R: c(
     person("Pieter","Marcus",email="pieter.marcus@persgroep.net",role="aut"))
 URL: https://github.com/jurrr/modelplotr
 BugReports: https://github.com/jurrr/modelplotr/issues
-Description: Plots to evaluate the business performance of predictive models in R.
-    A number of widely used plots to assess the quality of a predictive model from 
-    a business perspective can easily be created. Using these plots, it can be shown
-    how implementation of the model will impact business targets like response on a
-    campaign. Also, the under/over-performance of a model on the train data compared 
-    to other datasets (test data, external validation data,...) can be visualized 
-    with a number of functions. 
+Description: Plots to assess the quality of predictive models from a business perspective. 
+    Using these plots, it can be shown how implementation of the model will impact business 
+    targets like response on a campaign. Different scopes can be selected: compare models, compare 
+    datasets or compare target class values and various plot customization and highlighting options 
+    are avaiable.
 Depends: R (>= 3.1.0)
 License: GPL-3
 Encoding: UTF-8

@@ -104,9 +104,9 @@
 #' plot_response(data = plot_input)
 #' plot_cumresponse(data = plot_input)
 #' plot_multiplot(data = plot_input)
-#' plot_costsrevs(data=plot_input,fixed_costs=1500,variable_costs_per_unit=10,profit_per_unit=50)
-#' plot_profit(data=plot_input,fixed_costs=1500,variable_costs_per_unit=10,profit_per_unit=50)
-#' plot_roi(data=plot_input,fixed_costs=1500,variable_costs_per_unit=10,profit_per_unit=50)
+#' plot_costsrevs(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+#' plot_profit(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+#' plot_roi(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
 #' }
 #' @export
 #' @importFrom magrittr %>%
@@ -152,7 +152,7 @@ prepare_scores_and_ntiles <- function(datasets,
 
         # 1.2.1. mlr models
         if(ifelse(is.null(class(get(mdl))), "", class(get(mdl))) == "WrappedModel") {
-          cat(paste0('... scoring mlr model "',mdl,'" on dataset "',dataset,'".\n'))
+          message(paste0('... scoring mlr model "',mdl,'" on dataset "',dataset,'".'))
           if (!requireNamespace("mlr", quietly = TRUE)) {
             stop("Package \"mlr\" needed for this function to work, but it's not installed. Please install it.",
               call. = FALSE)
@@ -171,7 +171,7 @@ prepare_scores_and_ntiles <- function(datasets,
           }
         # 1.2.2. h2o models
         } else if (ifelse(is.null(attr(class(get(mdl)), "package")), "", attr(class(get(mdl)), "package")) == "h2o") {
-          cat(paste0('... scoring h2o model "',mdl,'" on dataset "',dataset,'".\n'))
+          message(paste0('... scoring h2o model "',mdl,'" on dataset "',dataset,'".'))
           if (!requireNamespace("h2o", quietly = TRUE)) {
             stop("Package \"h2o\" needed for this function to work, but it's not installed. Please install it.",
                  call. = FALSE)
@@ -186,7 +186,7 @@ prepare_scores_and_ntiles <- function(datasets,
         }
         # 1.2.3. keras models
         else if (max(grepl('keras',class(get(mdl)))) == 1) {
-        cat(paste0('... scoring keras model "',mdl,'" on dataset "',dataset,'".\n'))
+        message(paste0('... scoring keras model "',mdl,'" on dataset "',dataset,'".'))
         if (!requireNamespace("keras", quietly = TRUE)) {
           stop("Package \"keras\" needed for this function to work, but it's not installed. Please install it.",
                call. = FALSE)
@@ -208,7 +208,7 @@ prepare_scores_and_ntiles <- function(datasets,
         }
           # 1.2.4. caret models
         else {
-          cat(paste0('... scoring caret model "',mdl,'" on dataset "',dataset,'".\n'))
+          message(paste0('... scoring caret model "',mdl,'" on dataset "',dataset,'".'))
           if (!requireNamespace("caret", quietly = TRUE)) {
             stop("Package \"caret\" needed for this function to work, but it's not installed. Please install it.",
               call. = FALSE)
@@ -244,7 +244,7 @@ prepare_scores_and_ntiles <- function(datasets,
     scores_and_ntiles = rbind(scores_and_ntiles,probabilities)
     }
   }
-  cat('Data preparation step 1 succeeded! Dataframe created.')
+  message('Data preparation step 1 succeeded! Dataframe created.')
   return(scores_and_ntiles)
 }
 
@@ -467,7 +467,7 @@ Use prepare_scores_and_deciles() or see ?aggregate_over_ntiles for details how t
     ntiles_aggregate = rbind(ntiles_aggregate,eval_t_zero,eval_t_add)
     ntiles_aggregate = ntiles_aggregate[with(ntiles_aggregate,order(target_class,dataset_label,ntile)),]
   }
-  cat('Data preparation step 2 succeeded! Dataframe created.')
+  message('Data preparation step 2 succeeded! Dataframe created.')
   return(ntiles_aggregate)
 }
 
@@ -609,9 +609,9 @@ Use prepare_scores_and_deciles() or see ?aggregate_over_ntiles for details how t
 #' plot_response(data = plot_input)
 #' plot_cumresponse(data = plot_input)
 #' plot_multiplot(data = plot_input)
-#' plot_costsrevs(data=plot_input,fixed_costs=1500,variable_costs_per_unit=10,profit_per_unit=50)
-#' plot_profit(data=plot_input,fixed_costs=1500,variable_costs_per_unit=10,profit_per_unit=50)
-#' plot_roi(data=plot_input,fixed_costs=1500,variable_costs_per_unit=10,profit_per_unit=50)
+#' plot_costsrevs(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+#' plot_profit(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+#' plot_roi(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
 #' }
 #' @export
 #' @importFrom magrittr %>%
@@ -638,7 +638,7 @@ plotting_scope <- function(prepared_input,
 Use prepare_scores_and_deciles() or see ?aggregate_over_ntiles for details how to build required input yourself.')
     } else{
       prepared_input <- aggregate_over_ntiles(prepared_input)
-      cat('"prepared_input" aggregated...\n')
+      message('"prepared_input" aggregated...\n')
     }
   }
 
@@ -741,7 +741,7 @@ Single evaluation line will be plotted: Target value "',
 -> To plot one line, do not specify scope or specify scope = "no_comparison".'))
     }
   plot_input <- cbind(scope=scope,plot_input)
-  cat(paste0('Data preparation step 3 succeeded! Dataframe created.\n\n',type_print,'\n\n'))
+  message(paste0('Data preparation step 3 succeeded! Dataframe created.\n\n',type_print,'\n\n'))
   return(plot_input)
 }
 

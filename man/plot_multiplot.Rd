@@ -14,7 +14,7 @@ or else meet required input format.}
 
 \item{save_fig}{Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plot is optimized for 36x24cm.}
 
-\item{save_fig_filename}{String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.}
+\item{save_fig_filename}{String. Filename of saved plot. Default the plot is saved as {tempdir()}/{plotname}.png.}
 
 \item{custom_line_colors}{Vector of Strings. Specifying colors for the lines in the plot.
 When not specified, colors from the RColorBrewer palet "Set1" are used.}

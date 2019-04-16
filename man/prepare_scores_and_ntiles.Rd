@@ -108,9 +108,9 @@ plot_cumlift(data = plot_input)
 plot_response(data = plot_input)
 plot_cumresponse(data = plot_input)
 plot_multiplot(data = plot_input)
-plot_costsrevs(data=plot_input,fixed_costs=1500,variable_costs_per_unit=10,profit_per_unit=50)
-plot_profit(data=plot_input,fixed_costs=1500,variable_costs_per_unit=10,profit_per_unit=50)
-plot_roi(data=plot_input,fixed_costs=1500,variable_costs_per_unit=10,profit_per_unit=50)
+plot_costsrevs(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+plot_profit(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+plot_roi(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
 }
 }
 \seealso{

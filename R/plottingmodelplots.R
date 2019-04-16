@@ -25,7 +25,7 @@ utils::globalVariables(c("ntile","scope","pct","legend","refline","dataset_label
 #' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen ntile.
 #' "text" adds text below the plot explaining the plot at chosen ntile but does not highlight the plot.
 #' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plots are optimized for 18x12cm.
-#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
+#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {tempdir()}/{plotname}.png.
 #' @param custom_plot_text List. List with customized textual elements for plot. Create a list with defaults
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return ggplot object. Cumulative gains plot.
@@ -83,7 +83,7 @@ plot_cumgains <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot
   highlight_how <- highlight_how
 
   if(is.null(custom_plot_text)) {
-    plot_text <- quiet(customize_plot_text(plot_input = plot_input))
+    plot_text <- suppressMessages(customize_plot_text(plot_input = plot_input))
   } else {
     plot_text <- custom_plot_text
   }
@@ -154,20 +154,7 @@ plot_cumgains <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot
 
   #save plot when requested
   if(save_fig | (missing(save_fig) & !is.na(save_fig_filename))) {
-    if(!is.na(save_fig_filename)){
-      if(!grepl("\\.[a-zA-Z]{3,4}",save_fig_filename)) save_fig_filename <- paste0(save_fig_filename,'.png')
-      if(grepl("\\\\|/",save_fig_filename)) {
-        filename <- save_fig_filename
-      } else {
-        filename <- paste0(getwd(),'/',save_fig_filename)
-      }
-    } else {
-      filename <-   paste0(getwd(),'/',pp$scope$plottype,'.png')
-cat("No filename for saved plot specified! Specify 'save_fig_filename' to customize location and name.\n")
-    }
-cat(paste0("Plot is saved as: ",filename,"\n\n"))
-    ggplot2::ggsave(file=filename,plot=plot,width = 18, height = 12, units = "cm",dpi=320)
-    #ggplot2::ggsave(file=filename,plot=plot)
+    savemodelplots(save_fig_filename,plot = plot,pp=pp,width=18,height= 12)
   }
   if(length(plot$layout)>0) {
     grid::grid.newpage()
@@ -199,7 +186,7 @@ cat(paste0("Plot is saved as: ",filename,"\n\n"))
 #' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen ntile.
 #' "text" adds text below the plot explaining the plot at chosen ntile but does not highlight the plot.
 #' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plots are optimized for 18x12cm.
-#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
+#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {tempdir()}/{plotname}.png.
 #' @param custom_plot_text List. List with customized textual elements for plot. Create a list with defaults
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return ggplot object. Lift plot.
@@ -257,7 +244,7 @@ plot_cumlift <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_
   highlight_how <- highlight_how
 
   if(is.null(custom_plot_text)) {
-    plot_text <- quiet(customize_plot_text(plot_input = plot_input))
+    plot_text <- suppressMessages(customize_plot_text(plot_input = plot_input))
   } else {
     plot_text <- custom_plot_text
   }
@@ -308,20 +295,7 @@ plot_cumlift <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_
 
   #save plot when requested
   if(save_fig | (missing(save_fig) & !is.na(save_fig_filename))) {
-    if(!is.na(save_fig_filename)){
-      if(!grepl("\\.[a-zA-Z]{3,4}",save_fig_filename)) save_fig_filename <- paste0(save_fig_filename,'.png')
-      if(grepl("\\\\|/",save_fig_filename)) {
-        filename <- save_fig_filename
-      } else {
-        filename <- paste0(getwd(),'/',save_fig_filename)
-      }
-    } else {
-      filename <-   paste0(getwd(),'/',pp$scope$plottype,'.png')
-      cat("No filename for saved plot specified! Specify 'save_fig_filename' to customize location and name.\n")
-    }
-    cat(paste0("Plot is saved as: ",filename,"\n\n"))
-    ggplot2::ggsave(file=filename,plot=plot,width = 18, height = 12, units = "cm",dpi=320)
-    #ggplot2::ggsave(file=filename,plot=plot)
+    savemodelplots(save_fig_filename,plot = plot,pp=pp,width=18,height= 12)
   }
   if(length(plot$layout)>0) {
     grid::grid.newpage()
@@ -353,7 +327,7 @@ plot_cumlift <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot_
 #' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen ntile.
 #' "text" adds text below the plot explaining the plot at chosen ntile but does not highlight the plot.
 #' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plots are optimized for 18x12cm.
-#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
+#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {tempdir()}/{plotname}.png.
 #' @param custom_plot_text List. List with customized textual elements for plot. Create a list with defaults
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return ggplot object. Response plot.
@@ -411,7 +385,7 @@ plot_response <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot
   highlight_how <- highlight_how
 
   if(is.null(custom_plot_text)) {
-    plot_text <- quiet(customize_plot_text(plot_input = plot_input))
+    plot_text <- suppressMessages(customize_plot_text(plot_input = plot_input))
   } else {
     plot_text <- custom_plot_text
   }
@@ -475,20 +449,7 @@ plot_response <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot
 
   #save plot when requested
   if(save_fig | (missing(save_fig) & !is.na(save_fig_filename))) {
-    if(!is.na(save_fig_filename)){
-      if(!grepl("\\.[a-zA-Z]{3,4}",save_fig_filename)) save_fig_filename <- paste0(save_fig_filename,'.png')
-      if(grepl("\\\\|/",save_fig_filename)) {
-        filename <- save_fig_filename
-      } else {
-        filename <- paste0(getwd(),'/',save_fig_filename)
-      }
-    } else {
-      filename <-   paste0(getwd(),'/',pp$scope$plottype,'.png')
-      cat("No filename for saved plot specified! Specify 'save_fig_filename' to customize location and name.\n")
-    }
-    cat(paste0("Plot is saved as: ",filename,"\n\n"))
-    ggplot2::ggsave(file=filename,plot=plot,width = 18, height = 12, units = "cm",dpi=320)
-    #ggplot2::ggsave(file=filename,plot=plot)
+    savemodelplots(save_fig_filename,plot = plot,pp=pp,width=18,height= 12)
   }
   if(length(plot$layout)>0) {
     grid::grid.newpage()
@@ -520,7 +481,7 @@ plot_response <- function(data=plot_input,highlight_ntile=NA,highlight_how='plot
 #' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen ntile.
 #' "text" adds text below the plot explaining the plot at chosen ntile but does not highlight the plot.
 #' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plots are optimized for 18x12cm.
-#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
+#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {tempdir()}/{plotname}.png.
 #' @param custom_plot_text List. List with customized textual elements for plot. Create a list with defaults
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return ggplot object. Cumulative Response plot.
@@ -578,7 +539,7 @@ plot_cumresponse <- function(data=plot_input,highlight_ntile=NA,highlight_how='p
   highlight_how <- highlight_how
 
   if(is.null(custom_plot_text)) {
-    plot_text <- quiet(customize_plot_text(plot_input = plot_input))
+    plot_text <- suppressMessages(customize_plot_text(plot_input = plot_input))
   } else {
     plot_text <- custom_plot_text
   }
@@ -641,20 +602,7 @@ plot_cumresponse <- function(data=plot_input,highlight_ntile=NA,highlight_how='p
 
   #save plot when requested
   if(save_fig | (missing(save_fig) & !is.na(save_fig_filename))) {
-    if(!is.na(save_fig_filename)){
-      if(!grepl("\\.[a-zA-Z]{3,4}",save_fig_filename)) save_fig_filename <- paste0(save_fig_filename,'.png')
-      if(grepl("\\\\|/",save_fig_filename)) {
-        filename <- save_fig_filename
-      } else {
-        filename <- paste0(getwd(),'/',save_fig_filename)
-      }
-    } else {
-      filename <-   paste0(getwd(),'/',pp$scope$plottype,'.png')
-      cat("No filename for saved plot specified! Specify 'save_fig_filename' to customize location and name.\n")
-    }
-    cat(paste0("Plot is saved as: ",filename,"\n\n"))
-    ggplot2::ggsave(file=filename,plot=plot,width = 18, height = 12, units = "cm",dpi=320)
-    #ggplot2::ggsave(file=filename,plot=plot)
+    savemodelplots(save_fig_filename,plot = plot,pp=pp,width=18,height= 12)
   }
   if(length(plot$layout)>0) {
     grid::grid.newpage()
@@ -680,7 +628,7 @@ plot_cumresponse <- function(data=plot_input,highlight_ntile=NA,highlight_how='p
 #' @param custom_line_colors Vector of Strings. Specifying colors for the lines in the plot.
 #' When not specified, colors from the RColorBrewer palet "Set1" are used.
 #' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plot is optimized for 36x24cm.
-#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
+#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {tempdir()}/{plotname}.png.
 #' @param highlight_ntile Integer. Specifying the ntile at which the plot is annotated
 #' and/or performances are highlighted.
 #' @param custom_plot_text List. List with customized textual elements for plot. Create a list with defaults
@@ -734,7 +682,7 @@ plot_multiplot <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,c
   custom_line_colors <- custom_line_colors
 
   if(is.null(custom_plot_text)) {
-    plot_text <- quiet(customize_plot_text(plot_input = plot_input))
+    plot_text <- suppressMessages(customize_plot_text(plot_input = plot_input))
   } else {
     plot_text <- custom_plot_text
   }
@@ -786,22 +734,8 @@ plot_multiplot <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,c
 
   #save plot when requested
   if(save_fig | (missing(save_fig) & !is.na(save_fig_filename))) {
-    if(!is.na(save_fig_filename)){
-      if(!grepl("\\.[a-zA-Z]{3,4}",save_fig_filename)) save_fig_filename <- paste0(save_fig_filename,'.png')
-      if(grepl("\\\\|/",save_fig_filename)) {
-        filename <- save_fig_filename
-      } else {
-        filename <- paste0(getwd(),'/',save_fig_filename)
-      }
-    } else {
-      filename <-   paste0(getwd(),'/',pp$scope$plottype,'.png')
-      cat("No filename for saved plot specified! Specify 'save_fig_filename' to customize location and name.\n")
-    }
-    cat(paste0("Plot is saved as: ",filename,"\n\n"))
-    ggplot2::ggsave(file=filename,plot=plot,width = 36, height = 24, units = "cm",dpi=320)
-    #ggplot2::ggsave(file=filename,plot=plot)
+    savemodelplots(save_fig_filename,plot = plot,pp=pp,width=36,height= 24)
   }
-
   grid::grid.newpage()
   grid::grid.draw(plot)
 
@@ -838,7 +772,7 @@ plot_multiplot <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,c
 #' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen ntile.
 #' "text" adds text below the plot explaining the plot at chosen ntile but does not highlight the plot.
 #' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plot is optimized for 36x24cm.
-#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
+#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {tempdir()}/{plotname}.png.
 #' @param custom_plot_text List. List with customized textual elements for plot. Create a list with defaults
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return gtable, containing 6 grobs.
@@ -869,10 +803,10 @@ plot_multiplot <- function(data=plot_input,save_fig=FALSE,save_fig_filename=NA,c
 #'                          ntiles=100)
 #' # set scope for analysis (default: no comparison)
 #' plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
-#' plot_roi(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50)
-#' plot_roi(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50,
+#' plot_roi(data=plot_input,fixed_costs=1000,variable_costs_per_unit= 10,profit_per_unit=50)
+#' plot_roi(data=plot_input,fixed_costs=1000,variable_costs_per_unit= 10,profit_per_unit=50,
 #'          highlight_ntile=20)
-#' plot_roi(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50,
+#' plot_roi(data=plot_input,fixed_costs=1000,variable_costs_per_unit= 10,profit_per_unit=50,
 #'          highlight_ntile="max_profit")
 #' @export
 #' @importFrom magrittr %>%
@@ -903,7 +837,7 @@ plot_roi <- function(data=plot_input,highlight_ntile='max_roi',highlight_how='pl
 
   # check if plot text customization is requested, else generate default plot text elements
   if(is.null(custom_plot_text)) {
-    plot_text <- quiet(customize_plot_text(plot_input = plot_input))
+    plot_text <- suppressMessages(customize_plot_text(plot_input = plot_input))
   } else {
     plot_text <- custom_plot_text
   }
@@ -1005,20 +939,7 @@ plot_roi <- function(data=plot_input,highlight_ntile='max_roi',highlight_how='pl
 
   #save plot when requested
   if(save_fig | (missing(save_fig) & !is.na(save_fig_filename))) {
-    if(!is.na(save_fig_filename)){
-      if(!grepl("\\.[a-zA-Z]{3,4}",save_fig_filename)) save_fig_filename <- paste0(save_fig_filename,'.png')
-      if(grepl("\\\\|/",save_fig_filename)) {
-        filename <- save_fig_filename
-      } else {
-        filename <- paste0(getwd(),'/',save_fig_filename)
-      }
-    } else {
-      filename <-   paste0(getwd(),'/',pp$scope$plottype,'.png')
-      cat("No filename for saved plot specified! Specify 'save_fig_filename' to customize location and name.\n")
-    }
-    cat(paste0("Plot is saved as: ",filename,"\n\n"))
-    ggplot2::ggsave(file=filename,plot=plot,width = 18, height = 12, units = "cm",dpi=320)
-    #ggplot2::ggsave(file=filename,plot=plot)
+    savemodelplots(save_fig_filename,plot = plot,pp=pp,width=18,height= 12)
   }
   if(length(plot$layout)>0) {
     grid::grid.newpage()
@@ -1058,7 +979,7 @@ plot_roi <- function(data=plot_input,highlight_ntile='max_roi',highlight_how='pl
 #' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen ntile.
 #' "text" adds text below the plot explaining the plot at chosen ntile but does not highlight the plot.
 #' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plot is optimized for 36x24cm.
-#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
+#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {tempdir()}/{plotname}.png.
 #' @param custom_plot_text List. List with customized textual elements for plot. Create a list with defaults
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return gtable, containing 6 grobs.
@@ -1088,10 +1009,10 @@ plot_roi <- function(data=plot_input,highlight_ntile='max_roi',highlight_how='pl
 #'                          ntiles=100)
 #' # set scope for analysis (default: no comparison)
 #' plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope='compare_models')
-#' plot_profit(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50)
-#' plot_profit(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50,
+#' plot_profit(data=plot_input,fixed_costs=1000,variable_costs_per_unit= 10,profit_per_unit=50)
+#' plot_profit(data=plot_input,fixed_costs=1000,variable_costs_per_unit= 10,profit_per_unit=50,
 #'             highlight_ntile=20)
-#' plot_profit(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50,
+#' plot_profit(data=plot_input,fixed_costs=1000,variable_costs_per_unit= 10,profit_per_unit=50,
 #'             highlight_ntile='max_roi')
 #' @export
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
@@ -1121,7 +1042,7 @@ plot_profit <- function(data=plot_input,highlight_ntile='max_profit',highlight_h
 
   # check if plot text customization is requested, else generate default plot text elements
   if(is.null(custom_plot_text)) {
-    plot_text <- quiet(customize_plot_text(plot_input = plot_input))
+    plot_text <- suppressMessages(customize_plot_text(plot_input = plot_input))
   } else {
     plot_text <- custom_plot_text
   }
@@ -1225,20 +1146,7 @@ plot_profit <- function(data=plot_input,highlight_ntile='max_profit',highlight_h
 
   #save plot when requested
   if(save_fig | (missing(save_fig) & !is.na(save_fig_filename))) {
-    if(!is.na(save_fig_filename)){
-      if(!grepl("\\.[a-zA-Z]{3,4}",save_fig_filename)) save_fig_filename <- paste0(save_fig_filename,'.png')
-      if(grepl("\\\\|/",save_fig_filename)) {
-        filename <- save_fig_filename
-      } else {
-        filename <- paste0(getwd(),'/',save_fig_filename)
-      }
-    } else {
-      filename <-   paste0(getwd(),'/',pp$scope$plottype,'.png')
-      cat("No filename for saved plot specified! Specify 'save_fig_filename' to customize location and name.\n")
-    }
-    cat(paste0("Plot is saved as: ",filename,"\n\n"))
-    ggplot2::ggsave(file=filename,plot=plot,width = 18, height = 12, units = "cm",dpi=320)
-    #ggplot2::ggsave(file=filename,plot=plot)
+    savemodelplots(save_fig_filename,plot = plot,pp=pp,width=18,height= 12)
   }
   if(length(plot$layout)>0) {
     grid::grid.newpage()
@@ -1279,7 +1187,7 @@ plot_profit <- function(data=plot_input,highlight_ntile='max_profit',highlight_h
 #' "plot" only highligths the plot, but does not add text below the plot explaining the plot at chosen ntile.
 #' "text" adds text below the plot explaining the plot at chosen ntile but does not highlight the plot.
 #' @param save_fig Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plot is optimized for 36x24cm.
-#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.
+#' @param save_fig_filename String. Filename of saved plot. Default the plot is saved as {tempdir()}/{plotname}.png.
 #' @param custom_plot_text List. List with customized textual elements for plot. Create a list with defaults
 #' by using \code{\link{customize_plot_text}} and override default values to customize.
 #' @return gtable, containing 6 grobs.
@@ -1309,12 +1217,12 @@ plot_profit <- function(data=plot_input,highlight_ntile='max_profit',highlight_h
 #'                          ntiles=100)
 #' # set scope for analysis (default: no comparison)
 #' plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope='compare_models')
-#' plot_costsrevs(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50)
-#' plot_costsrevs(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50,
+#' plot_costsrevs(data=plot_input,fixed_costs=1000,variable_costs_per_unit= 10,profit_per_unit=50)
+#' plot_costsrevs(data=plot_input,fixed_costs=1000,variable_costs_per_unit= 10,profit_per_unit=50,
 #'                highlight_ntile=20)
-#' plot_costsrevs(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50,
+#' plot_costsrevs(data=plot_input,fixed_costs=1000,variable_costs_per_unit= 10,profit_per_unit=50,
 #'                highlight_ntile='max_roi')
-#' plot_costsrevs(data=plot_input,fixed_costs=1500,variable_costs_per_unit= 10,profit_per_unit=50,
+#' plot_costsrevs(data=plot_input,fixed_costs=1000,variable_costs_per_unit= 10,profit_per_unit=50,
 #'                highlight_ntile='max_profit')
 #' @export
 #' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
@@ -1343,7 +1251,7 @@ plot_costsrevs <- function(data=plot_input,highlight_ntile='max_profit',highligh
 
   # check if plot text customization is requested, else generate default plot text elements
   if(is.null(custom_plot_text)) {
-    plot_text <- quiet(customize_plot_text(plot_input = plot_input))
+    plot_text <- suppressMessages(customize_plot_text(plot_input = plot_input))
   } else {
     plot_text <- custom_plot_text
   }
@@ -1444,20 +1352,7 @@ plot_costsrevs <- function(data=plot_input,highlight_ntile='max_profit',highligh
 
   #save plot when requested
   if(save_fig | (missing(save_fig) & !is.na(save_fig_filename))) {
-    if(!is.na(save_fig_filename)){
-      if(!grepl("\\.[a-zA-Z]{3,4}",save_fig_filename)) save_fig_filename <- paste0(save_fig_filename,'.png')
-      if(grepl("\\\\|/",save_fig_filename)) {
-        filename <- save_fig_filename
-      } else {
-        filename <- paste0(getwd(),'/',save_fig_filename)
-      }
-    } else {
-      filename <-   paste0(getwd(),'/',pp$scope$plottype,'.png')
-      cat("No filename for saved plot specified! Specify 'save_fig_filename' to customize location and name.\n")
-    }
-    cat(paste0("Plot is saved as: ",filename,"\n\n"))
-    ggplot2::ggsave(file=filename,plot=plot,width = 18, height = 12, units = "cm",dpi=320)
-    #ggplot2::ggsave(file=filename,plot=plot)
+    savemodelplots(save_fig_filename,plot = plot,pp=pp,width=18,height= 12)
   }
   if(length(plot$layout)>0) {
     grid::grid.newpage()
@@ -1468,3 +1363,27 @@ plot_costsrevs <- function(data=plot_input,highlight_ntile='max_profit',highligh
 
 }
 
+
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### savemodelplots()              ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+# internal function to save modelplotr plots to file
+
+savemodelplots <- function(save_fig_filename,plot,pp,width=18,height= 12) {
+  if(!is.na(save_fig_filename)){
+    if(!grepl("\\.[a-zA-Z]{3,4}",save_fig_filename)) save_fig_filename <- paste0(save_fig_filename,'.png')
+    if(grepl("\\\\|/",save_fig_filename)) {
+      filename <- save_fig_filename
+    } else {
+      filename <- paste0(tempdir(),'/',save_fig_filename)
+      warning("No location for saved plot specified! Plot is saved to tempdir(). Specify 'save_fig_filename' to customize location and name.\n",
+              call. = FALSE)
+    }
+  } else {
+    filename <-   paste0(tempdir(),'/',pp$scope$plottype,'.png')
+    warning("No filename for saved plot specified! Specify 'save_fig_filename' to customize location and name.\n",
+            call. = FALSE)
+  }
+  message(paste0("Plot is saved as: ",filename,"\n\n"))
+  ggplot2::ggsave(file=filename,plot=plot,width = width, height = height, units = "cm",dpi=320)
+}
