@@ -12,6 +12,9 @@ Description: Plots to assess the quality of predictive models from a business pe
     targets like response on a campaign or return on investment. Different scopes can be selected: 
     compare models, compare datasets or compare target class values and various plot customization 
     and highlighting options are available.
+    targets like response on a campaign. Different scopes can be selected: compare models, compare 
+    datasets or compare target class values and various plot customization and highlighting options 
+    are available.
 Depends: R (>= 3.1.0)
 License: GPL-3
 Encoding: UTF-8
