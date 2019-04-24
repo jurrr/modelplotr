@@ -5,8 +5,9 @@
 \title{Response plot}
 \usage{
 plot_response(data = plot_input, highlight_ntile = NA,
-  highlight_how = "plot_text", save_fig = FALSE, save_fig_filename = NA,
-  custom_line_colors = NA, custom_plot_text = NULL, ...)
+  highlight_how = "plot_text", save_fig = FALSE,
+  save_fig_filename = NA, custom_line_colors = NA,
+  custom_plot_text = NULL)
 }
 \arguments{
 \item{data}{Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
@@ -22,10 +23,13 @@ Default is "plot_text", both highlighting the ntile and value on the plot as wel
 
 \item{save_fig}{Logical. Save plot to file? Default = FALSE. When set to TRUE, saved plots are optimized for 18x12cm.}
 
-\item{save_fig_filename}{String. Filename of saved plot. Default the plot is saved as {working_dir_path}/{plotname}.png.}
+\item{save_fig_filename}{String. Filename of saved plot. Default the plot is saved as {tempdir()}/{plotname}.png.}
 
 \item{custom_line_colors}{Vector of Strings. Specifying colors for the lines in the plot.
 When not specified, colors from the RColorBrewer palet "Set1" are used.}
+
+\item{custom_plot_text}{List. List with customized textual elements for plot. Create a list with defaults
+by using \code{\link{customize_plot_text}} and override default values to customize.}
 }
 \value{
 ggplot object. Response plot.
@@ -37,60 +41,46 @@ the model and select ntile X, what is the expected percentage of target class ob
 in that ntile?
 }
 \examples{
-data(iris)
-# add some noise to iris to prevent perfect models
-addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
-iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
-iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
-iris <- rbind(iris,iris_addnoise)
-train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-train = iris[train_index,]
-test = iris[-train_index,]
-#train models using mlr...
-trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-testTask <- mlr::makeClassifTask(data = test, target = "Species")
-mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-task = mlr::makeClassifTask(data = train, target = "Species")
-lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
-rf = mlr::train(lrn, task)
-lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
-mnl = mlr::train(lrn, task)
-#... or train models using caret...
-rf = caret::train(Species ~.,data = train, method = "rf")
-mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
-#.. or train models using h2o
-h2o::h2o.init()
-h2o::h2o.no_progress()
-h2o_train = h2o::as.h2o(train)
-h2o_test = h2o::as.h2o(test)
-gbm <- h2o::h2o.gbm(y = "Species",
-                          x = setdiff(colnames(train), "Species"),
-                          training_frame = h2o_train,
-                          nfolds = 5)
-# preparation steps
-prepare_scores_and_ntiles(datasets=list("train","test"),
-                      dataset_labels = list("train data","test data"),
-                      models = list("rf","mnl", "gbm"),
-                      model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
-                      target_column="Species")
-head(scores_and_ntiles)
-aggregate_over_ntiles()
-plotting_scope(scope="compare_targetclasses")
-plot_response()
-plot_response(custom_line_colors=RColorBrewer::brewer.pal(3,"Dark2"))
-plot_response(highlight_ntile=2)
+# load example data (Bank clients with/without a term deposit - see ?bank_td for details)
+data("bank_td")
+# prepare data for training model for binomial target has_td and train models
+train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
+train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#train models using caret... (or use mlr or H2o or keras ... see ?prepare_scores_and_ntiles)
+# setting caret cross validation, here tuned for speed (not accuracy!)
+fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+# random forest using ranger package, here tuned for speed (not accuracy!)
+rf = caret::train(has_td ~.,data = train, method = "ranger",trControl = fitControl,
+                  tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+# mnl model using glmnet package
+mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
+# load modelplotr
+library(modelplotr)
+# transform datasets and model objects to input for modelplotr
+scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
+                         dataset_labels = list("train data","test data"),
+                         models = list("rf","mnl"),
+                         model_labels = list("random forest","multinomial logit"),
+                         target_column="has_td",
+                         ntiles=100)
+plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
+plot_response(data=plot_input)
+plot_response(data=plot_input,custom_line_colors=RColorBrewer::brewer.pal(3,"Dark2"))
+plot_response(data=plot_input,highlight_ntile=2)
 }
 \seealso{
 \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
 
-\code{\link{prepare_scores_and_ntiles}} for details on the function \code{prepare_scores_and_ntiles}
-that generates the required input.
-
-\code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
-generates the required input.
+\code{vignette('modelplotr')}
 
 \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
-filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
+transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
+a dataframe in the required format for all modelplotr plots.
+
+\code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
+aggregates the output of \code{prepare_scores_and_ntiles} to create a dataframe with aggregated actuals and predictions.
+In most cases, you do not need to use it since the \code{plotting_scope} function will call this function automatically.
 
 \url{https://github.com/modelplot/modelplotr} for details on the package
 

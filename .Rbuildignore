@@ -1,3 +1,9 @@
+^Meta$
+^doc$
 ^README\.Rmd$
+^NEWS\.Rmd$
+^cran-comments.Rmd$
+^cran-comments.md$
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^CRAN-RELEASE$

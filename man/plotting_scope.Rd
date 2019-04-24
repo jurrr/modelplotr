@@ -2,16 +2,16 @@
 % Please edit documentation in R/dataprepmodelplots.R
 \name{plotting_scope}
 \alias{plotting_scope}
-\title{Build 'plot_input' with subset for selected evaluation type.}
+\title{Build dataframe with formatted input for all plots.}
 \usage{
-plotting_scope(prepared_input = ntiles_aggregate, scope = "no_comparison",
+plotting_scope(prepared_input, scope = "no_comparison",
   select_model_label = NA, select_dataset_label = NA,
   select_targetclass = NA, select_smallest_targetclass = TRUE)
 }
 \arguments{
-\item{prepared_input}{Dataframe. Dataframe resulting from function \code{\link{aggregate_over_ntiles}()} or with similar
-format. Default value is ntiles_aggregate, the output of \code{aggregate_over_ntiles()}. When ntiles_aggregate is not found, function
-\code{aggregate_over_ntiles()} is automatically called.}
+\item{prepared_input}{Dataframe. Dataframe created with \code{\link{prepare_scores_and_ntiles}} or dataframe created with
+\code{\link{aggregate_over_ntiles}} or a dataframe that is created otherwise with similar layout as the output of these functions
+(see ?prepare_scores_and_ntiles and ?aggregate_over_ntiles for layout details).}
 
 \item{scope}{String. Evaluation type of interest. Possible values:
 "compare_models","compare_datasets", "compare_targetclasses","no_comparison".
@@ -36,7 +36,10 @@ interest. Default is True, hence the target value with the least observations is
 Dataframe \code{plot_input} is a subset of \code{ntiles_aggregate}.
 }
 \description{
-Build dataframe 'plot_input' with a subset of 'ntiles_aggregate' that meets the requested evaluation perspective.
+Build a dataframe in the required format for all modelplotr plots, relevant to the selected scope of evaluation.
+Each record in this dataframe represents a unique combination of datasets, models, target classes and ntiles.
+As an input, plotting_scope can handle both a dataframe created with \code{aggregate_over_ntiles} as well as a dataframe
+created with \code{prepare_scores_and_ntiles} (or created otherwise with similar layout).
 There are four perspectives:
 \describe{
   \item{"no_comparison" (default)}{In this perspective, you're interested in the performance of one model on one dataset
@@ -56,68 +59,106 @@ There are four perspectives:
    values on a specific dataset.This resuls in a comparison between target classes available in ntiles_aggregate$target_class for
    a selected model (default: first alphabetic model) and for a selected dataset (default: first alphabetic dataset).}}
 }
+\section{When you build input for plotting_scope() yourself}{
+
+To make plots with modelplotr, is not required to use the function prepare_scores_and_ntiles to generate the required input data.
+You can create your own dataframe containing actuals and probabilities and ntiles (1st ntile = (1/#ntiles) percent
+with highest model probability, last ntile = (1/#ntiles) percent with lowest probability according to model) ,
+In that case, make sure the input dataframe contains the folowing columns & formats:
+\tabular{lll}{
+  \bold{column} \tab \bold{type} \tab \bold{definition} \cr
+  model_label \tab Factor \tab Name of the model object \cr
+  dataset_label \tab Factor \tab Datasets to include in the plot as factor levels\cr
+  y_true \tab Factor \tab Target with actual values \cr
+  prob_[tv1] \tab Decimal \tab Probability according to model for target value 1 \cr
+  prob_[tv2] \tab Decimal \tab Probability according to model for target value 2 \cr
+  ... \tab ... \tab ... \cr
+  prob_[tvn] \tab Decimal \tab Probability according to model for target value n \cr
+  ntl_[tv1] \tab Integer \tab Ntile based on probability according to model for target value 1 \cr
+  ntl_[tv2] \tab Integerl \tab Ntile based on probability according to model for target value 2 \cr
+  ... \tab ... \tab ... \cr
+  ntl_[tvn] \tab Integer \tab Ntile based on probability according to model for target value n
+ }
+See \link{build_input_yourself} for an example to build the required input yourself.
+}
+
 \examples{
-data(iris)
-# add some noise to iris to prevent perfect models
-addNoise <- function(x) round(rnorm(n=100,mean=mean(x),sd=sd(x)),1)
-iris_addnoise <- as.data.frame(lapply(iris[1:4], addNoise))
-iris_addnoise$Species <- sample(unique(iris$Species),100,replace=TRUE)
-iris <- rbind(iris,iris_addnoise)
-train_index =  sample(seq(1, nrow(iris)),size = 0.7*nrow(iris), replace = F )
-train = iris[train_index,]
-test = iris[-train_index,]
+\dontrun{
+# load example data (Bank clients with/without a term deposit - see ?bank_td for details)
+data("bank_td")
+
+# prepare data for training model for binomial target has_td and train models
+train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
+train = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+test = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+
 #train models using mlr...
-trainTask <- mlr::makeClassifTask(data = train, target = "Species")
-testTask <- mlr::makeClassifTask(data = test, target = "Species")
+trainTask <- mlr::makeClassifTask(data = train, target = "has_td")
+testTask <- mlr::makeClassifTask(data = test, target = "has_td")
 mlr::configureMlr() # this line is needed when using mlr without loading it (mlr::)
-task = mlr::makeClassifTask(data = train, target = "Species")
+task = mlr::makeClassifTask(data = train, target = "has_td")
 lrn = mlr::makeLearner("classif.randomForest", predict.type = "prob")
 rf = mlr::train(lrn, task)
 lrn = mlr::makeLearner("classif.multinom", predict.type = "prob")
 mnl = mlr::train(lrn, task)
 #... or train models using caret...
-rf = caret::train(Species ~.,data = train, method = "rf")
-mnl = caret::train(Species ~.,data = train, method = "multinom",trace = FALSE)
-#.. or train models using h2o
+# setting caret cross validation, here tuned for speed (not accuracy!)
+fitControl <- caret::trainControl(method = "cv",number = 2,classProbs=TRUE)
+# random forest using ranger package, here tuned for speed (not accuracy!)
+rf = caret::train(has_td ~.,data = train, method = "ranger",trControl = fitControl,
+                  tuneGrid = expand.grid(.mtry = 2,.splitrule = "gini",.min.node.size=10))
+# mnl model using glmnet package
+mnl = caret::train(has_td ~.,data = train, method = "glmnet",trControl = fitControl)
+#... or train models using h2o...
 h2o::h2o.init()
 h2o::h2o.no_progress()
 h2o_train = h2o::as.h2o(train)
 h2o_test = h2o::as.h2o(test)
-gbm <- h2o::h2o.gbm(y = "Species",
-                          x = setdiff(colnames(train), "Species"),
+gbm <- h2o::h2o.gbm(y = "has_td",
+                          x = setdiff(colnames(train), "has_td"),
                           training_frame = h2o_train,
                           nfolds = 5)
+#... or train models using keras.
+x_train <- as.matrix(train[,-1]); y=train[,1]; y_train <- keras::to_categorical(as.numeric(y)-1)
+`\%>\%` <- magrittr::`\%>\%`
+nn <- keras::keras_model_sequential() \%>\%
+keras::layer_dense(units = 16,kernel_initializer = "uniform",activation = 'relu',
+                   input_shape = NCOL(x_train))\%>\%
+  keras::layer_dense(units=16,kernel_initializer="uniform",activation='relu') \%>\%
+  keras::layer_dense(units=length(levels(train[,1])),activation='softmax')
+nn \%>\% keras::compile(optimizer='rmsprop',loss='categorical_crossentropy',metrics=c('accuracy'))
+nn \%>\% keras::fit(x_train,y_train,epochs = 20,batch_size = 1028,verbose=0)
+
 # preparation steps
-prepare_scores_and_ntiles(datasets=list("train","test"),
+scores_and_ntiles <- prepare_scores_and_ntiles(datasets=list("train","test"),
                       dataset_labels = list("train data","test data"),
-                      models = list("rf","mnl", "gbm"),
-                      model_labels = list("random forest","multinomial logit", "gradient boosting machine"),
-                      target_column="Species")
-head(scores_and_ntiles)
-aggregate_over_ntiles()
-plotting_scope()
-# various plotting examples with different plotting scopes
-plot_cumgains()
-plot_cumgains(highlight_ntile=2)
-plotting_scope(scope="compare_models")
-plot_cumlift()
-plot_cumlift(highlight_ntile=2,highlight_how="plot")
-plotting_scope(scope="compare_targetclasses")
-plot_response()
-plot_response(custom_line_colors = c('green','orange','darkblue'))
-plotting_scope(scope="compare_datasets")
-plot_cumresponse()
-plot_cumresponse(highlight_ntile=2,highlight_how="text")
-plot_all()
+                      models = list("rf","mnl", "gbm","nn"),
+                      model_labels = list("random forest","multinomial logit",
+                                          "gradient boosting machine","artificial neural network"),
+                      target_column="has_td")
+plot_input <- plotting_scope(prepared_input = scores_and_ntiles)
+plot_cumgains(data = plot_input)
+plot_cumlift(data = plot_input)
+plot_response(data = plot_input)
+plot_cumresponse(data = plot_input)
+plot_multiplot(data = plot_input)
+plot_costsrevs(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+plot_profit(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+plot_roi(data=plot_input,fixed_costs=1000,variable_costs_per_unit=10,profit_per_unit=50)
+}
 }
 \seealso{
 \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+
+\code{vignette('modelplotr')}
 
 \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
 generates the required input.
 
 \code{\link{prepare_scores_and_ntiles}} for details on the function \code{prepare_scores_and_ntiles}
 that generates the required input.
+
+\code{\link{build_input_yourself}} for an example to build the required input yourself.
 filters the output of \code{aggregate_over_ntiles} to prepare it for the required evaluation.
 
 \url{https://github.com/modelplot/modelplotr} for details on the package

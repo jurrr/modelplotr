@@ -1,41 +1,49 @@
 Package: modelplotr
 Type: Package
 Title: Plots to Evaluate the Business Performance of Predictive Models
-Version: 0.4
-Authors@R: as.person(c(
-    "Jurriaan Nagelkerke <jurriaan.nagelkerke@gmail.com> [aut, cre]", 
-    "Pieter Marcus <pieter.marcus@persgroep.net> [aut]"))
+Version: 1.0.0
+Authors@R: c(
+    person("Jurriaan","Nagelkerke",email="jurriaan.nagelkerke@gmail.com",role=c("aut","cre")), 
+    person("Pieter","Marcus",email="pieter.marcus@persgroep.net",role="aut"))
 URL: https://github.com/jurrr/modelplotr
 BugReports: https://github.com/jurrr/modelplotr/issues
-Description: Plots to evaluate the business performance of predictive models in R.
-    A number of widely used plots to assess the quality of a predictive model from 
-    a business perspective can easily be created.Using these plots, it can be shown
-    how implementation of the model will impact business targets like response on a
-    campaign. Also, the under/overperformance of a model on the train data compared 
-    to other datasets (test data, external validation data,...) can be visualized 
-    with a number of functions.
-Depends: R (>= 3.3.0)
+Description: Plots to assess the quality of predictive models from a business perspective. 
+    Using these plots, it can be shown how implementation of the model will impact business 
+    targets like response on a campaign or return on investment. Different scopes can be selected: 
+    compare models, compare datasets or compare target class values and various plot customization 
+    and highlighting options are available.
+    targets like response on a campaign. Different scopes can be selected: compare models, compare 
+    datasets or compare target class values and various plot customization and highlighting options 
+    are available.
+Depends: R (>= 3.1.0)
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Imports:
     ggplot2 (>= 2.2.1),
-    grid (>= 3.5.0),
     gridExtra (>= 2.3.0),
     magrittr (>= 1.5.0),
-    tidyverse (>= 1.2.1),
+    dplyr (>= 0.7.7),
     RColorBrewer (>= 1.1.2),
-    randomForest (>= 4.6.14),
-    nnet(>= 7.3-12),
-    ggfittext (>= 0.6.0)
+    ggfittext (>= 0.6.0),
+    scales (>= 1.0.0),
+    rlang (>= 0.3.1)
 RoxygenNote: 6.1.1
 Suggests: 
     mlr (>= 2.12.1),
     caret (>= 6.0),
+    randomForest (>= 4.6.14),
+    nnet(>= 7.3-12),
     e1071,
     h2o,
+    keras,
     knitr,
     rmarkdown,
     testthat,
-    xgboost
+    xgboost,
+    stringr,
+    kableExtra,
+    lattice,
+    ranger,
+    glmnet
 VignetteBuilder: knitr
