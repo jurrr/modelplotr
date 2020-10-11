@@ -4,9 +4,14 @@
 \alias{plot_multiplot}
 \title{Create plot with all four evaluation plots}
 \usage{
-plot_multiplot(data = plot_input, save_fig = FALSE,
-  save_fig_filename = NA, custom_line_colors = NA,
-  highlight_ntile = NA, custom_plot_text = NULL)
+plot_multiplot(
+  data = plot_input,
+  save_fig = FALSE,
+  save_fig_filename = NA,
+  custom_line_colors = NA,
+  highlight_ntile = NA,
+  custom_plot_text = NULL
+)
 }
 \arguments{
 \item{data}{Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}

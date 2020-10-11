@@ -22,3 +22,8 @@ cat(paste0("Last Update: ",Sys.time()))
 ## v1.0.0
 2019-04-13
 * Initial CRAN release.
+
+## v1.1.0
+2020-10-11
+* prepare_scores_and_ntiles_keras() function added to better support keras models
+
