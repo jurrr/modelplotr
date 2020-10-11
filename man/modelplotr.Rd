@@ -3,7 +3,6 @@
 \docType{package}
 \name{modelplotr}
 \alias{modelplotr}
-\alias{modelplotr-package}
 \title{modelplotr: Plots to Evaluate the Business Performance of Predictive Models.}
 \description{
 Plots to evaluate the business performance of predictive models in R.
@@ -22,12 +21,14 @@ datapreparation, plot parameterization and plotting.
   \item{\code{\link{prepare_scores_and_ntiles}}}{Function that builds a dataframe
   that contains actuals and predictions on the target variable for each dataset in \code{datasets} and each model in \code{models}.
   As inputs, it takes dataframes to score and model objects created with \strong{caret}, \strong{mlr}, \strong{h2o} or \strong{keras}.
+  Specifically for keras models, built with keras_model_sequential() or with the keras functional API, there is the
+  \code{\link{prepare_scores_and_ntiles_keras}} function.
   To use modelplotr on top of models created otherwise, even models built outside r, see \code{\link{aggregate_over_ntiles}}}
   \item{\code{\link{plotting_scope}}}{Function that creates a dataframe in the required format for all
   modelplotr plots, relevant to the selected scope of evaluation. Each record in this dataframe represents
   a unique combination of datasets, models, target classes and ntiles. As an input, plotting_scope can handle
   both a dataframe created with \code{aggregate_over_ntiles} as well as a dataframe created with
-  \code{prepare_scores_and_ntiles} (or created otherwise, with similar layout). }
+  \code{prepare_scores_and_ntiles} (or with \code{prepare_scores_and_ntiles_keras} or created otherwise, with similar layout). }
   \item{\code{\link{aggregate_over_ntiles}}}{Function that aggregates the output of \code{prepare_scores_and_ntiles}
   to create a dataframe with aggregated actuals and predictions. Each record in this dataframe represents
   a unique combination of datasets, models, target classes and ntiles. In most cases, you do not need to use function

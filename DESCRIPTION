@@ -1,7 +1,7 @@
 Package: modelplotr
 Type: Package
 Title: Plots to Evaluate the Business Performance of Predictive Models
-Version: 1.0.0
+Version: 1.1.0
 Authors@R: c(
     person("Jurriaan","Nagelkerke",email="jurriaan.nagelkerke@gmail.com",role=c("aut","cre")), 
     person("Pieter","Marcus",email="pieter.marcus@persgroep.net",role="aut"))
@@ -28,7 +28,7 @@ Imports:
     ggfittext (>= 0.6.0),
     scales (>= 1.0.0),
     rlang (>= 0.3.1)
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1
 Suggests: 
     mlr (>= 2.12.1),
     caret (>= 6.0),

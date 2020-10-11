@@ -4,10 +4,15 @@
 \alias{plot_cumlift}
 \title{Cumulative Lift plot}
 \usage{
-plot_cumlift(data = plot_input, highlight_ntile = NA,
-  highlight_how = "plot_text", save_fig = FALSE,
-  save_fig_filename = NA, custom_line_colors = NA,
-  custom_plot_text = NULL)
+plot_cumlift(
+  data = plot_input,
+  highlight_ntile = NA,
+  highlight_how = "plot_text",
+  save_fig = FALSE,
+  save_fig_filename = NA,
+  custom_line_colors = NA,
+  custom_plot_text = NULL
+)
 }
 \arguments{
 \item{data}{Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}
