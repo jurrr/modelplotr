@@ -393,7 +393,7 @@ prepare_scores_and_ntiles_keras <- function(inputlists,
                                             targetclass_labels,
                                             ntiles=10){
   if((typeof(inputlists)!='character'&typeof(inputlists)!="list")|typeof(inputlists[[1]])!='character') {
-    stop('"inputs" should a be string referring to a list object with input matrices! (e.g. "input_list")')}
+    stop('"inputlists" should a be string (or list of strings) referring to a (list of) matrix object(s)! (e.g. "x_train" or list("inputs_train","inputs_test"))')}
   if(missing(inputlist_labels)) {
     inputlist_labels = inputlists
   } else if((typeof(inputlist_labels)!='character'&typeof(inputlist_labels)!="list")|typeof(inputlist_labels[[1]])!='character') {
@@ -409,10 +409,15 @@ prepare_scores_and_ntiles_keras <- function(inputlists,
 
   # create per dataset (train, test,...) a set with y, y_pred, p_y and ntl_y
   scores_and_ntiles = data.frame()
+  if(length(inputlists)!=length(outputlists)){
+    stop('inputlist length unequal to outputlist length! Specify matching input lists and output lists.\n
+ In case of multi input models or multi output models, provide the names of named input list(s) and named output lists\n
+ E.g. inputlist_train <- list(x1_input,x2_input) and as parameter: inputlists=list("inputlist_train") ')
+  }
   for (inputlist_id in seq(length(inputlists))) {
-    inputlist = inputlists[[inputlist_id]]
-    outputlist = outputlists[[inputlist_id]]
-    n_outputs = ifelse(is.list(get(outputlist)),length(get(outputlist)),1)
+    inplst = inputlists[[inputlist_id]]
+    outlst = outputlists[[inputlist_id]]
+    n_outputs = ifelse(is.list(get(outlst)),length(get(outlst)),0)
 
     for (mdl in models) {
       # 1.0 check if specified model object exists
@@ -421,14 +426,16 @@ prepare_scores_and_ntiles_keras <- function(inputlists,
           if (!requireNamespace("keras", quietly = TRUE)) {
             stop("Package \"keras\" needed for this function to work, but it's not installed. Please install it.",
                  call. = FALSE)
-          }else{
-
-            for (output_id in select_output_index){
-              message(paste0('... scoring keras model "',mdl,'" on input list "',inputlist,'" for output index ',output_id,'.'))
+          } else {
+            if(n_outputs>=1){
+              output = get(outlst)[[select_output_index]]
+            } else {
+              output = get(outlst)
+            }
+            message(paste0('... scoring keras model "',mdl,'" on input list "',inplst,'" for output ',outlst,' (output index ',select_output_index,').'))
 
               # 1.1. get actual values en predictions per output
-              output = get(outputlist)[[output_id]]
-              probs = stats::predict(get(mdl),get(inputlist))
+              probs = stats::predict(get(mdl),get(inplst))
               if(select_output_index>1 & (!is.list(probs)|length(probs)<select_output_index)){
                 stop(paste0('model "',mdl,'" does not have output with index ',select_output_index,'!'))
               }
@@ -436,7 +443,7 @@ prepare_scores_and_ntiles_keras <- function(inputlists,
               if(NCOL(output)==1){
                 actuals = as.factor(output)
                 if(is.list(probs)) {
-                  probabilities = as.data.frame(1-probs[[output_id]])
+                  probabilities = as.data.frame(1-probs[[select_output_index]])
                 } else {
                   probabilities = as.data.frame(1-probs)
                 }
@@ -445,14 +452,16 @@ prepare_scores_and_ntiles_keras <- function(inputlists,
               else {
                 actuals = as.factor(apply(output, 1, function(x) which(x == 1)))
                 if(is.list(probs)) {
-                  probabilities = as.data.frame(probs[[output_id]])
+                  probabilities = as.data.frame(probs[[select_output_index]])
                 } else {
                   probabilities = as.data.frame(probs)
                 }
               }
-              if(!missing(targetclass_labels)&length(targetclass_labels)==NCOL(probabilities)){
-                y_values = unlist(targetclass_labels)
-                levels(actuals) = unlist(targetclass_labels)
+              if(!missing(targetclass_labels)){
+                if(length(targetclass_labels)==NCOL(probabilities)){
+                  y_values = unlist(targetclass_labels)
+                  levels(actuals) = unlist(targetclass_labels)
+                }
               } else {
                 y_values = levels(actuals)
               }
@@ -482,7 +491,7 @@ prepare_scores_and_ntiles_keras <- function(inputlists,
             }
 
           }
-        }
+
 
 
       } else {warning(paste0('Model object \'',mdl,'\' does not exist!'))}
