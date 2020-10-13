@@ -4,8 +4,14 @@
 \alias{prepare_scores_and_ntiles}
 \title{Build a dataframe containing Actuals, Probabilities and Ntiles}
 \usage{
-prepare_scores_and_ntiles(datasets, dataset_labels, models, model_labels,
-  target_column, ntiles = 10)
+prepare_scores_and_ntiles(
+  datasets,
+  dataset_labels,
+  models,
+  model_labels,
+  target_column,
+  ntiles = 10
+)
 }
 \arguments{
 \item{datasets}{List of Strings. A list of the names of the dataframe

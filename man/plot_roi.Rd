@@ -4,11 +4,18 @@
 \alias{plot_roi}
 \title{ROI plot}
 \usage{
-plot_roi(data = plot_input, highlight_ntile = "max_roi",
-  highlight_how = "plot_text", save_fig = FALSE,
-  save_fig_filename = NA, custom_line_colors = NA,
-  custom_plot_text = NULL, fixed_costs, variable_costs_per_unit,
-  profit_per_unit)
+plot_roi(
+  data = plot_input,
+  highlight_ntile = "max_roi",
+  highlight_how = "plot_text",
+  save_fig = FALSE,
+  save_fig_filename = NA,
+  custom_line_colors = NA,
+  custom_plot_text = NULL,
+  fixed_costs,
+  variable_costs_per_unit,
+  profit_per_unit
+)
 }
 \arguments{
 \item{data}{Dataframe. Dataframe needs to be created with \code{\link{plotting_scope}}

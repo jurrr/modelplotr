@@ -4,9 +4,14 @@
 \alias{plotting_scope}
 \title{Build dataframe with formatted input for all plots.}
 \usage{
-plotting_scope(prepared_input, scope = "no_comparison",
-  select_model_label = NA, select_dataset_label = NA,
-  select_targetclass = NA, select_smallest_targetclass = TRUE)
+plotting_scope(
+  prepared_input,
+  scope = "no_comparison",
+  select_model_label = NA,
+  select_dataset_label = NA,
+  select_targetclass = NA,
+  select_smallest_targetclass = TRUE
+)
 }
 \arguments{
 \item{prepared_input}{Dataframe. Dataframe created with \code{\link{prepare_scores_and_ntiles}} or dataframe created with

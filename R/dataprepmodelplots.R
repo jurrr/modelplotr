@@ -250,6 +250,259 @@ prepare_scores_and_ntiles <- function(datasets,
 
 
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+#### prepare_scores_and_ntiles_keras()      ####
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
+
+
+#' Build a dataframe containing Actuals, Probabilities and Ntiles for keras models
+#'
+#' Build dataframe object that contains actuals and predictions on the target variable
+#' for each input list in \code{inputlists} and each (sequential/functional API) keras model in \code{models}
+#'
+#' @param inputlists List of Strings. A list of list names, referring to the input list
+#'   objects to include in model evaluation.
+#' @param inputlist_labels List of Strings. A list of labels for the inputlists, shown in plots.
+#'   When inputlist_labels is not specified, the names from \code{inputlists} are used.
+#' @param outputlists List of Strings. A list of list names, referring to the output list
+#'   objects to include in model evaluation.
+#' @param select_output_index Integer. The index of the output of \code{outputlists} to evaluate and show
+#' in plots. Only relevant for multi-output models, default index value for multi-output models: 1.
+#' @param models List of Strings. List of the names of the keras model objects, containing parameters to
+#'   apply models to datasets. To use this function, model objects need to be generated
+#'   by the keras package. Both models created with \code{keras_model_sequential()} as well as models
+#'   created with the keras functional API are supported by modelplotr.
+#' @param model_labels List of Strings. Labels for the models, shown in plots.
+#'   When model_labels is not specified, the names from \code{moddels} are used.
+#' @param targetclass_labels List of Strings. A list of names to use in plots for the target class values
+#' for the selected output. If not specified, the model output column indices are used.
+#' Specify the labels in the same order as the model output columns.
+#' @param ntiles Integer. Number of ntiles. The ntile parameter represents the specified number
+#'   of equally sized buckets the observations in each dataset are grouped into.
+#'   By default, observations are grouped in 10 equally sized buckets, often referred to as deciles.
+#' @return Dataframe. A dataframe is built, based on the \code{datasets}
+#'   and \code{models} specified. It contains the dataset name, actuals on the \code{target_column} ,
+#'   the predicted probabilities for each target class (eg. unique target value) and attribution to
+#'   ntiles in the dataset for each target class.
+#'
+#' @section When you build scores_and_ntiles yourself:
+#' To make plots with modelplotr, is not required to use this function to generate input for function \code{plotting_scope}
+#' You can create your own dataframe containing actuals and predictions and ntiles,
+#' See \code{\link{build_input_yourself}} for an example to build the required input for \code{\link{plotting_scope}}
+#' or \code{\link{aggregate_over_ntiles}} yourself, within r or even outside of r.
+#' @seealso \code{\link{modelplotr}} for generic info on the package \code{moddelplotr}
+#' @seealso \code{vignette('modelplotr')}
+#' @seealso \code{\link{plotting_scope}} for details on the function \code{plotting_scope} that
+#' transforms a dataframe created with  \code{prepare_scores_and_ntiles} or \code{aggregate_over_ntiles} to
+#' a dataframe in the required format for all modelplotr plots.
+#' @seealso \code{\link{aggregate_over_ntiles}} for details on the function \code{aggregate_over_ntiles} that
+#' aggregates the output of \code{prepare_scores_and_ntiles} to create a dataframe with aggregated actuals and predictions.
+#' In most cases, you do not need to use it since the \code{plotting_scope} function will call this function automatically.
+#' @seealso \url{https://github.com/modelplot/modelplotr} for details on the package
+#' @seealso \url{https://modelplot.github.io/} for our blog on the value of the model plots
+#' @examples
+#' \dontrun{
+#' # load example data (Bank clients with/without a term deposit - see ?bank_td for details)
+#'data("bank_td")
+#'
+#'# prepare data for training model for binomial target has_td and train models
+#'train_index =  sample(seq(1, nrow(bank_td)),size = 0.5*nrow(bank_td) ,replace = FALSE)
+#'train = bank_td[train_index,]
+#'test = bank_td[-train_index,]
+#'
+#'train_seq = bank_td[train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#'test_seq = bank_td[-train_index,c('has_td','duration','campaign','pdays','previous','euribor3m')]
+#'
+#'
+#'#train keras models using keras_model_sequential() .
+#'x_train <- as.matrix(train[,-c(1:2)]); y_train <- 2-as.numeric(train[,1]);
+#'input_train = list(x_train); output_train = list(y_train)
+#'x_test  <- as.matrix(test[,-c(1:2)]);  y_test <- 2-as.numeric(test[,1]);
+#'input_test = list(x_test); output_test = list(y_test)
+#'
+#'`%>%` <- magrittr::`%>%`
+#'nn_seq <- keras::keras_model_sequential() %>%
+#'  keras::layer_dense(units = 16,kernel_initializer = "uniform",activation = 'relu',
+#'                     input_shape = NCOL(x_train))%>%
+#'  keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu') %>%
+#'  keras::layer_dense(units = 1,activation='sigmoid')
+#'nn_seq %>% keras::compile(optimizer='rmsprop',loss='binary_crossentropy',metrics=c('accuracy'))
+#'nn_seq %>% keras::fit(input_train,output_train,epochs = 20,batch_size = 1028,verbose=0)
+#'
+#'scores_and_ntiles <- prepare_scores_and_ntiles_keras(inputlists = list("input_train","input_test"),
+#'                           inputlist_labels = list("train data","test data"),
+#'                           models = list("nn_seq"),
+#'                           model_labels = list("keras sequential model"),
+#'                           outputlists = list("output_train","output_test"),
+#'                           select_output_index = 1,
+#'                           targetclass_labels = list("no.term.deposit","term.deposit"),
+#'                           ntiles = 10)
+#'
+#'plot_input <- plotting_scope(prepared_input = scores_and_ntiles,scope = "compare_datasets")
+#'plot_cumgains(data = plot_input)
+#'plot_cumlift(data = plot_input)
+#'plot_response(data = plot_input)
+#'plot_cumresponse(data = plot_input)
+#'plot_multiplot(data = plot_input)
+#'
+#'
+#'#... or train keras models using keras functional api (multi-input / multi-output is supported).
+#'x1_train <- as.matrix(train[,c(3:4)]); y1_train <- as.numeric(train[,1])-1;
+#'x2_train <- as.matrix(train[,c(5:7)]); y2_train <- keras::to_categorical(as.numeric(train[,2])-1,
+#'                                                                          num_classes = 4);
+#'input_train = list(x1_train,x2_train); output_train = list(y1_train,y2_train)
+#'x1_test <- as.matrix(test[,c(3:4)]); y1_test <- as.numeric(test[,1])-1;
+#'x2_test <- as.matrix(test[,c(5:7)]); y2_test <- keras::to_categorical(as.numeric(test[,2])-1,
+#'                                                                          num_classes = 4);
+#'input_test = list(x1_test,x2_test); output_test = list(y1_test,y2_test)
+#'
+#'x1_input <- keras::layer_input(shape = NCOL(x1_train))
+#'x2_input <- keras::layer_input(shape = NCOL(x2_train))
+#'concatenated <- keras::layer_concatenate(list(x1_input, x2_input)) %>%
+#'  keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu') %>%
+#'  keras::layer_dense(units = 16,kernel_initializer = "uniform", activation='relu')
+#'y1_output <- concatenated %>% keras::layer_dense(1, activation = "sigmoid", name = "has_td")
+#'y2_output <- concatenated %>% keras::layer_dense(4, activation = "softmax", name = "td_type")
+#'nn_api <- keras::keras_model(list(x1_input,x2_input), list(y1_output,y2_output))
+#'nn_api %>% keras::compile(optimizer = "rmsprop",
+#'                          loss = c("binary_crossentropy","categorical_crossentropy"))
+#'nn_api %>% keras::fit(list(x1_train, x2_train),list(y1_train, y2_train),20,batch_size = 1028)
+#'
+#'scores_and_ntiles <- prepare_scores_and_ntiles_keras(inputlists = list("input_train","input_test"),
+#'                           inputlist_labels = list("train data","test data"),
+#'                           models = list("nn_api"),
+#'                           model_labels = list("keras api model"),
+#'                           outputlists = list("output_train","output_test"),
+#'                           select_output_index = 2,
+#'                           targetclass_labels = list('no.td','td.type.A','td.type.B','td.type.C'),
+#'                           ntiles = 100)
+#'plot_input <- plotting_scope(prepared_input=scores_and_ntiles,scope="compare_targetclasses")
+#'plot_cumgains(data = plot_input)
+#'plot_cumlift(data = plot_input)
+#'plot_response(data = plot_input)
+#'plot_cumresponse(data = plot_input)
+#'plot_multiplot(data = plot_input)
+#' }
+#' @export
+#' @importFrom magrittr %>%
+prepare_scores_and_ntiles_keras <- function(inputlists,
+                                            inputlist_labels,
+                                            outputlists,
+                                            select_output_index=1,
+                                            models,
+                                            model_labels ,
+                                            targetclass_labels,
+                                            ntiles=10){
+  if((typeof(inputlists)!='character'&typeof(inputlists)!="list")|typeof(inputlists[[1]])!='character') {
+    stop('"inputlists" should a be string (or list of strings) referring to a (list of) matrix object(s)! (e.g. "x_train" or list("inputs_train","inputs_test"))')}
+  if(missing(inputlist_labels)) {
+    inputlist_labels = inputlists
+  } else if((typeof(inputlist_labels)!='character'&typeof(inputlist_labels)!="list")|typeof(inputlist_labels[[1]])!='character') {
+    stop('input_labels should be list with desctiption strings! (e.g. "list("train set","test set")")')}
+  if((typeof(models)!='character'&typeof(models)!="list")|typeof(models[[1]])!='character') {
+    stop('"models" should a be list with model object names as string!.
+      \n model objects need to be generated with mlr package!')}
+  if(!(ntiles%%1==0&ntiles>=4&ntiles<=100)) {
+    stop('"ntiles should be an integer value between 4 and 100.')}
+  if(missing(model_labels)) model_labels = models
+  if((typeof(outputlists)!='character'&typeof(outputlists)!="list")|typeof(outputlists[[1]])!='character') {
+    stop('"outputs" should a be string referring to a list object with output matrices! (e.g. "output_list")')}
+
+  # create per dataset (train, test,...) a set with y, y_pred, p_y and ntl_y
+  scores_and_ntiles = data.frame()
+  if(length(inputlists)!=length(outputlists)){
+    stop('inputlist length unequal to outputlist length! Specify matching input lists and output lists.\n
+ In case of multi input models or multi output models, provide the names of named input list(s) and named output lists\n
+ E.g. inputlist_train <- list(x1_input,x2_input) and as parameter: inputlists=list("inputlist_train") ')
+  }
+  for (inputlist_id in seq(length(inputlists))) {
+    inplst = inputlists[[inputlist_id]]
+    outlst = outputlists[[inputlist_id]]
+    n_outputs = ifelse(is.list(get(outlst)),length(get(outlst)),0)
+
+    for (mdl in models) {
+      # 1.0 check if specified model object exists
+      if(exists(mdl)){
+        if (max(grepl('keras',class(get(mdl)))) == 1) {
+          if (!requireNamespace("keras", quietly = TRUE)) {
+            stop("Package \"keras\" needed for this function to work, but it's not installed. Please install it.",
+                 call. = FALSE)
+          } else {
+            if(n_outputs>=1){
+              output = get(outlst)[[select_output_index]]
+            } else {
+              output = get(outlst)
+            }
+            message(paste0('... scoring keras model "',mdl,'" on input list "',inplst,'" for output ',outlst,' (output index ',select_output_index,').'))
+
+              # 1.1. get actual values en predictions per output
+              probs = stats::predict(get(mdl),get(inplst))
+              if(select_output_index>1 & (!is.list(probs)|length(probs)<select_output_index)){
+                stop(paste0('model "',mdl,'" does not have output with index ',select_output_index,'!'))
+              }
+              # for binary targets
+              if(NCOL(output)==1){
+                actuals = as.factor(output)
+                if(is.list(probs)) {
+                  probabilities = as.data.frame(1-probs[[select_output_index]])
+                } else {
+                  probabilities = as.data.frame(1-probs)
+                }
+                probabilities[,2] = 1-probabilities[,1]
+              } # for multiclass targets
+              else {
+                actuals = as.factor(apply(output, 1, function(x) which(x == 1)))
+                if(is.list(probs)) {
+                  probabilities = as.data.frame(probs[[select_output_index]])
+                } else {
+                  probabilities = as.data.frame(probs)
+                }
+              }
+              if(!missing(targetclass_labels)){
+                if(length(targetclass_labels)==NCOL(probabilities)){
+                  y_values = unlist(targetclass_labels)
+                  levels(actuals) = unlist(targetclass_labels)
+                }
+              } else {
+                y_values = levels(actuals)
+              }
+              colnames(probabilities) = paste0('prob_',y_values)
+              y_probvars = colnames(probabilities)
+              #name probability per target class
+              probabilities = cbind(model_label=unlist(model_labels[match(mdl,models)]),
+                                    dataset_label=unlist(inputlist_labels[inputlist_id]),
+                                    y_true = actuals,
+                                    probabilities)
+              # 1.3. calculate ntiles per target class
+              for (i in 1:length(y_values)) {
+                #! Added small proportion to prevent equal ntile bounds
+                # and reset to 0-1 range (to prevent probs > 1.0)
+                range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+                prob_plus_smallrandom = range01(probabilities[,y_probvars[i]]+
+                                                  stats::runif(NROW(probabilities))/1e12)
+                # determine cutoffs based on prob_plus_smallrandom
+                cutoffs = c(stats::quantile(prob_plus_smallrandom,probs = seq(0,1,1/ntiles),
+                                            na.rm = TRUE))
+                # add ntile variable per y-class
+                probabilities[,paste0('ntl_',y_values[i])] <- (ntiles+1)-as.numeric(
+                  cut(prob_plus_smallrandom,breaks=cutoffs,include.lowest = TRUE))
+              }
+              scores_and_ntiles = scores_and_ntiles %>% dplyr::bind_rows(probabilities)
+
+            }
+
+          }
+
+
+
+      } else {warning(paste0('Model object \'',mdl,'\' does not exist!'))}
+    }
+  }
+  message('Data preparation step 1 succeeded! Dataframe created.')
+  return(scores_and_ntiles)
+}
+
+
+##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 #### aggregate_over_ntiles()         ####
 ##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@##
 
